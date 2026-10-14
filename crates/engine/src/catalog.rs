@@ -69,6 +69,7 @@ pub static TOOL_GROUPS: &[ToolGroup] = &[
         sections: &[ToolSection {
             title: "Export to",
             items: &[
+                item("Email message (.eml)", "mail", "email.message", Ready),
                 item("Microsoft Word (.docx)", "file-text", "export.docx", Ready),
                 item("Spreadsheet (.xlsx)", "grid-3x3", "export.xlsx", Planned("M10")),
                 item("Presentation (.pptx)", "presentation", "export.pptx", Ready),
@@ -149,6 +150,7 @@ pub static TOOL_GROUPS: &[ToolGroup] = &[
             title: "Create from",
             items: &[
                 item("Single file", "file-input", "create.file", Ready),
+                item("Email message (.eml)", "mail", "create.file", Ready),
                 item("Multiple files", "files", "create.multiple", Ready),
                 item("Separate PDFs", "files", "create.multiple_separate", Ready),
                 item("Images", "image", "create.images", Ready),

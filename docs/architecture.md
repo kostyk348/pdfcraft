@@ -27,7 +27,7 @@ standalone and publishable.
 
 | Layer | Crates today | Role |
 |---|---|---|
-| L0 foundation | `geom`, `filters`, `crypt` | Geometry; stream filters (Flate, LZW, predictors, ASCII85, ASCIIHex, RunLength); standard security handler R2–R6 (RC4, AES-128/256, SASLprep) |
+| L0 foundation | `geom`, `filters`, `crypt`, `eml`, `smtp` | Geometry; stream filters (Flate, LZW, predictors, ASCII85, ASCIIHex, RunLength); standard security handler R2–R6 (RC4, AES-128/256, SASLprep); email (`.eml`, RFC 822 / MIME) reading and hash-chained receipts; delivering a message over SMTP (RFC 5321) |
 | L1 objects | `cos` | Lazy, tolerant parser with xref repair; copy-on-write object graph; incremental and full writers with object streams; decryption on load and re-encryption on save |
 | L2 core model | `content`, `model`, `fonts` | Content-stream operators with source spans and a serializer; typed page tree with inherited attributes and display geometry (`/UserUnit`, `/Rotate`); font metrics and encodings for generated appearances |
 | L3 core services | `render`, `annot`, `forms`, `js`, `xfa` | Rendering and inspection (bootstrap: vendored `hayro`, `lopdf`); annotation builders and appearance streams; AcroForm model, filling, appearances; sandboxed JavaScript (boa) and FormCalc; XFA template layout and data |

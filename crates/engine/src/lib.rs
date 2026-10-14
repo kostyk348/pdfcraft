@@ -150,11 +150,56 @@ pub type SplitPart = (usize, usize, Arc<Vec<u8>>);
 use std::sync::Arc;
 
 use pdfcraft_cos::{SaveOptions, write_full, write_incremental};
-use pdfcraft_render::{DocInfo, Layer, LayerOp, OpenError, ReadingColors, RenderConfig, RenderPool, inspect};
+use pdfcraft_render::{DocInfo, Layer, LayerOp, OpenError, ReadingColors, RenderConfig, RenderPool, RenderRequest, RequestKind, inspect};
 
 /// Stable identifier of an open document within a session.
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash)]
 pub struct DocId(pub u64);
+
+/// Headers and resolution for [`Session::email_message`].
+#[derive(Clone, Debug, PartialEq)]
+pub struct EmailOptions {
+    pub from: String,
+    pub to: String,
+    pub cc: String,
+    pub subject: String,
+    pub body: String,
+    pub dpi: f64,
+}
+
+impl Default for EmailOptions {
+    fn default() -> Self {
+        EmailOptions {
+            from: "pdfcraft@localhost".to_string(),
+            to: String::new(),
+            cc: String::new(),
+            subject: String::new(),
+            body: String::new(),
+            dpi: 96.0,
+        }
+    }
+}
+
+/// The renderer's premultiplied RGBA as an opaque PNG, as an email's inline page images want it.
+fn email_png(width: u32, height: u32, premultiplied: &[u8]) -> Result<Vec<u8>, EditError> {
+    let mut rgba = premultiplied.to_vec();
+    for px in rgba.as_chunks_mut::<4>().0 {
+        let a = u32::from(px[3]);
+        if a != 0 && a != 255 {
+            for c in &mut px[..3] {
+                *c = ((u32::from(*c) * 255 + a / 2) / a).min(255) as u8;
+            }
+        }
+    }
+    let mut out = Vec::new();
+    let mut encoder = png::Encoder::new(&mut out, width, height);
+    encoder.set_color(png::ColorType::Rgba);
+    encoder.set_depth(png::BitDepth::Eight);
+    let mut writer = encoder.write_header().map_err(|e| EditError::Write(e.to_string()))?;
+    writer.write_image_data(&rgba).map_err(|e| EditError::Write(e.to_string()))?;
+    writer.finish().map_err(|e| EditError::Write(e.to_string()))?;
+    Ok(out)
+}
 
 /// Undo/redo depth. Snapshots share unchanged data, so this is memory-cheap.
 const MAX_UNDO: usize = 100;
@@ -3867,6 +3912,46 @@ impl Session {
         self.write_new(&pdfcraft_create::from_text(title, text, pdfcraft_create::LETTER, 11.0)?)
     }
 
+    /// A new document from an email (`.eml`): its header lines, its body as text and its
+    /// attachment list.
+    pub fn create_from_email(&self, name: &str, bytes: &[u8]) -> Result<Arc<Vec<u8>>, EditError> {
+        self.write_new(&pdfcraft_create::from_email_bytes(name, bytes)?)
+    }
+
+    /// The document as an email message (`.eml`): every page as an inline PNG in an HTML body,
+    /// with the PDF attached. Pure: it renders and composes in memory, writes nothing and opens no
+    /// socket, so sending the message stays a separate, opt-in step.
+    pub fn email_message(&self, id: DocId, options: &EmailOptions) -> Result<Vec<u8>, EditError> {
+        let doc = self.get(id).ok_or(EditError::NoDocument)?;
+        let pages = doc.info.pages.len();
+        let dpi = if options.dpi.is_finite() && options.dpi > 0.0 { options.dpi.clamp(1.0, 600.0) } else { 96.0 };
+        let scale = (dpi / 72.0) as f32;
+        let subject = if options.subject.is_empty() { doc.name.clone() } else { options.subject.clone() };
+        let mut message = pdfcraft_eml::Message::new(&options.from, &options.to, &subject, &options.body);
+        if !options.cc.is_empty() {
+            message.cc(&options.cc);
+        }
+        let config = RenderConfig { password: doc.password.as_deref().map(Arc::from), ..Default::default() };
+        let mut renderer = pdfcraft_render::PageRenderer::new(doc.display.clone(), config);
+        let mut html = String::from("<div>");
+        for page in 0..pages {
+            let shot = renderer.render(RenderRequest { page, kind: RequestKind::Pixels, scale, ..Default::default() });
+            if let Some(error) = shot.error {
+                return Err(EditError::Source(format!("page {} could not be rendered: {error}", page + 1)));
+            }
+            let png = email_png(shot.width, shot.height, &shot.rgba)?;
+            let cid = format!("page-{}", page + 1);
+            message.embed(&format!("{cid}.png"), "image/png", &cid, png);
+            html.push_str(&format!("<p><img src=\"cid:{cid}\"></p>"));
+        }
+        html.push_str("</div>");
+        message.html(&html);
+        let pdf = self.save_bytes(id)?;
+        let name = if doc.name.ends_with(".pdf") { doc.name.clone() } else { format!("{}.pdf", doc.name) };
+        message.attach(&name, "application/pdf", pdf.to_vec());
+        Ok(message.render())
+    }
+
     /// [`Self::create_from_text`] for a report PdfCraft writes from documents (comment summaries,
     /// compare reports), which can quote any language: characters Helvetica can't draw are written
     /// as `[U+XXXX]`, and the report's first line says so, rather than the report being refused.
@@ -3879,7 +3964,7 @@ impl Session {
     /// (it must open and allow copying pages) and returned as it is.
     pub fn convert_to_pdf(&self, name: &str, bytes: &Arc<Vec<u8>>) -> Result<(SourceKind, Arc<Vec<u8>>), EditError> {
         let Some(kind) = source_kind(name, bytes) else {
-            return Err(EditError::Source(format!("{name}: this file type can't be converted; use a PDF, an image or a .txt file")));
+            return Err(EditError::Source(format!("{name}: this file type can't be converted; use a PDF, an image, a .txt or a .eml file")));
         };
         let title = name.rsplit_once('.').map_or(name, |(s, _)| s);
         // Image decoders read untrusted bytes: a panic in one must not take the app down.
@@ -3887,6 +3972,7 @@ impl Session {
             SourceKind::Pdf => open_source(name, bytes).map(|_| bytes.clone()),
             SourceKind::Image => self.create_from_images(&[(name.to_string(), bytes.to_vec())]),
             SourceKind::Text => self.create_from_text(title, &decode_text(bytes)),
+            SourceKind::Email => self.create_from_email(name, bytes),
         })
         .map_err(|_| EditError::Source(format!("{name}: the file could not be read")))?;
         Ok((kind, created?))
@@ -3898,7 +3984,7 @@ impl Session {
     pub fn as_pdf(&self, name: &str, bytes: &Arc<Vec<u8>>) -> Result<Arc<Vec<u8>>, EditError> {
         let pdf = match source_kind(name, bytes) {
             Some(SourceKind::Pdf) => true,
-            Some(SourceKind::Image | SourceKind::Text) => false,
+            Some(SourceKind::Image | SourceKind::Text | SourceKind::Email) => false,
             None => name.to_ascii_lowercase().ends_with(".pdf"),
         };
         if pdf { Ok(bytes.clone()) } else { self.convert_to_pdf(name, bytes).map(|(_, pdf)| pdf) }

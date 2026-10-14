@@ -73,6 +73,7 @@ features total).
 | RTF | yes | no | none | |
 | PostScript / EPS (Distiller) | yes | no | none | `create.distiller` planned (P3) |
 | Markdown | no | no | none | `create.from-markdown` planned (P2; not an Acrobat feature) |
+| Email (`.eml`, RFC 822 / MIME) | yes (from Outlook or Apple Mail) | yes: the header lines, the body as text and the attachment list | basic | `create.from-email`; `crates/create/src/tests.rs::an_email_becomes_a_text_pdf`, `crates/automation/tests/automation.rs::creating_from_an_email_through_tools` |
 | Scanner | yes | no | none | `ocr.scanner-acquire` planned |
 | Several files at once | yes | yes: combine PDFs, images and text into one document, or create a separate PDF for each non-PDF source (GUI and `doc_create_multiple mode=separate`); existing outputs get numbered names | good for supported source types | `create.create-multiple`, `separate_batch_creates_one_pdf_per_source_without_replacing_existing_files` |
 
@@ -110,6 +111,7 @@ features total).
 
 | Date | Change | Summary |
 |---|---|---|
+| 2026-10-13 | minor | Email (`.eml`, RFC 822 / MIME) added to Create: the header lines, the body as text and the attachment list, through the new `pdfcraft-eml` reader. HTML bodies are reduced to text and attachments are listed, not embedded. |
 | 2026-10-12 | minor | XDP split into data (read and write for XFA forms, already shipped under `form.xfa-data`) and opening `.xdp` as a document (none). Create PDF reads BigTIFF; malformed GIF headers are no longer detected as images. |
 | 2026-10-11 | minor | #773: inferred tables have no invented borders; rotated or overlapping invoice pages use floating shapes and page sections. Full Office layout fidelity remains partial. |
 | 2026-10-11 | minor | Encrypted PDF row: written files open in Acrobat DC (#774, fixed by #836). FDF row: #807, #809 and #819 fixed |

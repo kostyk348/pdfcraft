@@ -179,6 +179,24 @@ The desktop UI asks Allow/Cancel before following absolute GoToR targets and dis
 complete path. Relative links retain their existing behavior. Named destinations remain
 unapplied with a warning.
 
+## Sending the message (opt-in, `doc_email_send`)
+
+`doc_email` writes a file and opens no socket. `doc_email_send` is the separate, explicitly requested
+step that delivers that same message: it composes the body with the same engine call (every page as
+an inline PNG in an HTML body, the PDF attached) and hands it to the SMTP server the caller names —
+`host`, `port`, `security`, an optional `username`/`password` (AUTH PLAIN), `from`, `to`, `cc` and the
+same `subject`, `body` and `dpi`. Nothing else in the tool table opens a socket.
+
+A request that cannot be carried out is refused **before** the connection, with the error as a value:
+an address a relay could not read (a space, a line ending, `<`, `>`, a comma, no `@`), a port that is
+not a port, credentials given without their other half, `security` other than `none` (TLS lives in
+the app tier and is not wired in yet, so `starttls`/`tls` say so instead of sending a password in the
+clear), or a document that cannot be rendered. With `crlf` off (the default) the message goes out
+byte for byte, so what a receiver keeps hashes the same as the `.eml`; `crlf true` sends RFC 5321
+line endings, which a relay that rejects bare LF wants. Results carry the recipients the relay took,
+its reply, the session log (credentials redacted), the byte count and the message's SHA-256. See
+[`pdfcraft-smtp`](../smtp/README.md) for the protocol and what is not implemented.
+
 ## Folder batches
 
 `doc_batch` runs conversion, OCR and compression over files and optionally recursive

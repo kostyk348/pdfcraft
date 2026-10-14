@@ -6800,6 +6800,30 @@ evidence = ["crates/create/src/tests.rs::text_is_wrapped_and_paginated", "crates
 notes = "Helvetica 11 pt on US Letter; form feeds start pages"
 
 [[feature]]
+id = "create.from-email"
+title = "Create PDF from email (.eml, RFC 822 / MIME)"
+area = "J"
+tier = "P2"
+milestone = "M10"
+status = "shipped"
+commands = ["create.file"]
+tools = ["doc_create"]
+evidence = ["crates/create/src/tests.rs::an_email_becomes_a_text_pdf", "crates/automation/tests/automation.rs::creating_from_an_email_through_tools"]
+notes = "Header lines, body as text and the attachment list, in any language (Helvetica can't draw is written as [U+XXXX]); an HTML body is reduced to text, not rendered, and attachments are listed, not embedded. Read by pdfcraft-eml (RFC 5322/2045/2046/2047), so the other Create paths (.eml in Combine, Create from multiple files, and opening one) accept it too"
+
+[[feature]]
+id = "create.send-email"
+title = "Send the open document as an email message (opt-in SMTP)"
+area = "J"
+tier = "P2"
+milestone = "M10"
+status = "shipped"
+commands = []
+tools = ["doc_email_send"]
+evidence = ["crates/automation/tests/automation.rs::sending_an_email_delivers_the_eml_byte_for_byte", "crates/automation/tests/automation.rs::sending_refuses_what_it_cannot_carry_out_and_never_connects", "crates/smtp/tests/session.rs::a_message_arrives_byte_for_byte"]
+notes = "The message is the one doc_email composes (same engine call, same bytes: the receiver's copy and the .eml hash the same), delivered by pdfcraft-smtp over RFC 5321 with an opt-in server and recipient — no other tool opens a socket. A request that cannot be carried out (unusable address, port, half-given credentials, security other than \"none\") is refused before the connection; TLS is not wired in yet, so starttls/tls are named and refused rather than sent in the clear. crlf true sends RFC 5321 line endings for a relay that rejects bare LF."
+
+[[feature]]
 id = "create.from-markdown"
 title = "Create PDF from Markdown"
 area = "J"

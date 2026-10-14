@@ -353,6 +353,8 @@ impl Automation {
             }
             "page_set_box" => self.page_set_box(&a)?,
             "doc_create" => self.doc_create(&a)?,
+            "doc_email" => self.doc_email(&a)?,
+            "doc_email_send" => self.doc_email_send(&a)?,
             "doc_flatten" => {
                 let (comments, fields) = (a.opt_bool("comments")?.unwrap_or(true), a.opt_bool("fields")?.unwrap_or(true));
                 if !comments && !fields {
@@ -1267,6 +1269,13 @@ impl Automation {
                 })?;
                 (format!("{title}.pdf"), bytes)
             }
+            "email" => {
+                let path = self.resolve(a.str("path")?, false)?;
+                let bytes = std::fs::read(&path).map_err(|e| failed(format!("{}: {e}", path.display())))?;
+                let name = path.file_name().map(|n| n.to_string_lossy().into_owned()).unwrap_or_else(|| "email.eml".into());
+                let stem = path.file_stem().map(|n| n.to_string_lossy().into_owned()).unwrap_or_else(|| "email".into());
+                (format!("{stem}.pdf"), self.session.create_from_email(&name, &bytes).map_err(failed)?)
+            }
             other => return Err(ToolError::InvalidArgs(format!("unknown source {other:?}"))),
         };
         let name = a.opt_str("name")?.map(str::to_owned).unwrap_or(name);
@@ -1454,6 +1463,106 @@ impl Automation {
             });
         }
         Ok(json!({ "files": out }))
+    }
+
+    /// Save the open document as an email message (`.eml`): each page as an inline PNG in an HTML
+    /// body, with the PDF attached. Writes one file; it opens no socket (sending the message is a
+    /// separate, opt-in step). The message is composed with `pdfcraft-eml`.
+    fn doc_email(&mut self, a: &Args) -> Result<Value> {
+        // A thin adapter over the engine: render, compose and write the message (no socket).
+        let id = self.doc(a)?.id;
+        let mut options = pdfcraft_engine::EmailOptions::default();
+        if let Some(v) = a.opt_str("from")? {
+            options.from = v.to_string();
+        }
+        if let Some(v) = a.opt_str("to")? {
+            options.to = v.to_string();
+        }
+        if let Some(v) = a.opt_str("cc")? {
+            options.cc = v.to_string();
+        }
+        if let Some(v) = a.opt_str("subject")? {
+            options.subject = v.to_string();
+        }
+        if let Some(v) = a.opt_str("body")? {
+            options.body = v.to_string();
+        }
+        if let Some(v) = a.opt_num("dpi")? {
+            options.dpi = v;
+        }
+        let bytes = self.session.email_message(id, &options).map_err(failed)?;
+        let pages = self.doc(a)?.info.pages.len();
+        let target = self.resolve(a.str("path")?, true)?;
+        write_atomic(&target, &bytes)?;
+        Ok(json!({ "path": target.to_string_lossy(), "bytes": bytes.len(), "pages": pages, "attachments": 1 }))
+    }
+
+    /// Send the open document as an email message over SMTP. The body is composed by the same
+    /// engine call `doc_email` uses, so what a receiver ends up with is byte for byte the `.eml`
+    /// that tool writes. Opt-in twice over: this tool must be called, and it must be given a server
+    /// and a recipient. Every argument it cannot carry out — an unusable address, a transport this
+    /// build has no TLS for, a port that is not a port — is refused before a socket is opened, and
+    /// a document that cannot be rendered never reaches the network at all.
+    fn doc_email_send(&mut self, a: &Args) -> Result<Value> {
+        let id = self.doc(a)?.id;
+        let host = a.str("host")?.trim().to_string();
+        let port = a.opt_int("port")?.unwrap_or(25);
+        let port = u16::try_from(port).map_err(|_| ToolError::InvalidArgs(format!("port must be 1 to 65535 (got {port})")))?;
+        let security = pdfcraft_smtp::Security::parse(a.opt_str("security")?.unwrap_or("none")).map_err(|e| ToolError::InvalidArgs(e.to_string()))?;
+        let timeout = a.opt_int("timeout_ms")?.unwrap_or(30_000);
+        let timeout = u64::try_from(timeout)
+            .map_err(|_| ToolError::InvalidArgs(format!("timeout_ms must be a positive number of milliseconds (got {timeout})")))?;
+
+        let to = a.strs("to")?;
+        let cc = a.opt_strs("cc")?;
+        // The envelope holds the recipients; the headers show them the way a mail client wrote them.
+        let recipients: Vec<String> = to.iter().copied().chain(cc.iter().copied()).map(|address| address.trim().to_string()).collect();
+
+        let mut options = pdfcraft_engine::EmailOptions::default();
+        if let Some(v) = a.opt_str("from")? {
+            options.from = v.to_string();
+        }
+        options.to = to.iter().map(|address| address.trim()).collect::<Vec<_>>().join(", ");
+        options.cc = cc.iter().map(|address| address.trim()).collect::<Vec<_>>().join(", ");
+        if let Some(v) = a.opt_str("subject")? {
+            options.subject = v.to_string();
+        }
+        if let Some(v) = a.opt_str("body")? {
+            options.body = v.to_string();
+        }
+        if let Some(v) = a.opt_num("dpi")? {
+            options.dpi = v;
+        }
+
+        // Compose first: rendering a page can fail, and a failure must be a failure, not a message
+        // that reached a relay half-formed.
+        let bytes = self.session.email_message(id, &options).map_err(failed)?;
+        let server = pdfcraft_smtp::Server {
+            host,
+            port,
+            security,
+            username: a.opt_str("username")?.map(str::to_owned),
+            password: a.opt_str("password")?.map(str::to_owned),
+            timeout: std::time::Duration::from_millis(timeout),
+            crlf: a.opt_bool("crlf")?.unwrap_or(false),
+            ..Default::default()
+        };
+        let report = pdfcraft_smtp::send(&server, &options.from, &recipients, &bytes).map_err(failed)?;
+        let pages = self.doc(a)?.info.pages.len();
+        Ok(json!({
+            "sent": true,
+            "host": report.host,
+            "port": report.port,
+            "recipients": report.accepted,
+            "refused": report.refused.iter().map(|(address, reply)| json!({ "address": address, "reply": reply })).collect::<Vec<_>>(),
+            "pages": pages,
+            "attachments": 1,
+            "bytes": bytes.len(),
+            "sha256": sha256_hex(&bytes),
+            "stuffed_lines": report.stuffed_lines,
+            "reply": report.reply,
+            "log": report.log,
+        }))
     }
 
     fn page_extract(&mut self, a: &Args) -> Result<Value> {
@@ -2059,6 +2168,18 @@ impl Args<'_> {
         let arr = v.as_array().ok_or_else(|| Self::wrong(key, "an array of strings"))?;
         arr.iter().map(|x| x.as_str().ok_or_else(|| Self::wrong(key, "an array of strings"))).collect()
     }
+    fn opt_strs(&self, key: &str) -> Result<Vec<&str>> {
+        let Some(v) = self.get(key) else { return Ok(Vec::new()) };
+        let arr = v.as_array().ok_or_else(|| Self::wrong(key, "an array of strings"))?;
+        arr.iter().map(|x| x.as_str().ok_or_else(|| Self::wrong(key, "an array of strings"))).collect()
+    }
+}
+
+/// The SHA-256 of `bytes` as hex: what a receipt records about a file, and what `doc_email_send`
+/// reports about the message it handed to a relay.
+fn sha256_hex(bytes: &[u8]) -> String {
+    use sha2::{Digest, Sha256};
+    Sha256::digest(bytes).iter().map(|b| format!("{b:02x}")).collect()
 }
 
 /// Bookmark rows in listing order as JSON: a row holds the rows that follow it on the page at the

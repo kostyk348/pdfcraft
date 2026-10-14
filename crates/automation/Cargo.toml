@@ -14,6 +14,7 @@ pdfcraft-cos = { workspace = true }
 pdfcraft-render = { workspace = true }
 pdfcraft-organize = { workspace = true }
 pdfcraft-platform = { workspace = true }
+pdfcraft-smtp = { workspace = true }
 serde_json = { workspace = true }
 sha2 = "0.11"
 tempfile = "3.27"
@@ -32,3 +33,5 @@ flate2.workspace = true
 pdfcraft-model = { workspace = true }
 pdfcraft-xfa = { workspace = true }
 image = { version = "0.25", default-features = false, features = ["jpeg"] }
+# The sending test compares the hash of the .eml with the hash of what a receiver kept.
+sha2 = "0.11"

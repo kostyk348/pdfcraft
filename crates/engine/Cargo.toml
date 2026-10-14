@@ -33,6 +33,7 @@ pdfcraft-export = { workspace = true }
 pdfcraft-fonts = { workspace = true }
 pdfcraft-create = { workspace = true }
 pdfcraft-model = { workspace = true }
+pdfcraft-eml = { workspace = true }
 pdfcraft-geom = { workspace = true }
 thiserror = { workspace = true }
 png = "0.18"

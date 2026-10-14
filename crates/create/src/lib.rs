@@ -483,10 +483,11 @@ pub enum SourceKind {
     Pdf,
     Image,
     Text,
+    Email,
 }
 
-/// File extensions Create converts to PDF (images and plain text).
-pub const CONVERTIBLE: [&str; 12] = ["png", "jpg", "jpeg", "tif", "tiff", "gif", "bmp", "jp2", "j2k", "jpx", "txt", "text"];
+/// File extensions Create converts to PDF (images, plain text and email).
+pub const CONVERTIBLE: [&str; 13] = ["png", "jpg", "jpeg", "tif", "tiff", "gif", "bmp", "jp2", "j2k", "jpx", "txt", "text", "eml"];
 
 /// A classic TIFF or a BigTIFF (version 43), in either byte order.
 fn is_tiff(bytes: &[u8]) -> bool {
@@ -520,6 +521,10 @@ pub fn source_kind(name: &str, bytes: &[u8]) -> Option<SourceKind> {
     }
     if is_image(bytes) {
         return Some(SourceKind::Image);
+    }
+    // An email before plain text: a `.txt` body never starts a file with a message field.
+    if pdfcraft_eml::Email::is_likely(name, bytes) {
+        return Some(SourceKind::Email);
     }
     let lower = name.to_ascii_lowercase();
     (lower.ends_with(".txt") || lower.ends_with(".text")).then_some(SourceKind::Text)
@@ -668,6 +673,39 @@ pub fn from_text_escaped(title: &str, text: &str, page: (f64, f64), font_size: f
     }
     // The title is a text string in /Info, which holds any character.
     Ok((set_text(title, &out, page, font_size)?, escaped))
+}
+
+/// A new document from an email (`.eml`, RFC 822 / MIME): the header lines, the body as text and
+/// the attachment list. A body or a header may be in any language, so this goes through
+/// [`from_text_escaped`], which writes what Helvetica can't draw as `[U+XXXX]` instead of
+/// refusing the file.
+pub fn from_email_bytes(name: &str, bytes: &[u8]) -> Result<Document, CreateError> {
+    let email = pdfcraft_eml::Email::parse(bytes).to_document();
+    let fallback = name.rsplit_once('.').map_or(name, |(stem, _)| stem);
+    let title = if email.title.is_empty() { fallback } else { email.title.as_str() };
+    let mut text = String::new();
+    for (label, value) in &email.headers {
+        // The subject is the document title, so it is not repeated in the body.
+        if !label.eq_ignore_ascii_case("Subject") {
+            text.push_str(label);
+            text.push_str(": ");
+            text.push_str(value);
+            text.push('\n');
+        }
+    }
+    text.push('\n');
+    text.push_str(&email.body_text());
+    let attachments = email.attachment_lines();
+    if !attachments.is_empty() {
+        text.push_str(&format!("\n\nAttachments ({})\n", attachments.len()));
+        for line in &attachments {
+            text.push_str("  ");
+            text.push_str(line);
+            text.push('\n');
+        }
+    }
+    let (document, _escaped) = from_text_escaped(title, &text, LETTER, 11.0)?;
+    Ok(document)
 }
 
 fn set_text(title: &str, text: &str, page: (f64, f64), font_size: f64) -> Result<Document, CreateError> {

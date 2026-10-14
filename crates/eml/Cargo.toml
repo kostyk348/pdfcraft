@@ -1,0 +1,11 @@
+[package]
+name = "pdfcraft-eml"
+description = "Read email (.eml, RFC 822 / MIME) for Create, and write hash-chained receipts"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+
+[lints]
+workspace = true
+
+[dependencies]

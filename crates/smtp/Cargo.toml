@@ -1,0 +1,11 @@
+[package]
+name = "pdfcraft-smtp"
+description = "Deliver an email over SMTP (RFC 5321): a client with no dependency beyond the standard library"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+
+[lints]
+workspace = true
+
+[dependencies]

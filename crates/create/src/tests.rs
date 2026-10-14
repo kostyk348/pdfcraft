@@ -412,6 +412,30 @@ fn source_kind_tells_pdfs_images_and_text_apart() {
     // conversion that then fails.
     assert_eq!(source_kind("a.gif", b"GIF8x not a gif"), None);
     assert_eq!(source_kind("notes.txt", b"GIF8 is a word here"), Some(SourceKind::Text));
+    // An email is a `.eml`, or a message field on the first line.
+    assert_eq!(source_kind("note.eml", b"From: a@b\n\nhi"), Some(SourceKind::Email));
+    assert_eq!(source_kind("x.txt", b"Received: from mail\n\nhi"), Some(SourceKind::Email), "a message field wins over a .txt name");
+    assert_eq!(source_kind("notes.txt", b"From the desk of X\nsecond line"), Some(SourceKind::Text), "prose that merely starts with From stays text");
+}
+
+/// An email becomes a text PDF: the header lines, the body and the attachment list, in any
+/// language (Helvetica can't draw is written as [U+XXXX]).
+#[test]
+fn an_email_becomes_a_text_pdf() {
+    let raw = "From: Ada <ada@example.com>\nTo: Team <team@example.com>\nSubject: Отчёт за Q3\nMIME-Version: 1.0\nContent-Type: multipart/mixed; boundary=\"b\"\n\n--b\nContent-Type: text/plain; charset=utf-8\n\nQuarterly totals follow.\n--b\nContent-Type: application/pdf; name=\"report.pdf\"\nContent-Disposition: attachment; filename=\"report.pdf\"\nContent-Transfer-Encoding: base64\n\nJVBERi0xLjQK\n--b--\n";
+    let doc = reopen(&from_email_bytes("note.eml", raw.as_bytes()).unwrap());
+    let p = pages(&doc);
+    assert_eq!(p.len(), 1);
+    let c = doc.resolve(p[0].get(b"Contents").unwrap());
+    let Object::Stream(s) = &*c else { panic!() };
+    let body = String::from_utf8_lossy(&s.decoded().unwrap()).into_owned();
+    assert!(body.contains("ada@example.com"), "{body}");
+    assert!(body.contains("Quarterly totals follow."), "{body}");
+    // A PDF content stream escapes `(` and `)`, so match the label alone.
+    assert!(body.contains("Attachments"), "{body}");
+    assert!(body.contains("report.pdf"), "{body}");
+    // The title came from the subject, which is in a language Helvetica can't draw.
+    assert!(reopen(&from_email_bytes("note.eml", raw.as_bytes()).unwrap()).root().is_some());
 }
 
 /// BigTIFF (version 43, used for large scans) is detected and converted like a classic TIFF.
