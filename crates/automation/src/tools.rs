@@ -175,6 +175,31 @@ pub fn tools() -> Vec<ToolDef> {
             }),
             &["doc", "path"],
         )),
+        t(
+            "doc_email_send",
+            "Send a document as an email message",
+            "Compose the open document as an RFC 822 / MIME message exactly as doc_email does — every page as an inline PNG in an HTML body, the PDF attached — and deliver it over SMTP to host:port. This is the opt-in sending step: doc_email only writes a file, and nothing opens a socket unless this tool is called with a server and at least one recipient. The message goes out byte for byte (crlf true sends RFC 5321 line endings instead, which a strict relay wants), so the receiver's copy is the same bytes as the .eml. security accepts \"none\"; \"starttls\" and \"tls\" are refused before anything is connected, because the workspace's TLS stack is not wired into this client yet. Credentials are used with AUTH PLAIN, and only when the server offers it.",
+        )
+        .destructive()
+        .with(schema(
+            json!({
+                "doc": doc(),
+                "host": { "type": "string", "minLength": 1, "description": "The SMTP server to send through." },
+                "port": { "type": "integer", "minimum": 1, "maximum": 65535, "description": "Its port (default 25)." },
+                "security": { "type": "string", "enum": ["none", "starttls", "tls"], "description": "Transport security. Only \"none\" is available in this build; the other two are refused before the connection, so a password is never sent in the clear by accident." },
+                "username": { "type": "string", "description": "AUTH PLAIN user name (needs password too)." },
+                "password": { "type": "string", "description": "AUTH PLAIN password. Never written to the result's log." },
+                "from": { "type": "string", "description": "Sender address (default pdfcraft@localhost)." },
+                "to": { "type": "array", "items": { "type": "string" }, "minItems": 1, "maxItems": 1000, "description": "Recipient addresses; at least one." },
+                "cc": { "type": "array", "items": { "type": "string" }, "maxItems": 1000, "description": "Carbon-copy addresses; they are recipients too." },
+                "subject": { "type": "string" },
+                "body": { "type": "string", "description": "Plain-text body; the HTML body carries the pages." },
+                "dpi": { "type": "number", "minimum": 1, "maximum": 600, "description": "Resolution of the inline page images (default 96)." },
+                "crlf": { "type": "boolean", "description": "Send with CRLF line endings and dot-stuffing, as RFC 5321 requires. Default false: the message is transmitted as it was composed, so what the receiver stores is byte for byte the .eml." },
+                "timeout_ms": { "type": "integer", "minimum": 1000, "maximum": 600000, "description": "Budget for connecting and for each reply (default 30000)." }
+            }),
+            &["doc", "host", "to"],
+        )),
         t("doc_set_info", "Set document metadata", "Set a document information entry such as Title, Author, Subject or Keywords; an empty value removes it. When the file has XMP metadata, the matching XMP property (dc:title, dc:creator, dc:description, pdf:Keywords, xmp:CreatorTool, pdf:Producer) is changed too, so viewers that read XMP first show the new value. Undoable.")
             .with(schema(json!({ "doc": doc(), "key": { "type": "string" }, "value": { "type": "string" } }), &["doc", "key", "value"])),
         t("page_render", "Render a page", "Render one page to a PNG image (default 96 dpi, at most 600).")

@@ -2750,10 +2750,168 @@ fn composing_an_email_from_a_document_through_tools() {
     let text = String::from_utf8_lossy(&std::fs::read(dir.join("doc.eml")).unwrap()).into_owned();
     assert!(text.contains("multipart/mixed"), "no mixed container");
     assert!(text.contains("multipart/alternative"), "no alternative body");
-    assert!(text.contains("cid:page-1") && text.contains("cid:page-2"), "pages are not embedded inline");
+    // Every leaf part of the message is base64 (the HTML body included), so the `cid:` references it
+    // carries are not searchable as plain text: the inline parts are read from their headers, one
+    // per page, which is what makes the HTML's `<img src="cid:page-N">` resolve.
+    assert!(text.contains("Content-ID: <page-1>") && text.contains("Content-ID: <page-2>"), "pages are not embedded inline");
+    assert_eq!(text.matches("Content-Disposition: inline").count(), 2, "one inline part per page");
     assert!(text.contains("application/pdf"), "the PDF is not attached");
     assert!(text.contains("Subject: Two pages"), "the subject is missing");
-    assert!(text.contains("Content-ID: <page-1>"), "an inline part has no Content-ID");
+}
+
+/// What the minimal receiver kept: the message without the transfer's framing, and the commands it
+/// was given in order.
+struct Received {
+    payload: Vec<u8>,
+    commands: Vec<String>,
+}
+
+/// A minimal SMTP receiver on loopback, so the sending tool can be tested without an internet
+/// connection: a `220` greeting, `250` for the envelope, `354` then the message data, `221` for
+/// `QUIT`. Returns its port and what it received once the session ends.
+fn smtp_receiver() -> (u16, std::thread::JoinHandle<Received>) {
+    use std::io::{BufRead, BufReader, Write};
+
+    let listener = std::net::TcpListener::bind("127.0.0.1:0").expect("a loopback port");
+    let port = listener.local_addr().expect("the port").port();
+    let handle = std::thread::spawn(move || {
+        let (mut stream, _) = listener.accept().expect("one connection");
+        let mut reader = BufReader::new(stream.try_clone().expect("a second handle"));
+        let _ = stream.write_all(b"220 receiver.test ESMTP pdfcraft-test\r\n");
+        let mut commands: Vec<String> = Vec::new();
+        let mut payload: Vec<u8> = Vec::new();
+        loop {
+            let mut line = String::new();
+            if reader.read_line(&mut line).expect("a command line") == 0 {
+                return Received { payload, commands };
+            }
+            let command = line.trim_end_matches(['\r', '\n']).to_string();
+            commands.push(command.clone());
+            let upper = command.to_ascii_uppercase();
+            let reply: &[u8] = match upper.as_str() {
+                _ if upper.starts_with("EHLO") || upper.starts_with("HELO") => b"250 receiver.test\r\n",
+                _ if upper.starts_with("MAIL FROM") => b"250 2.1.0 sender ok\r\n",
+                _ if upper.starts_with("RCPT TO") => b"250 2.1.5 recipient ok\r\n",
+                "DATA" => b"354 end data with <CRLF>.<CRLF>\r\n",
+                "RSET" => b"250 2.0.0 flushed\r\n",
+                "QUIT" => b"221 2.0.0 bye\r\n",
+                _ => b"500 5.5.1 command not recognised\r\n",
+            };
+            if stream.write_all(reply).is_err() {
+                return Received { payload, commands };
+            }
+            if upper == "DATA" {
+                loop {
+                    let mut chunk = Vec::new();
+                    if reader.read_until(b'\n', &mut chunk).expect("message data") == 0 {
+                        break;
+                    }
+                    if chunk == b".\r\n" || chunk == b".\n" {
+                        break;
+                    }
+                    payload.extend_from_slice(&chunk);
+                }
+                // `CRLF.CRLF` ends the message data, so the CRLF in front of the dot is framing.
+                if payload.ends_with(b"\r\n") {
+                    payload.truncate(payload.len() - 2);
+                }
+                if stream.write_all(b"250 2.0.0 ok: queued as 7\r\n").is_err() {
+                    return Received { payload, commands };
+                }
+            }
+            if upper == "QUIT" {
+                return Received { payload, commands };
+            }
+        }
+    });
+    (port, handle)
+}
+
+fn sha256(bytes: &[u8]) -> String {
+    use sha2::{Digest, Sha256};
+    Sha256::digest(bytes).iter().map(|b| format!("{b:02x}")).collect()
+}
+
+#[test]
+fn sending_an_email_delivers_the_eml_byte_for_byte() {
+    let dir = workdir("doc-email-send");
+    std::fs::write(dir.join("doc.pdf"), fixture(2)).unwrap();
+    let (port, receiver) = smtp_receiver();
+    let mut a = auto(&dir);
+    let d = ok(&mut a, "doc_open", json!({ "path": "doc.pdf" }))["doc"].as_u64().unwrap();
+    let headers = json!({ "doc": d, "to": "team@example.com", "from": "ada@example.com", "subject": "Two pages", "body": "See the attached pages." });
+
+    // What doc_email writes, and its hash.
+    let mut write = headers.clone();
+    write["path"] = json!("doc.eml");
+    ok(&mut a, "doc_email", write);
+    let eml = std::fs::read(dir.join("doc.eml")).unwrap();
+    let eml_hash = sha256(&eml);
+
+    // The same document, the same headers, sent to a local receiver. The two hash lines below are
+    // the point of the test: they must print the same value.
+    let mut send = headers.clone();
+    send["host"] = json!("127.0.0.1");
+    send["port"] = json!(port);
+    send["to"] = json!(["team@example.com"]);
+    send["timeout_ms"] = json!(5000);
+    let r = ok(&mut a, "doc_email_send", send);
+
+    let received = receiver.join().expect("the receiver thread");
+    println!("doc_email wrote {} bytes, sha256 {eml_hash}", eml.len());
+    println!("the receiver kept {} bytes, sha256 {}", received.payload.len(), sha256(&received.payload));
+    assert_eq!(sha256(&received.payload), eml_hash, "the receiver's copy is not the message doc_email wrote");
+    assert_eq!(received.payload, eml, "the receiver's copy differs from the .eml in bytes");
+    assert_eq!(r["sha256"].as_str(), Some(eml_hash.as_str()), "the tool reported another hash");
+    assert_eq!(r["bytes"].as_u64(), Some(eml.len() as u64));
+    assert_eq!(r["sent"], json!(true));
+    assert_eq!(r["recipients"], json!(["team@example.com"]));
+    assert_eq!(r["pages"].as_u64(), Some(2));
+    assert_eq!(r["stuffed_lines"].as_u64(), Some(0));
+    assert_eq!(received.commands, vec!["EHLO pdfcraft.local", "MAIL FROM:<ada@example.com>", "RCPT TO:<team@example.com>", "DATA", "QUIT"]);
+    assert!(r["reply"].as_str().unwrap_or_default().contains("queued"), "{r}");
+}
+
+#[test]
+fn sending_refuses_what_it_cannot_carry_out_and_never_connects() {
+    let dir = workdir("doc-email-send-refusal");
+    std::fs::write(dir.join("doc.pdf"), fixture(1)).unwrap();
+    // A live listener: `WouldBlock` after every refusal proves the tool never opened anything.
+    let listener = std::net::TcpListener::bind("127.0.0.1:0").expect("a loopback port");
+    let port = listener.local_addr().expect("the port").port();
+    listener.set_nonblocking(true).expect("nonblocking");
+    let mut a = auto(&dir);
+    let d = ok(&mut a, "doc_open", json!({ "path": "doc.pdf" }))["doc"].as_u64().unwrap();
+
+    let refused = [
+        // The schema: a server and a recipient are both required.
+        json!({ "doc": d }),
+        json!({ "doc": d, "host": "127.0.0.1" }),
+        json!({ "doc": d, "host": "127.0.0.1", "to": [] }),
+        // A transport this build has no TLS for is refused before the connection.
+        json!({ "doc": d, "host": "127.0.0.1", "port": port, "to": ["team@example.com"], "security": "tls" }),
+        json!({ "doc": d, "host": "127.0.0.1", "port": port, "to": ["team@example.com"], "security": "starttls" }),
+        // A security name that is not a transport at all.
+        json!({ "doc": d, "host": "127.0.0.1", "port": port, "to": ["team@example.com"], "security": "maybe" }),
+        // A port that is not a port.
+        json!({ "doc": d, "host": "127.0.0.1", "port": 99999, "to": ["team@example.com"] }),
+        // An address a relay could not read, and one carrying a line ending.
+        json!({ "doc": d, "host": "127.0.0.1", "port": port, "to": ["not an address"] }),
+        json!({ "doc": d, "host": "127.0.0.1", "port": port, "to": ["a@b\nRCPT TO:<evil@example.com>"] }),
+        // Credentials half given.
+        json!({ "doc": d, "host": "127.0.0.1", "port": port, "to": ["team@example.com"], "password": "hunter2" }),
+    ];
+    for args in refused {
+        let outcome = a.call("doc_email_send", &args);
+        assert!(outcome.is_err(), "{args} should have been refused");
+        if let Err(error) = outcome {
+            println!("refused: {error}");
+        }
+    }
+    assert!(matches!(listener.accept(), Err(ref e) if e.kind() == std::io::ErrorKind::WouldBlock), "a refused request still opened a connection");
+
+    // And with no intention to send, the composing tool needs no server at all: it only writes a file.
+    assert!(ok(&mut a, "doc_email", json!({ "doc": d, "path": "doc.eml", "to": "team@example.com" }))["path"].is_string());
 }
 
 #[test]

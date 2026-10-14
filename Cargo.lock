@@ -3629,6 +3629,7 @@ dependencies = [
  "pdfcraft-organize",
  "pdfcraft-platform",
  "pdfcraft-render",
+ "pdfcraft-smtp",
  "pdfcraft-xfa",
  "png 0.18.1",
  "serde_json",
@@ -3956,6 +3957,10 @@ dependencies = [
  "sha3",
  "thiserror 2.0.21",
 ]
+
+[[package]]
+name = "pdfcraft-smtp"
+version = "0.7.1"
 
 [[package]]
 name = "pdfcraft-ui-egui"
