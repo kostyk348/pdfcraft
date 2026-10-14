@@ -155,12 +155,13 @@ update the numbers.
 ### 8. Office export weak, Office import absent
 
 - **Missing:** Word export that keeps layout; Excel and PowerPoint export; creating PDFs from Office,
-  HTML, web pages and PostScript; SVG/XML/EPS/PS/JPEG 2000 export.
+  web pages and PostScript; SVG/XML/EPS/PS/JPEG 2000 export. (Create PDF from an HTML **file**, and
+  from an email's HTML body, landed 2026-10-14: a bounded subset with no CSS, scripts or images.)
 - **Evidence:** `create.export-docx` partial; the synthetic invoice regression for
   [#773](https://github.com/storytold/pdfcraft/issues/773) now covers absent inferred borders,
   floating watermark text and per-page section sizes. Exact font matching, vector rules and
   broader layout fidelity remain incomplete;
-  `create.export-xlsx`, `create.export-pptx`, `create.from-office`, `create.from-html` planned.
+  `create.export-xlsx`, `create.export-pptx`, `create.from-office`, `create.from-web-page` planned.
 - **Impact:** "Export PDF" and "Create PDF" are two of Acrobat's most used tools.
 - **Gate:** lossy or missing sub-cases of the convert-and-share workflow (partial, not blocking).
   First beta items: Create PDF from Office (LibreOffice sidecar, 10–20 h) and a Word export that

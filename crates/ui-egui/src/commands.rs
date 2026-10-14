@@ -103,6 +103,29 @@ impl PdfCraftApp {
         }
     }
 
+    /// File ▸ Save as email message…: pick a path, compose the `.eml` (pages as inline images and
+    /// the PDF attached) and write it. It writes a file and opens no socket; sending is separate.
+    fn email_dialog(&mut self) {
+        let Some((_, id)) = self.active_ids() else { return };
+        let name = self.session.get(id).map(|d| d.name.clone()).unwrap_or_else(|| "document".to_string());
+        let stem = name.strip_suffix(".pdf").unwrap_or(name.as_str()).to_string();
+        let dialog = rfd::AsyncFileDialog::new()
+            .set_title(tl!("Save as email message"))
+            .set_file_name(format!("{stem}.eml"))
+            .add_filter("Email message", &["eml"]);
+        let _ = self.ask(crate::pickers::Ask::Save(dialog), None, move |app, paths| {
+            let Some(path) = paths.first() else { return };
+            match app.session.email_message(id, &pdfcraft_engine::EmailOptions::default()) {
+                Ok(bytes) => {
+                    if let Err(e) = std::fs::write(path, &bytes) {
+                        app.notify(format!("{}: {e}", path.display()));
+                    }
+                }
+                Err(e) => app.notify(e.to_string()),
+            }
+        });
+    }
+
     fn execute_unguarded(&mut self, id: &str) -> bool {
         let Some(spec) = commands::command(id) else { return false };
         if !self.command_enabled(spec) {
@@ -367,6 +390,7 @@ impl PdfCraftApp {
                 };
                 self.apply_edit(Edit::RemoveMarks { kind });
             }
+            "email.message" => self.email_dialog(),
             "export.image" => self.dialog = Some(Dialog::Export(crate::export_ui::ExportKind::Image)),
             "export.text" => self.dialog = Some(Dialog::Export(crate::export_ui::ExportKind::Text)),
             "a11y.check" => self.start_accessibility_check(),

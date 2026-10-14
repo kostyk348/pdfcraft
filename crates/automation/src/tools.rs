@@ -156,6 +156,25 @@ pub fn tools() -> Vec<ToolDef> {
             }),
             &["doc"],
         )),
+        t(
+            "doc_email",
+            "Save a document as an email message",
+            "Write the open document as an RFC 822 / MIME message (.eml): every page as an inline PNG in an HTML body, and the PDF attached. Writes one file inside --root; it opens no socket, so sending the message is a separate, opt-in step. to, cc, from, subject and body fill the headers.",
+        )
+        .destructive()
+        .with(schema(
+            json!({
+                "doc": doc(),
+                "path": { "type": "string", "description": "Write the .eml here." },
+                "to": { "type": "string", "description": "Recipient address (optional; a message with no recipients is still written)." },
+                "cc": { "type": "string" },
+                "from": { "type": "string", "description": "Sender address (default pdfcraft@localhost)." },
+                "subject": { "type": "string" },
+                "body": { "type": "string", "description": "Plain-text body; the HTML body carries the pages." },
+                "dpi": { "type": "number", "minimum": 1, "maximum": 600, "description": "Resolution of the inline page images (default 96)." }
+            }),
+            &["doc", "path"],
+        )),
         t("doc_set_info", "Set document metadata", "Set a document information entry such as Title, Author, Subject or Keywords; an empty value removes it. When the file has XMP metadata, the matching XMP property (dc:title, dc:creator, dc:description, pdf:Keywords, xmp:CreatorTool, pdf:Producer) is changed too, so viewers that read XMP first show the new value. Undoable.")
             .with(schema(json!({ "doc": doc(), "key": { "type": "string" }, "value": { "type": "string" } }), &["doc", "key", "value"])),
         t("page_render", "Render a page", "Render one page to a PNG image (default 96 dpi, at most 600).")
@@ -1110,14 +1129,15 @@ pub fn tools() -> Vec<ToolDef> {
         t(
             "doc_create",
             "Create a PDF",
-            "Create a new, unsaved document and return it like doc_open: `blank` (pages, width, height in points; default 1 US Letter page), `images` (paths of PNG, JPEG, TIFF (every page), GIF or BMP files, one page each at the image's resolution) or `text` (a .txt path, or `text` directly; Western European (WinAnsi) characters only, others are refused). Save it with doc_save and a path.",
+            "Create a new, unsaved document and return it like doc_open: `blank` (pages, width, height in points; default 1 US Letter page), `images` (paths of PNG, JPEG, TIFF (every page), GIF or BMP files, one page each at the image's resolution), `text` (a .txt path, or `text` directly; Western European (WinAnsi) characters only, others are refused), `email` (a .eml path: its header lines, body and attachment list; an HTML body is laid out, a plain-text body is set as text; any language, undrawable characters written as [U+XXXX]) or `html` (a .html/.htm path, or `html` directly: headings, paragraphs, lists, quotes, preformatted text, rules and simple tables are laid out; CSS, scripts, images and nested tables are ignored — see the `pdfcraft-create` README). Save it with doc_save and a path.",
         )
         .with(schema(
             json!({
-                "from": { "type": "string", "enum": ["blank", "images", "text"] },
+                "from": { "type": "string", "enum": ["blank", "images", "text", "email", "html"] },
                 "paths": { "type": "array", "items": { "type": "string" }, "minItems": 1 },
                 "dpi": { "type": "number", "minimum": 1, "maximum": 1200, "description": "For images: override the embedded resolution without resampling. 72 gives one point per pixel; omit to use each image's resolution (72 when absent)." },
                 "text": { "type": "string" },
+                "html": { "type": "string", "description": "For from=html: the markup itself, instead of a path." },
                 "path": { "type": "string" },
                 "pages": { "type": "integer", "minimum": 1, "maximum": 10000 },
                 "width": { "type": "number", "minimum": 3 },

@@ -6800,6 +6800,18 @@ evidence = ["crates/create/src/tests.rs::text_is_wrapped_and_paginated", "crates
 notes = "Helvetica 11 pt on US Letter; form feeds start pages"
 
 [[feature]]
+id = "create.from-email"
+title = "Create PDF from email (.eml, RFC 822 / MIME)"
+area = "J"
+tier = "P2"
+milestone = "M10"
+status = "shipped"
+commands = ["create.file"]
+tools = ["doc_create"]
+evidence = ["crates/create/src/tests.rs::an_email_becomes_a_text_pdf", "crates/create/src/tests.rs::an_html_email_body_becomes_a_structured_pdf", "crates/automation/tests/automation.rs::creating_from_an_email_through_tools", "crates/automation/tests/automation.rs::an_html_email_body_is_laid_out_through_tools"]
+notes = "Header lines, body and attachment list, in any language (a character the standard fonts can't draw is written as [U+XXXX]). A plain-text body is set as text; an HTML body is laid out as a document by create.from-html, so its headings, lists, tables and rules survive. Attachments are listed, not embedded. Read by pdfcraft-eml (RFC 5322/2045/2046/2047), so the other Create paths (.eml in Combine, Create from multiple files, and opening one) accept it too"
+
+[[feature]]
 id = "create.from-markdown"
 title = "Create PDF from Markdown"
 area = "J"
@@ -6853,11 +6865,11 @@ title = "Create PDF from an HTML file"
 area = "J"
 tier = "P2"
 milestone = "M10"
-status = "planned"
-commands = []
-tools = []
-evidence = []
-notes = ""
+status = "shipped"
+commands = ["create.file"]
+tools = ["doc_create"]
+evidence = ["crates/create/src/tests.rs::an_html_body_becomes_a_structured_pdf", "crates/create/src/tests.rs::html_table_rows_are_not_split_across_pages", "crates/automation/tests/automation.rs::creating_from_html_through_tools"]
+notes = "A bounded subset laid out on US Letter pages with the standard-14 metrics: h1-h3 (bold, 20/16/13.5 pt), h4-h6 at body size in bold, paragraphs and block containers, br, ul/ol/li with bullets, numbers and a hanging indent, blockquote with a rule, pre in Courier with its whitespace kept, hr, and simple tables (columns sized to their content, a hairline per row, a header row in bold, no row split across a page). b/strong, i/em and code change the face (there is no bold-italic); a link contributes its text only; the common entities and numeric references are decoded. CSS, scripts and their contents, attributes, images (an email's cid: parts included), nested tables and unknown tags are ignored. 1 MiB of HTML at most; a character the standard fonts can't draw becomes [U+XXXX] with a note in the first line. An email's HTML body (create.from-email) uses the same path"
 
 [[feature]]
 id = "create.from-web-page"

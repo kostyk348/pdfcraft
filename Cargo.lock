@@ -3682,6 +3682,7 @@ dependencies = [
  "hayro-syntax",
  "image",
  "pdfcraft-cos",
+ "pdfcraft-eml",
  "pdfcraft-fonts",
  "pdfcraft-model",
  "png 0.18.1",
@@ -3718,6 +3719,10 @@ dependencies = [
 ]
 
 [[package]]
+name = "pdfcraft-eml"
+version = "0.7.1"
+
+[[package]]
 name = "pdfcraft-engine"
 version = "0.7.1"
 dependencies = [
@@ -3732,6 +3737,7 @@ dependencies = [
  "pdfcraft-cos",
  "pdfcraft-create",
  "pdfcraft-edit",
+ "pdfcraft-eml",
  "pdfcraft-export",
  "pdfcraft-fonts",
  "pdfcraft-forms",

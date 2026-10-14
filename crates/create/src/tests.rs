@@ -412,6 +412,30 @@ fn source_kind_tells_pdfs_images_and_text_apart() {
     // conversion that then fails.
     assert_eq!(source_kind("a.gif", b"GIF8x not a gif"), None);
     assert_eq!(source_kind("notes.txt", b"GIF8 is a word here"), Some(SourceKind::Text));
+    // An email is a `.eml`, or a message field on the first line.
+    assert_eq!(source_kind("note.eml", b"From: a@b\n\nhi"), Some(SourceKind::Email));
+    assert_eq!(source_kind("x.txt", b"Received: from mail\n\nhi"), Some(SourceKind::Email), "a message field wins over a .txt name");
+    assert_eq!(source_kind("notes.txt", b"From the desk of X\nsecond line"), Some(SourceKind::Text), "prose that merely starts with From stays text");
+}
+
+/// An email becomes a text PDF: the header lines, the body and the attachment list, in any
+/// language (Helvetica can't draw is written as [U+XXXX]).
+#[test]
+fn an_email_becomes_a_text_pdf() {
+    let raw = "From: Ada <ada@example.com>\nTo: Team <team@example.com>\nSubject: Отчёт за Q3\nMIME-Version: 1.0\nContent-Type: multipart/mixed; boundary=\"b\"\n\n--b\nContent-Type: text/plain; charset=utf-8\n\nQuarterly totals follow.\n--b\nContent-Type: application/pdf; name=\"report.pdf\"\nContent-Disposition: attachment; filename=\"report.pdf\"\nContent-Transfer-Encoding: base64\n\nJVBERi0xLjQK\n--b--\n";
+    let doc = reopen(&from_email_bytes("note.eml", raw.as_bytes()).unwrap());
+    let p = pages(&doc);
+    assert_eq!(p.len(), 1);
+    let c = doc.resolve(p[0].get(b"Contents").unwrap());
+    let Object::Stream(s) = &*c else { panic!() };
+    let body = String::from_utf8_lossy(&s.decoded().unwrap()).into_owned();
+    assert!(body.contains("ada@example.com"), "{body}");
+    assert!(body.contains("Quarterly totals follow."), "{body}");
+    // A PDF content stream escapes `(` and `)`, so match the label alone.
+    assert!(body.contains("Attachments"), "{body}");
+    assert!(body.contains("report.pdf"), "{body}");
+    // The title came from the subject, which is in a language Helvetica can't draw.
+    assert!(reopen(&from_email_bytes("note.eml", raw.as_bytes()).unwrap()).root().is_some());
 }
 
 /// BigTIFF (version 43, used for large scans) is detected and converted like a classic TIFF.
@@ -817,4 +841,259 @@ fn cmyk_and_ycck_jpegs_export_in_the_colours_the_page_shows() {
             assert_eq!((ext, &extract_images(&doc, &[0], 0).images[0].data), ("jpg", &jpeg), "{what}");
         }
     }
+}
+
+// ── create.from-html ────────────────────────────────────────────────────────────────────────
+
+/// Every page's decoded content stream, as bytes, in page order. The streams are WinAnsi, not
+/// UTF-8, so the byte-level assertions use these.
+fn page_bytes(doc: &Document) -> Vec<Vec<u8>> {
+    pages(doc)
+        .iter()
+        .map(|p| {
+            let contents = doc.resolve(p.get(b"Contents").unwrap());
+            let Object::Stream(s) = &*contents else { panic!("Contents is not a stream") };
+            s.decoded().unwrap()
+        })
+        .collect()
+}
+
+/// [`page_bytes`] as text, for the assertions that only look at ASCII.
+fn page_streams(doc: &Document) -> Vec<String> {
+    page_bytes(doc).iter().map(|b| String::from_utf8_lossy(b).into_owned()).collect()
+}
+
+/// Where a piece of text is drawn: the `x` and `y` of the text matrix in force when it is set.
+fn text_position(stream: &str, needle: &str) -> (f64, f64) {
+    let at = stream.find(needle).unwrap_or_else(|| panic!("{needle:?} is not on this page"));
+    let before = stream.get(..at).unwrap_or("");
+    let tm = before.rfind(" Tm").unwrap_or_else(|| panic!("no text matrix before {needle:?}"));
+    let line = before.get(..tm).and_then(|b| b.rsplit('\n').next()).unwrap_or("");
+    let numbers: Vec<f64> = line.split_whitespace().filter_map(|t| t.parse::<f64>().ok()).collect();
+    let tail = numbers.get(numbers.len().saturating_sub(2)..).unwrap_or_default();
+    let [x, y] = <[f64; 2]>::try_from(tail).unwrap_or([0.0, 0.0]);
+    (x, y)
+}
+
+/// The HTML a report is written in, with every element the subset covers.
+const REPORT_HTML: &str = r#"<!doctype html>
+<html><head><title>Ignored title</title><style>p { color: red }</style></head>
+<body>
+<h1>Quarterly report</h1>
+<p>The opening paragraph has <b>bold</b> and <i>italic</i> words, a link to <a href="https://example.com/q3">example.com</a>, and an entity: Q&amp;A.</p>
+<h2>Numbers</h2>
+<ul><li>Revenue grew by 12%</li><li>Churn fell</li></ul>
+<ol><li>Wake up</li><li>Ship the report</li></ol>
+<blockquote>The best quarter so far.<br>— the team</blockquote>
+<pre>key = "value"
+  indented line</pre>
+<hr>
+<table>
+  <tr><th>Quarter</th><th>Total</th></tr>
+  <tr><td>Q1</td><td>1200</td></tr>
+  <tr><td>Q2</td><td>1450</td></tr>
+</table>
+<p>Closing line.</p>
+</body></html>"#;
+
+/// An HTML body becomes a PDF whose text is in the order of the HTML, with the structure the
+/// sender wrote: headings, paragraphs, lists, a quote, preformatted text and a table.
+#[test]
+fn an_html_body_becomes_a_structured_pdf() {
+    let doc = reopen(&from_html("Quarterly report", REPORT_HTML).unwrap());
+    let streams = page_streams(&doc);
+    assert_eq!(streams.len(), 1, "the report fits on one page");
+    let stream = streams.first().cloned().unwrap_or_default();
+    let raw = page_bytes(&doc).concat();
+    for needle in [
+        "Quarterly report",
+        "The opening paragraph",
+        "bold",
+        "italic",
+        "example.com",
+        "Q&A",
+        "Numbers",
+        "Revenue grew by 12%",
+        "1.",
+        "Wake up",
+        "The best quarter so far.",
+        "the team",
+        "key =",
+        "indented line",
+        "Quarter",
+        "Total",
+        "1200",
+        "Closing line.",
+    ] {
+        assert!(stream.contains(needle), "{needle:?} is missing from\n{stream}");
+    }
+    // A `<style>` and a `<script>` never reach the page.
+    assert!(!stream.contains("color: red"), "{stream}");
+    assert!(!stream.contains("Ignored title"), "{stream}");
+    // A bullet is WinAnsi 0x95 in the content stream, and one list item carries it.
+    assert!(raw.contains(&0x95), "the bullet markers are missing\n{stream}");
+    // The body text is Helvetica, the heading Helvetica-Bold, the `pre` Courier.
+    assert!(stream.contains("/F1 11.00 Tf"), "body text is not F1 at 11 pt\n{stream}");
+    assert!(stream.contains("/F2 20.00 Tf"), "the h1 is not F2 at 20 pt\n{stream}");
+    assert!(stream.contains("/F4 9.00 Tf"), "`pre` is not F4 at 9 pt\n{stream}");
+    // The link contributes its text, never the target.
+    assert!(!stream.contains("https://example.com/q3"), "{stream}");
+
+    // The order of the text is the order of the HTML.
+    let order = [
+        "Quarterly report",
+        "The opening paragraph",
+        "Numbers",
+        "Revenue grew by 12%",
+        "Churn fell",
+        "Wake up",
+        "Ship the report",
+        "The best quarter so far.",
+        "key =",
+        "indented line",
+        "Quarter",
+        "Q1",
+        "Q2",
+        "Closing line.",
+    ];
+    let mut at = 0usize;
+    for needle in order {
+        let found = stream.get(at..).and_then(|rest| rest.find(needle)).unwrap_or_else(|| panic!("{needle:?} out of order"));
+        at = at.saturating_add(found).saturating_add(needle.len());
+    }
+
+    // The table is a grid: the header cells share a baseline and sit in different columns, and so
+    // do the cells of a row.
+    let (header_x, header_y) = text_position(&stream, "(Quarter) Tj");
+    let (total_x, total_y) = text_position(&stream, "(Total) Tj");
+    assert!((header_y - total_y).abs() < 0.01, "the header cells are not on one line: {header_y} vs {total_y}");
+    assert!(total_x > header_x + 20.0, "the columns are not apart: {header_x} vs {total_x}");
+    let (q1_x, q1_y) = text_position(&stream, "(Q1) Tj");
+    let (value_x, value_y) = text_position(&stream, "(1200) Tj");
+    assert!((q1_y - value_y).abs() < 0.01, "row cells are not on one line: {q1_y} vs {value_y}");
+    assert!(value_x > q1_x + 20.0, "the second column is not apart from the first: {q1_x} vs {value_x}");
+    assert!((q1_x - header_x).abs() < 0.01, "a column's cells are not aligned: {header_x} vs {q1_x}");
+}
+
+/// Nothing in a hostile HTML body panics or loops: unclosed tags, deep nesting, `script`/`style`,
+/// comments, a word longer than the page, a megabyte of markup and markup that never ends.
+#[test]
+fn hostile_html_never_panics_and_stays_bounded() {
+    let huge = format!("<p>{}</p>", "word ".repeat(40_000));
+    let deep = format!("{}deep{}", "<blockquote>".repeat(500), "</blockquote>".repeat(500));
+    let unclosed = "<h1>a heading that never closes<p>a paragraph <b>bold <table><tr><td>a cell<td>another</table><ul><li>an item";
+    let long_word = format!("<p>{}</p>", "W".repeat(5_000));
+    let markup_only = "<<<>>><p/></>< hr><hr/><table><table><tr><td></table>";
+    let cases: [(&str, &str); 8] = [
+        ("huge paragraph", &huge),
+        ("deep nesting", &deep),
+        ("unclosed tags", unclosed),
+        ("a word longer than the page", &long_word),
+        ("markup that ends mid-tag", "<p>text <span"),
+        ("script and style", "<script>while(true){}</script><style>p{}</style><p>After.</p>"),
+        ("unterminated comment", "<!-- a comment <p>swallowed</p>"),
+        ("punctuation-only markup", markup_only),
+    ];
+    for (what, html) in cases {
+        let doc = from_html("hostile", html).unwrap_or_else(|e| panic!("{what}: {e}"));
+        let doc = reopen(&doc);
+        let pages = pages(&doc).len();
+        assert!((1..400).contains(&pages), "{what}: {pages} pages");
+    }
+    // `script` and `style` contents never reach the page.
+    let doc = reopen(&from_html("t", "<script>alert(1)</script><p>After.</p><style>x{y}</style>").unwrap());
+    let stream = page_streams(&doc).join("\n");
+    assert!(stream.contains("After."), "{stream}");
+    assert!(!stream.contains("alert"), "{stream}");
+    assert!(!stream.contains("x{y}"), "{stream}");
+    // A megabyte of markup: cut at a bound and still laid out, never refused.
+    let megabyte = format!("<p>{}</p>", "lorem ipsum dolor sit amet ".repeat(50_000));
+    assert!(megabyte.len() > 1 << 20);
+    let doc = reopen(&from_html("big", &megabyte).unwrap());
+    assert!(!pages(&doc).is_empty());
+    // An empty heading and an empty list item leave nothing behind: the text after them is body
+    // text, not a heading and not an item.
+    let doc = reopen(&from_html("t", "<h1></h1><p>plain text</p><li></li>after the item").unwrap());
+    let stream = page_streams(&doc).join("\n");
+    assert!(stream.contains("/F1 11.00 Tf") && stream.contains("plain text"), "{stream}");
+    assert!(!stream.contains("/F2 20.00 Tf"), "an empty heading set the next text as a heading\n{stream}");
+}
+
+/// A table runs over as many pages as it needs, and no row is split across two of them.
+#[test]
+fn html_table_rows_are_not_split_across_pages() {
+    let mut html = String::from("<h1>A long table</h1><table><tr><th>Row</th><th>Description</th></tr>");
+    for i in 1..=80 {
+        html.push_str(&format!("<tr><td>row {i}</td><td>line one of row {i}</td></tr>"));
+    }
+    html.push_str("</table>");
+    let doc = reopen(&from_html("long table", &html).unwrap());
+    let streams = page_streams(&doc);
+    assert!(streams.len() > 1, "eighty rows should have run over one page");
+    for i in [1usize, 27, 53, 80] {
+        let marker = format!("(row {i})");
+        let page = streams.iter().position(|p| p.contains(&marker)).unwrap_or_else(|| panic!("row {i} is missing"));
+        assert!(streams[page].contains(&format!("(line one of row {i})")), "row {i} was split across pages");
+        let (x, y) = text_position(&streams[page], &marker);
+        let (sx, sy) = text_position(&streams[page], &format!("(line one of row {i})"));
+        assert!((y - sy).abs() < 0.01, "row {i} is not on one line: {y} vs {sy}");
+        assert!(sx > x + 20.0, "row {i} columns overlap: {x} vs {sx}");
+    }
+}
+
+/// Any language survives: a character the standard fonts can't draw is written as `[U+XXXX]`, and
+/// the first line says so — as `Create ▸ Text` does for reports.
+#[test]
+fn html_text_the_fonts_cannot_draw_is_escaped_not_dropped() {
+    let doc = reopen(&from_html("languages", "<h1>Отчёт</h1><p>日本語 and Ελληνικά — naïve</p>").unwrap());
+    let stream = page_streams(&doc).join("\n");
+    assert!(stream.contains("Characters Helvetica can't draw"), "the note is missing\n{stream}");
+    assert!(stream.contains("[U+041E]") && stream.contains("[U+0442]"), "Cyrillic was dropped\n{stream}");
+    assert!(stream.contains("[U+65E5]"), "a CJK character was dropped\n{stream}");
+    // What WinAnsi holds is written as itself: the em dash, ï and the accented vowels. The stream
+    // is WinAnsi, so these are byte tests, not text ones.
+    let raw = page_bytes(&doc).concat();
+    assert!(raw.windows(5).any(|w| w == b"na\xEFve"), "naïve is not in WinAnsi");
+    assert!(raw.contains(&0x97), "the em dash is not in WinAnsi");
+    assert!(!raw.windows(6).any(|w| w == b"[U+00EF"), "a WinAnsi character was escaped");
+    // The note comes first.
+    let note = stream.find("Characters Helvetica").unwrap_or(usize::MAX);
+    let heading = stream.find("[U+041E]").unwrap_or(0);
+    assert!(note < heading, "the note is not the first line\n{stream}");
+}
+
+/// An email whose body is HTML is laid out as a document, not reduced to text.
+#[test]
+fn an_html_email_body_becomes_a_structured_pdf() {
+    let raw = "From: Ada <ada@example.com>\nTo: Team <team@example.com>\nSubject: Q3 report\nMIME-Version: 1.0\nContent-Type: multipart/alternative; boundary=\"b\"\n\n--b\nContent-Type: text/plain; charset=utf-8\n\nplain fallback text\n--b\nContent-Type: text/html; charset=utf-8\n\n<html><body><h1>Q3 numbers</h1><ul><li>Revenue up</li></ul><table><tr><th>Item</th><th>Value</th></tr><tr><td>Revenue</td><td>1200</td></tr></table><script>alert(1)</script></body></html>\n--b--\n";
+    let doc = reopen(&from_email_bytes("report.eml", raw.as_bytes()).unwrap());
+    let stream = page_streams(&doc).join("\n");
+    assert!(stream.contains("ada@example.com"), "{stream}");
+    assert!(stream.contains("Q3 numbers"), "{stream}");
+    assert!(stream.contains("Revenue up"), "{stream}");
+    assert!(stream.contains("Item") && stream.contains("1200"), "{stream}");
+    // The HTML won over the plain text, as in a mail client.
+    assert!(!stream.contains("plain fallback text"), "{stream}");
+    // And a script in the body is still not text.
+    assert!(!stream.contains("alert"), "{stream}");
+}
+
+/// HTML files and HTML-looking sources are recognised, and a `.txt` or an `.eml` stays what it was.
+#[test]
+fn html_sources_are_recognised() {
+    assert_eq!(source_kind("page.html", b"<p>hello</p>"), Some(SourceKind::Html));
+    assert_eq!(source_kind("page.htm", b"<!doctype html><p>hello</p>"), Some(SourceKind::Html));
+    assert_eq!(source_kind("page", b"<!DOCTYPE html>\n<html><body>x</body></html>"), Some(SourceKind::Html));
+    assert_eq!(source_kind("page", b"<?xml version=\"1.0\"?><p>x</p>"), None);
+    assert_eq!(source_kind("note.txt", b"plain text, with <angle brackets>"), Some(SourceKind::Text));
+    assert_eq!(source_kind("note.eml", b"Subject: x\n\nhello"), Some(SourceKind::Email));
+    assert!(CONVERTIBLE.contains(&"html") && CONVERTIBLE.contains(&"htm"));
+    // A file's bytes, decoded like every other text source.
+    let doc = reopen(&from_html_bytes("page.html", "<h1>From a file</h1>".as_bytes()).unwrap());
+    assert!(page_streams(&doc).join("\n").contains("From a file"));
+    // A byte order mark and a Windows code page are handled the same way `decode_text` handles them.
+    let doc = reopen(&from_html_bytes("page.html", "\u{feff}<p>Ünicode</p>".as_bytes()).unwrap());
+    // Ü is WinAnsi 0xDC in the content stream.
+    let raw = page_bytes(&doc).concat();
+    assert!(raw.windows(7).any(|w| w == b"\xDCnicode"), "the byte order mark was not dropped");
 }

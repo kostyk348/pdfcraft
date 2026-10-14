@@ -21,5 +21,25 @@ Layer L4. Create a PDF (Acrobat's Create a PDF tool), execution plan M10.2:
 - `from_text_escaped(text, …)`: the same for reports PdfCraft generates from documents
   (comment summaries, compare reports): such characters are written as `[U+XXXX]` and the first
   line says so (`ESCAPED_NOTE`).
+- `from_html(title, html)` and `from_html_bytes(name, bytes)`: `create.from-html`. A **bounded**
+  subset of HTML is laid out as a document, with the standard-14 metrics in `pdfcraft-fonts`, on
+  US Letter pages: `h1`–`h3` (Helvetica-Bold at 20 / 16 / 13.5 pt), `h4`–`h6` at body size in bold,
+  paragraphs and the other block containers, `br`, `ul`/`ol`/`li` with bullets, numbers and a
+  hanging indent per level, `blockquote` (indented, with a rule down its left side), `pre`
+  (Courier, whitespace and blank lines kept, long lines wrapped), `hr`, and simple tables
+  (`tr`/`td`/`th`: columns sized to their content and scaled together to fit, cells wrapped, a
+  hairline under every row, a header row in bold, and no row split across a page). `b`/`strong`,
+  `i`/`em` and `code` change the face — there is no bold-italic: bold wins where they nest. A link
+  contributes its text only. The common named entities and every numeric reference are decoded.
+  Ignored by design: `style` and `script` (and `head`) **with their contents**, every attribute
+  (so no colours, sizes or alignment), images — including an email's `cid:` parts, whose `alt`
+  text is not written either — nested tables (their rows flatten into the outer grid), and any tag
+  it does not know. Input is bounded: 1 MiB of HTML, 20 000 blocks, 64 KiB of `pre`, and nesting
+  past six levels stops indenting; past a bound the document keeps what it has. Text that the
+  standard fonts can't draw becomes `[U+XXXX]` with `ESCAPED_NOTE` first, as above.
+- `from_email_bytes(name, bytes)`: an email (`.eml`, RFC 822 / MIME), read by `pdfcraft-eml`: the
+  header lines, the body and the attachment list. A plain-text body is set as text (any language,
+  as above); an **HTML** body goes through `from_html`, so its structure survives. Attachments are
+  listed, not embedded.
 
 Every function returns a `pdfcraft_cos::Document`; the caller writes it.

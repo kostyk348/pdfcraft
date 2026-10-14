@@ -2664,6 +2664,99 @@ fn creating_and_reducing_through_tools() {
 }
 
 #[test]
+fn creating_from_an_email_through_tools() {
+    let dir = workdir("create-email");
+    std::fs::write(
+        dir.join("note.eml"),
+        "From: Ada <ada@example.com>\nTo: Team <team@example.com>\nSubject: Q3 Report\nMIME-Version: 1.0\nContent-Type: text/plain; charset=utf-8\n\nPlease find the numbers attached.\n",
+    )
+    .unwrap();
+    let mut a = auto(&dir);
+    let d = ok(&mut a, "doc_create", json!({ "from": "email", "path": "note.eml" }))["doc"].as_u64().unwrap();
+    let joined = page_text(&mut a, d).join("\n");
+    assert!(joined.contains("ada@example.com"), "{joined}");
+    assert!(joined.contains("Please find the numbers attached."), "{joined}");
+    ok(&mut a, "doc_save", json!({ "doc": d, "path": "note.pdf" }));
+    assert!(dir.join("note.pdf").exists());
+}
+
+/// `create.from-html`: the markup itself, a `.html` file, and the same file through Combine.
+#[test]
+fn creating_from_html_through_tools() {
+    let dir = workdir("create-html");
+    std::fs::write(dir.join("page.html"), "<h1>From a file</h1><ul><li>first item</li><li>second item</li></ul>").unwrap();
+    let mut a = auto(&dir);
+
+    // The markup, straight from the tool.
+    let d = ok(&mut a, "doc_create", json!({ "from": "html", "html": "<h1>Hello</h1><p>Body text with <b>bold</b>.</p>" }))["doc"].as_u64().unwrap();
+    let joined = page_text(&mut a, d).join("\n");
+    // A run boundary (the bold word, then the full stop) makes the extractor write a space there,
+    // as Acrobat does; the words and their order are what matter.
+    for needle in ["Hello", "Body text with", "bold"] {
+        assert!(joined.contains(needle), "{needle:?} missing from {joined}");
+    }
+    // The order of the text is the order of the markup.
+    assert!(joined.find("Hello").unwrap_or(usize::MAX) < joined.find("Body text with").unwrap_or(0), "{joined}");
+
+    // A `.html` file, saved and read back the way a user does.
+    let d = ok(&mut a, "doc_create", json!({ "from": "html", "path": "page.html" }))["doc"].as_u64().unwrap();
+    let joined = page_text(&mut a, d).join("\n");
+    for needle in ["From a file", "first item", "second item"] {
+        assert!(joined.contains(needle), "{needle:?} missing from {joined}");
+    }
+    ok(&mut a, "doc_save", json!({ "doc": d, "path": "page.pdf" }));
+    assert!(dir.join("page.pdf").is_file());
+    let reopened = ok(&mut a, "doc_open", json!({ "path": "page.pdf" }))["doc"].as_u64().unwrap();
+    assert!(page_text(&mut a, reopened).join("\n").contains("From a file"));
+
+    // `html` needs one of the two sources, and says which.
+    let err = a.call("doc_create", &json!({ "from": "html" })).unwrap_err();
+    assert!(matches!(&err, ToolError::InvalidArgs(m) if m.contains("html needs")), "{err}");
+
+    // Combine converts a `.html` file like a `.txt` or an `.eml`: one page here plus the three of a.pdf.
+    let made = ok(&mut a, "doc_create_multiple", json!({ "paths": ["page.html", "a.pdf"], "out": "all.pdf", "open": true }));
+    assert!(made["document"]["pages"].as_u64().unwrap_or(0) >= 4, "{made}");
+    assert!(dir.join("all.pdf").is_file());
+}
+
+/// An email whose body is HTML is laid out through `doc_create from=email`, not reduced to text.
+#[test]
+fn an_html_email_body_is_laid_out_through_tools() {
+    let dir = workdir("create-html-email");
+    std::fs::write(
+        dir.join("note.eml"),
+        "From: Ada <ada@example.com>\nSubject: Q3 numbers\nMIME-Version: 1.0\nContent-Type: multipart/alternative; boundary=\"b\"\n\n--b\nContent-Type: text/plain; charset=utf-8\n\nplain fallback\n--b\nContent-Type: text/html; charset=utf-8\n\n<html><body><h1>Q3 numbers</h1><ul><li>Revenue up</li></ul><table><tr><th>Item</th><th>Value</th></tr><tr><td>Revenue</td><td>1200</td></tr></table><script>alert(1)</script></body></html>\n--b--\n",
+    )
+    .unwrap();
+    let mut a = auto(&dir);
+    let d = ok(&mut a, "doc_create", json!({ "from": "email", "path": "note.eml" }))["doc"].as_u64().unwrap();
+    let joined = page_text(&mut a, d).join("\n");
+    for needle in ["ada@example.com", "Q3 numbers", "Revenue up", "1200"] {
+        assert!(joined.contains(needle), "{needle:?} missing from {joined}");
+    }
+    // The plain-text alternative did not win, and a script is still not text.
+    assert!(!joined.contains("plain fallback"), "{joined}");
+    assert!(!joined.contains("alert(1)"), "{joined}");
+}
+
+#[test]
+fn composing_an_email_from_a_document_through_tools() {
+    let dir = workdir("doc-email");
+    std::fs::write(dir.join("doc.pdf"), fixture(2)).unwrap();
+    let mut a = auto(&dir);
+    let d = ok(&mut a, "doc_open", json!({ "path": "doc.pdf" }))["doc"].as_u64().unwrap();
+    let r = ok(&mut a, "doc_email", json!({ "doc": d, "path": "doc.eml", "to": "team@example.com", "subject": "Two pages" }));
+    assert_eq!(r["pages"].as_u64(), Some(2));
+    let text = String::from_utf8_lossy(&std::fs::read(dir.join("doc.eml")).unwrap()).into_owned();
+    assert!(text.contains("multipart/mixed"), "no mixed container");
+    assert!(text.contains("multipart/alternative"), "no alternative body");
+    assert!(text.contains("cid:page-1") && text.contains("cid:page-2"), "pages are not embedded inline");
+    assert!(text.contains("application/pdf"), "the PDF is not attached");
+    assert!(text.contains("Subject: Two pages"), "the subject is missing");
+    assert!(text.contains("Content-ID: <page-1>"), "an inline part has no Content-ID");
+}
+
+#[test]
 fn creating_from_text_refuses_what_the_font_cannot_draw() {
     let dir = workdir("create-undrawable");
     std::fs::write(dir.join("kr.txt"), "ABC 제안서 시험").unwrap();

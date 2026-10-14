@@ -353,6 +353,7 @@ impl Automation {
             }
             "page_set_box" => self.page_set_box(&a)?,
             "doc_create" => self.doc_create(&a)?,
+            "doc_email" => self.doc_email(&a)?,
             "doc_flatten" => {
                 let (comments, fields) = (a.opt_bool("comments")?.unwrap_or(true), a.opt_bool("fields")?.unwrap_or(true));
                 if !comments && !fields {
@@ -1267,6 +1268,26 @@ impl Automation {
                 })?;
                 (format!("{title}.pdf"), bytes)
             }
+            "email" => {
+                let path = self.resolve(a.str("path")?, false)?;
+                let bytes = std::fs::read(&path).map_err(|e| failed(format!("{}: {e}", path.display())))?;
+                let name = path.file_name().map(|n| n.to_string_lossy().into_owned()).unwrap_or_else(|| "email.eml".into());
+                let stem = path.file_stem().map(|n| n.to_string_lossy().into_owned()).unwrap_or_else(|| "email".into());
+                (format!("{stem}.pdf"), self.session.create_from_email(&name, &bytes).map_err(failed)?)
+            }
+            "html" => {
+                let (title, html) = match (a.opt_str("html")?, a.opt_str("path")?) {
+                    (Some(html), _) => ("HTML".to_string(), html.to_string()),
+                    (None, Some(p)) => {
+                        let path = self.resolve(p, false)?;
+                        let bytes = std::fs::read(&path).map_err(|e| failed(format!("{}: {e}", path.display())))?;
+                        let title = path.file_stem().map(|s| s.to_string_lossy().into_owned()).unwrap_or_default();
+                        (title, pdfcraft_engine::decode_text(&bytes))
+                    }
+                    (None, None) => return Err(ToolError::InvalidArgs("html needs `html` or `path`".into())),
+                };
+                (format!("{title}.pdf"), self.session.create_from_html(&title, &html).map_err(failed)?)
+            }
             other => return Err(ToolError::InvalidArgs(format!("unknown source {other:?}"))),
         };
         let name = a.opt_str("name")?.map(str::to_owned).unwrap_or(name);
@@ -1454,6 +1475,38 @@ impl Automation {
             });
         }
         Ok(json!({ "files": out }))
+    }
+
+    /// Save the open document as an email message (`.eml`): each page as an inline PNG in an HTML
+    /// body, with the PDF attached. Writes one file; it opens no socket (sending the message is a
+    /// separate, opt-in step). The message is composed with `pdfcraft-eml`.
+    fn doc_email(&mut self, a: &Args) -> Result<Value> {
+        // A thin adapter over the engine: render, compose and write the message (no socket).
+        let id = self.doc(a)?.id;
+        let mut options = pdfcraft_engine::EmailOptions::default();
+        if let Some(v) = a.opt_str("from")? {
+            options.from = v.to_string();
+        }
+        if let Some(v) = a.opt_str("to")? {
+            options.to = v.to_string();
+        }
+        if let Some(v) = a.opt_str("cc")? {
+            options.cc = v.to_string();
+        }
+        if let Some(v) = a.opt_str("subject")? {
+            options.subject = v.to_string();
+        }
+        if let Some(v) = a.opt_str("body")? {
+            options.body = v.to_string();
+        }
+        if let Some(v) = a.opt_num("dpi")? {
+            options.dpi = v;
+        }
+        let bytes = self.session.email_message(id, &options).map_err(failed)?;
+        let pages = self.doc(a)?.info.pages.len();
+        let target = self.resolve(a.str("path")?, true)?;
+        write_atomic(&target, &bytes)?;
+        Ok(json!({ "path": target.to_string_lossy(), "bytes": bytes.len(), "pages": pages, "attachments": 1 }))
     }
 
     fn page_extract(&mut self, a: &Args) -> Result<Value> {
