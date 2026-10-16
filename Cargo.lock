@@ -3647,6 +3647,7 @@ dependencies = [
  "pdfcraft-cos",
  "pdfcraft-engine",
  "pdfcraft-render",
+ "pdfcraft-translate",
  "rustix 1.1.5",
  "serde_json",
  "winresource",
@@ -3968,6 +3969,7 @@ version = "0.7.1"
 dependencies = [
  "pdfcraft-cos",
  "pdfcraft-edit",
+ "pdfcraft-model",
  "rustls-native-certs",
  "serde",
  "serde_json",
@@ -4000,6 +4002,7 @@ dependencies = [
  "pdfcraft-model",
  "pdfcraft-platform",
  "pdfcraft-render",
+ "pdfcraft-translate",
  "pdfcraft-xfa",
  "png 0.18.1",
  "pollster 1.0.1",

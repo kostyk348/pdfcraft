@@ -26,7 +26,8 @@ pub mod check;
 mod tests;
 
 use pdfcraft_cos::Document;
-use pdfcraft_edit::{BlockStyle, replace_block, text_blocks, text_edit_layout};
+use pdfcraft_edit::text::text_edit_layout;
+use pdfcraft_edit::{BlockStyle, replace_block, text_blocks};
 use serde::Serialize;
 use thiserror::Error;
 
@@ -172,7 +173,7 @@ pub fn is_translatable(text: &str, min_letters: usize) -> bool {
 
 /// Read the translation plan: every block the editor can address, in page order.
 pub fn plan(doc: &Document, options: &Options) -> Result<Vec<Segment>, TranslateError> {
-    let pages = (0..doc.page_count());
+    let pages = 0..pdfcraft_model::pages(doc).len();
     let mut out = Vec::new();
     for page in pages {
         if let Some(selected) = &options.pages {
@@ -208,7 +209,7 @@ pub fn translate_document(
 ) -> Result<Report, TranslateError> {
     let plan = plan(doc, options)?;
     let mut report = Report { translator: translator.id(), segments: plan.len(), ..Default::default() };
-    report.pages_scanned = doc.page_count();
+    report.pages_scanned = pdfcraft_model::pages(doc).len();
 
     let work: Vec<Segment> = plan
         .into_iter()
