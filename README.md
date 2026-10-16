@@ -67,7 +67,6 @@
 
 [![CI](https://github.com/kostyk348/pdfcraft/actions/workflows/ci.yml/badge.svg)](https://github.com/kostyk348/pdfcraft/actions/workflows/ci.yml)
 [![Release](https://img.shields.io/github/v/release/kostyk348/pdfcraft?sort=semver&color=blue)](https://github.com/kostyk348/pdfcraft/releases)
-[![License](https://img.shields.io/badge/license-Apache-2.0-green)](https://github.com/kostyk348/pdfcraft/blob/main/LICENSE)
 [![Last commit](https://img.shields.io/github/last-commit/kostyk348/pdfcraft?branch=main)](https://github.com/kostyk348/pdfcraft/commits/main)
 
 PdfCraft is part of [ArtCraft](https://getartcraft.com). Come say hello, get help and follow development:
