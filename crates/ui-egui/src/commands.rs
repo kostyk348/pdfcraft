@@ -213,6 +213,10 @@ impl PdfCraftApp {
                     self.notify_tr("Security will be removed when you save");
                 }
             }
+            "file.translate" => {
+                self.translate_draft.reset();
+                self.dialog = Some(Dialog::Translate);
+            }
             "page.number" => {
                 if let Some(i) = active {
                     let v = &self.views[i];

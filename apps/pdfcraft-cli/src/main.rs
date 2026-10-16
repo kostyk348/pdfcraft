@@ -51,6 +51,11 @@ const USAGE: &str = concat!(
 pdfcraft-cli info   <file.pdf> [--password PW]            document summary as JSON
 pdfcraft-cli render <file.pdf> --page N [--dpi 96] --out x.png   (.png, .jpg, .tif or .pam)
 pdfcraft-cli text   <file.pdf> [--page N]                  extracted text (pages separated by form feeds)
+pdfcraft-cli translate <in.pdf> --to ru [--from en] --out out.pdf
+                      [--backend deeplx|google|google-api|upper] [--endpoint URL]
+                      [--page 1,2] [--report report.json] [--allow-overflow]
+                      (replaces text where it sits; a translation that does not fit its
+                       block is refused unless --allow-overflow is given)
 pdfcraft-cli edit   <in.pdf> --out out.pdf [--rotate 1,3:90] [--delete 2,4] [--move 5:1]
                       [--insert-blank 1] [--title T] [--author A] [--full]
                       (options run in order; page numbers refer to the document after the earlier options)
@@ -86,6 +91,7 @@ fn main() -> ExitCode {
         Some("info") => info(&args[1..]),
         Some("render") => render(&args[1..]),
         Some("text") => text(&args[1..]),
+        Some("translate") => translate(&args[1..]),
         Some("edit") => edit(&args[1..]),
         Some("combine") => combine(&args[1..]),
         Some("extract") => extract(&args[1..]),
@@ -379,6 +385,54 @@ fn text(args: &[String]) -> Result<(), CliError> {
 /// 1-based page list ("1,3,5") → 0-based indices.
 fn page_list(s: &str) -> Result<Vec<usize>, String> {
     s.split(',').map(|p| p.trim().parse::<usize>().ok().filter(|n| *n > 0).map(|n| n - 1).ok_or(format!("bad page number {p:?}"))).collect()
+}
+
+/// The options `translate` understands.
+const TRANSLATE_OPTIONS: &[OptionSpec] = &[
+    OptionSpec { name: "--to", takes_value: true },
+    OptionSpec { name: "--from", takes_value: true },
+    OptionSpec { name: "--backend", takes_value: true },
+    OptionSpec { name: "--endpoint", takes_value: true },
+    OptionSpec { name: "--out", takes_value: true },
+    OptionSpec { name: "--report", takes_value: true },
+    OptionSpec { name: "--page", takes_value: true },
+    OptionSpec { name: "--allow-overflow", takes_value: false },
+];
+
+/// Translate the text of a document in place and write the result.
+///
+/// The pipeline refuses a replacement that does not fit its own block: on a drawing the text sits
+/// in a box, and a translated line that grows past it covers something a reader cannot recover.
+/// `--allow-overflow` overrides that, and `--report` keeps the evidence either way.
+fn translate(args: &[String]) -> Result<(), CliError> {
+    use pdfcraft_cos::{Document, SaveOptions, write_full};
+    use pdfcraft_translate::{Options, backends, translate_document};
+
+    validate_options("translate", args, TRANSLATE_OPTIONS)?;
+    let path = *positional(args).first().ok_or("translate: missing file")?;
+    let out = flag(args, "--out").ok_or("translate: --out is required")?;
+    let target = flag(args, "--to").ok_or("translate: --to is required (for example --to ru)")?;
+    let source = flag(args, "--from").unwrap_or("en");
+    let backend = flag(args, "--backend").unwrap_or("deeplx");
+    let mut translator =
+        backends::by_name(backend, source, target, flag(args, "--endpoint")).map_err(CliError::from)?;
+    let pages = match flag(args, "--page") {
+        Some(list) => Some(page_list(list).map_err(CliError::from)?),
+        None => None,
+    };
+    let options = Options { pages, allow_overflow: args.iter().any(|a| a == "--allow-overflow"), ..Options::default() };
+    let mut doc = Document::open(read(path)?).map_err(|e| CliError::from(format!("{path}: {e}")))?;
+    let report = translate_document(&mut doc, translator.as_mut(), &options)
+        .map_err(|e| CliError::from(format!("translate: {e}")))?;
+    let bytes = write_full(&doc, &SaveOptions::default()).map_err(|e| CliError::from(format!("{out}: {e}")))?;
+    std::fs::write(out, bytes.as_slice()).map_err(|e| CliError::from(format!("{out}: {e}")))?;
+    if let Some(report_path) = flag(args, "--report") {
+        std::fs::write(report_path, report.to_json())
+            .map_err(|e| CliError::from(format!("{report_path}: {e}")))?;
+    }
+    stdout_line(format_args!("{}", report.summary_line()))?;
+    stdout_line(format_args!("{out}"))?;
+    Ok(())
 }
 
 /// The options `edit` understands, for its "unknown option" message.

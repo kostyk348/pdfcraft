@@ -1,0 +1,21 @@
+[package]
+name = "pdfcraft-translate"
+description = "Layout-preserving translation: replace text where it sits, refuse what does not fit, report every span"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+
+[lints]
+workspace = true
+
+[dependencies]
+pdfcraft-cos = { workspace = true }
+pdfcraft-edit = { workspace = true }
+serde = { workspace = true }
+serde_json = { workspace = true }
+thiserror = { workspace = true }
+# The same HTTP stack the desktop app uses for its update check: TLS roots from the operating
+# system, ring as the provider. A translation backend is a network call, so it goes through the
+# dependency that is already reviewed here rather than a second one.
+ureq = { version = "3.4", default-features = false, features = ["rustls-no-provider", "_ring"] }
+rustls-native-certs = "0.8"

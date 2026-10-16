@@ -921,6 +921,9 @@ fn dialogs(app: &mut PdfCraftApp, ctx: &egui::Context) {
                 close = start || cancel;
                 return;
             }
+            Dialog::Translate => {
+                crate::translate_ui::body(ui, &mut app.translate_draft);
+            }
             Dialog::Export(kind) => {
                 let (apply, cancel) = crate::export_ui::body(ui, app, &t, kind);
                 export_now = apply;
@@ -1142,6 +1145,10 @@ fn dialogs(app: &mut PdfCraftApp, ctx: &egui::Context) {
                     close = true;
                 }
                 if widgets::pill_button(ui, tl!("Cancel"), false).clicked() {
+                    close = true;
+                }
+            } else if dialog == Dialog::Translate {
+                if crate::translate_ui::footer(ui, app) {
                     close = true;
                 }
             } else if dialog == Dialog::Split {

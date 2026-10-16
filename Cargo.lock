@@ -3963,6 +3963,19 @@ name = "pdfcraft-smtp"
 version = "0.7.1"
 
 [[package]]
+name = "pdfcraft-translate"
+version = "0.7.1"
+dependencies = [
+ "pdfcraft-cos",
+ "pdfcraft-edit",
+ "rustls-native-certs",
+ "serde",
+ "serde_json",
+ "thiserror 2.0.21",
+ "ureq",
+]
+
+[[package]]
 name = "pdfcraft-ui-egui"
 version = "0.7.1"
 dependencies = [

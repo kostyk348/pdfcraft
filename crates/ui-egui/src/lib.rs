@@ -47,6 +47,7 @@ mod credits;
 mod crop;
 mod drag_pointer;
 mod export_ui;
+mod translate_ui;
 mod js_ui;
 mod marks_ui;
 mod measure_ui;
@@ -275,6 +276,8 @@ pub enum Dialog {
     Marks(pdfcraft_engine::MarkKind),
     /// Export a PDF ▸ Image / Text.
     Export(export_ui::ExportKind),
+    /// File ▸ Translate…: translate the document's text into a new document.
+    Translate,
     /// Fill & Sign ▸ Create signature (the drawing pad).
     Signature,
     /// Comment Properties.
@@ -746,6 +749,8 @@ pub struct PdfCraftApp {
     pub marks_draft: marks_ui::MarksDraft,
     /// Export dialog settings.
     pub export_draft: export_ui::ExportDraft,
+    /// File ▸ Translate…: the language pair, the backend and the last run's report.
+    pub translate_draft: translate_ui::TranslateDraft,
     /// A running export's progress.
     export_status: Option<export_ui::ExportStatus>,
     /// The saved Fill & Sign signature and initials (drawn or typed).
@@ -1017,6 +1022,7 @@ impl PdfCraftApp {
             boxes_draft: Default::default(),
             marks_draft: Default::default(),
             export_draft: Default::default(),
+            translate_draft: Default::default(),
             export_status: None,
             signature: None,
             initials: None,
