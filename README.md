@@ -7,7 +7,6 @@
   </a>
 </p>
 
-
 <h1 align="center">PdfCraft</h1>
 
 <p align="center">
@@ -64,7 +63,12 @@
 
 ---
 
-## Community
+# Community
+
+[![CI](https://github.com/kostyk348/pdfcraft/actions/workflows/ci.yml/badge.svg)](https://github.com/kostyk348/pdfcraft/actions/workflows/ci.yml)
+[![Release](https://img.shields.io/github/v/release/kostyk348/pdfcraft?sort=semver&color=blue)](https://github.com/kostyk348/pdfcraft/releases)
+[![License](https://img.shields.io/badge/license-Apache-2.0-green)](https://github.com/kostyk348/pdfcraft/blob/main/LICENSE)
+[![Last commit](https://img.shields.io/github/last-commit/kostyk348/pdfcraft?branch=main)](https://github.com/kostyk348/pdfcraft/commits/main)
 
 PdfCraft is part of [ArtCraft](https://getartcraft.com). Come say hello, get help and follow development:
 
@@ -81,18 +85,21 @@ The ArtCraft name and logos in `docs/brand/` are trademarks of the ArtCraft Team
 <td width="33%" valign="top">
 
 ### Faithful
+
 Real-world typography: world scripts, vertical Japanese, colour emoji, gradients, soft masks and transparency. All of it renders the way the author intended.
 
 </td>
 <td width="33%" valign="top">
 
 ### Fearless
+
 Every save appends your changes and leaves the original bytes untouched. Writes are atomic, undo runs deep, and nothing is lost if you close by mistake.
 
 </td>
 <td width="33%" valign="top">
 
 ### Yours
+
 No account, no telemetry, no cloud. It works offline and opens instantly. The engine, CLI and app are all open source.
 
 </td>
@@ -331,7 +338,6 @@ Each per-panel request requires a `panel` ID and an `operation`: `open`, `close`
 arrangement. The control channel accepts these methods directly; `ui.command` also accepts
 `{"id":"ui.dock","params":{...}}`. Saved preferences retain groups, active tabs, visibility
 and floating geometry. Invalid requests return an error without changing the document or layout.
-
 
 `resize` requests a native inner-window size in logical points (each dimension must be between 320 and 8192); the window manager may constrain it. `state` reports the observed `window.width`, `window.height` and `window.pixels_per_point`. `focus` accepts exactly one widget `id` or unique enabled, focusable `label`; subsequent `key` requests traverse or activate the actual widgets. `inspect` includes focusability and accepts a `focused` filter. `quit` takes no parameters: clean documents exit normally, while unsaved edits or typing open the existing Save/Don't save/Cancel prompt and return `quitting: false, needs_confirmation: true`. It never silently discards work. Window resizing and application quit are native-only.
 
