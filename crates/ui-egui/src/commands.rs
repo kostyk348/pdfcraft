@@ -103,27 +103,43 @@ impl PdfCraftApp {
         }
     }
 
-    /// File ▸ Save as email message…: pick a path, compose the `.eml` (pages as inline images and
-    /// the PDF attached) and write it. It writes a file and opens no socket; sending is separate.
+    /// File ▸ Save as email message…: compose the `.eml` (pages as inline images and the PDF
+    /// attached) and save it — to a picked path on the desktop, as a browser download on the web,
+    /// where there are no file paths to pick. It writes a file and opens no socket; sending is
+    /// separate.
     fn email_dialog(&mut self) {
         let Some((_, id)) = self.active_ids() else { return };
         let name = self.session.get(id).map(|d| d.name.clone()).unwrap_or_else(|| "document".to_string());
         let stem = name.strip_suffix(".pdf").unwrap_or(name.as_str()).to_string();
-        let dialog = rfd::AsyncFileDialog::new()
-            .set_title(tl!("Save as email message"))
-            .set_file_name(format!("{stem}.eml"))
-            .add_filter("Email message", &["eml"]);
-        let _ = self.ask(crate::pickers::Ask::Save(dialog), None, move |app, paths| {
-            let Some(path) = paths.first() else { return };
-            match app.session.email_message(id, &pdfcraft_engine::EmailOptions::default()) {
-                Ok(bytes) => {
-                    if let Err(e) = std::fs::write(path, &bytes) {
-                        app.notify(format!("{}: {e}", path.display()));
+        #[cfg(not(target_arch = "wasm32"))]
+        {
+            let dialog = rfd::AsyncFileDialog::new()
+                .set_title(tl!("Save as email message"))
+                .set_file_name(format!("{stem}.eml"))
+                .add_filter("Email message", &["eml"]);
+            let _ = self.ask(crate::pickers::Ask::Save(dialog), None, move |app, paths| {
+                let Some(path) = paths.first() else { return };
+                match app.session.email_message(id, &pdfcraft_engine::EmailOptions::default()) {
+                    Ok(bytes) => {
+                        if let Err(e) = std::fs::write(path, &bytes) {
+                            app.notify(format!("{}: {e}", path.display()));
+                        }
                     }
+                    Err(e) => app.notify(e.to_string()),
                 }
-                Err(e) => app.notify(e.to_string()),
+            });
+        }
+        // The browser has no file paths to pick: the message is composed now and saved the way
+        // every other Save works on the web (`editing::download`).
+        #[cfg(target_arch = "wasm32")]
+        match self.session.email_message(id, &pdfcraft_engine::EmailOptions::default()) {
+            Ok(bytes) => {
+                if let Err(e) = crate::editing::download(&format!("{stem}.eml"), &bytes) {
+                    self.notify_error(e);
+                }
             }
-        });
+            Err(e) => self.notify(e.to_string()),
+        }
     }
 
     fn execute_unguarded(&mut self, id: &str) -> bool {
