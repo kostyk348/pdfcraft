@@ -105,6 +105,25 @@ so nothing is left half-translated.
 {"Hello world": "Hallo Welt", "Second line": "Zweite Zeile"}
 ```
 
+A translation may mark a span with `<b>…</b>` or `<i>…</i>`, which is how a weighted word inside a
+row survives: the marker names a style the row **really has** — the run that is bold (or italic) in
+the source — and that span is drawn in that run's own font resource, size and colour. Everything the
+map does not mark keeps the row's first run's style.
+
+```json
+{"Every entry stands on a literal quote, and nothing else.":
+   "Jeder Eintrag fusst auf einem <b>Zitat</b>, nichts sonst."}
+```
+
+The style is taken from the source and never invented from the tag: only those four tags are
+understood, nesting is refused (a run has one style), a row may be marked at most as many times as it
+has runs, and a `<b>` in a row with no bold run cannot be honoured. Markup that cannot be honoured is
+drawn as plain text — never with the tags as characters — and reported in `formatting_lost` with the
+reason, the page and the coordinates. A translation with no markup is drawn exactly as before, so
+maps written before the markup existed keep working. `font_resource` draws the whole paragraph in that
+one face (it is how a script the document's fonts lack is written), so markup is reported there rather
+than pretended.
+
 Nothing is skipped silently: `missing` (no translation supplied), `too_long` (does not fit its box —
 with `page`, `rect`, `text` and `translation`) and `failed` (the font cannot show the new characters)
 carry the coordinates a report is read for. Invisible text over a scan (an OCR layer) is counted in
@@ -119,9 +138,9 @@ descenders; wrapping to another row overshoots by far more and is still caught.
 
 Known limits: per paragraph, so a table's cells translate but its columns do not move; vertical
 writing mode, text inside figures, form fields and annotations are not translated; a row that mixes
-styles (a bold word inside a sentence) keeps the first run's face for the whole translation and is
-listed as `formatting_lost`; one undo step per paragraph. See `parity/acrobat-features.toml`
-`edit.translate-text`.
+styles keeps the first run's face for everything the map does not mark, and is listed as
+`formatting_lost` when no markup carries it; one undo step per paragraph. See
+`parity/acrobat-features.toml` `edit.translate-text`.
 
 ## MCP server
 

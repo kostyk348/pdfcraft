@@ -6244,3 +6244,151 @@ fn translate_keeps_each_rows_size_weight_colour_and_position() {
         "the drawn text reads back, the three rows still one paragraph"
     );
 }
+
+/// The owner's document created from HTML, and each of its visual rows as `text_lines` reports the
+/// runs: 20 pt bold heading, 11 pt body line, 11 pt body line of three runs (plain, bold, plain).
+fn owner_document(a: &mut Automation) -> (u64, Vec<Vec<Value>>) {
+    let html = "<h1>Lost Tech Museum</h1>\
+        <p>The Time Protocol is still in use.</p>\
+        <p>Every entry stands on a literal quote, and <b>nothing</b> else.</p>";
+    let doc = ok(a, "doc_create", json!({ "from": "html", "html": html }))["doc"].as_u64().unwrap();
+    let rows = row_runs(a, doc, 0);
+    (doc, rows)
+}
+
+/// Paragraph `p`'s visual rows, each as the runs `text_lines` reports for it, in drawing order.
+fn row_runs(a: &mut Automation, doc: u64, p: usize) -> Vec<Vec<Value>> {
+    let rows: Vec<Vec<usize>> = paragraphs(a, doc)[p]["rows"]
+        .as_array()
+        .unwrap()
+        .iter()
+        .map(|row| row.as_array().unwrap().iter().map(|n| n.as_u64().unwrap() as usize).collect())
+        .collect();
+    let lines = text_lines(a, doc);
+    rows.iter().map(|row| row.iter().filter_map(|n| lines.get(n - 1)).cloned().collect()).collect()
+}
+
+/// The union of a row's run boxes.
+fn row_band(row: &[Value]) -> [f64; 4] {
+    row.iter().fold([f64::MAX, f64::MAX, f64::MIN, f64::MIN], |acc, line| {
+        let r = rect_of(line);
+        [acc[0].min(r[0]), acc[1].min(r[1]), acc[2].max(r[2]), acc[3].max(r[3])]
+    })
+}
+
+/// The map may mark a span with `<b>` (or `<i>`): the style is then taken from the run the source
+/// row really has, so a bold word inside a translated sentence stays bold. Before this, the row
+/// collapsed to its first run's face and every such row was counted as `formatting_lost`.
+#[test]
+fn translate_keeps_a_bold_word_inside_a_row_when_the_map_marks_it() {
+    let dir = workdir("translate-markup-bold");
+    let mut a = auto(&dir);
+    let (doc, before) = owner_document(&mut a);
+    assert_eq!(before.len(), 3, "three visual rows: {before:?}");
+    assert_eq!(before[2].len(), 3, "the third row is three runs (plain, bold, plain): {before:?}");
+    assert!(before[2][1]["font"].as_str().unwrap().contains("Bold"), "and the middle one is bold: {before:?}");
+
+    std::fs::write(
+        dir.join("map.json"),
+        "{\"Lost Tech Museum\": \"Museum der Ideen\", \
+          \"The Time Protocol is still in use.\": \"Das Zeitprotokoll gilt noch.\", \
+          \"Every entry stands on a literal quote, and nothing else.\": \
+            \"Jeder Eintrag fusst auf einem <b>Zitat</b>, nichts sonst.\"}",
+    )
+    .unwrap();
+    let report = ok(&mut a, "doc_translate", json!({ "doc": doc, "translations": "map.json" }));
+    assert_eq!(report["translated"], 1, "one paragraph, rewritten in place: {report}");
+    assert_eq!(report["too_long"]["count"], 0, "{report}");
+    assert_eq!(report["reverted"], 0, "{report}");
+    assert_eq!(report["formatting_lost"]["count"], 0, "the markup carried the bold word, so nothing is lost: {report}");
+
+    let after = row_runs(&mut a, doc, 0);
+    assert_eq!(after.len(), 3, "three rows stay three rows: {after:?}");
+    assert_eq!(after[2].len(), 3, "the marked word is a run of its own: {after:?}");
+    assert_eq!(after[2][1]["text"], "Zitat", "the bold run is the marked word: {after:?}");
+    assert!(after[2][1]["font"].as_str().unwrap().contains("Bold"), "and it is the source's bold face: {after:?}");
+    assert!(after[2][0]["text"].as_str().unwrap().trim_end().ends_with("einem"), "the text before the marker keeps the row's own face: {after:?}");
+    assert!(after[2][2]["text"].as_str().unwrap().contains("nichts sonst"), "and so does the text after it: {after:?}");
+    assert_eq!(after[2][0]["font"], before[2][0]["font"], "{after:?} vs {before:?}");
+    assert_eq!(after[2][2]["font"], before[2][2]["font"], "{after:?} vs {before:?}");
+
+    // Size and place are the source's: the markup changes the weight and nothing else.
+    for (i, (want, got)) in before.iter().zip(after.iter()).enumerate() {
+        for line in got {
+            assert_eq!(line["size"], want[0]["size"], "row {i} keeps its size: {line:?} vs {:?}", want[0]);
+        }
+        let (band, drawn) = (row_band(want), row_band(got));
+        assert!(inside_band(drawn, band, 2.0), "row {i} stays in its band: {drawn:?} vs {band:?}");
+        assert!((drawn[0] - band[0]).abs() <= 0.51, "row {i} keeps its left edge: {drawn:?} vs {band:?}");
+    }
+    assert_eq!(
+        page_text(&mut a, doc),
+        ["Museum der Ideen\nDas Zeitprotokoll gilt noch.\nJeder Eintrag fusst auf einem Zitat, nichts sonst."],
+        "the tags are markup, never text"
+    );
+}
+
+/// Without a marker the honest counter is unchanged: the mixed row is drawn in its first run's face
+/// and said so, so the fix above cannot hide a row it did not really format.
+#[test]
+fn translate_still_reports_a_mixed_row_whose_translation_carries_no_markup() {
+    let dir = workdir("translate-markup-absent");
+    let mut a = auto(&dir);
+    let (doc, before) = owner_document(&mut a);
+    assert_eq!(before[2].len(), 3, "{before:?}");
+    std::fs::write(
+        dir.join("map.json"),
+        "{\"Lost Tech Museum\": \"Museum der Ideen\", \
+          \"The Time Protocol is still in use.\": \"Das Zeitprotokoll gilt noch.\", \
+          \"Every entry stands on a literal quote, and nothing else.\": \"Jeder Eintrag fusst auf einem Zitat, nichts sonst.\"}",
+    )
+    .unwrap();
+    let report = ok(&mut a, "doc_translate", json!({ "doc": doc, "translations": "map.json" }));
+    assert_eq!(report["formatting_lost"]["count"], 1, "the mixed row is named: {report}");
+    assert_eq!(report["formatting_lost"]["paragraphs"][0]["row"], 3, "{report}");
+    assert!(report["formatting_lost"]["paragraphs"][0]["reason"].as_str().unwrap().contains("mixes"), "{report}");
+    let after = row_runs(&mut a, doc, 0);
+    assert_eq!(after.len(), 3, "{after:?}");
+    assert_eq!(after[2].len(), 1, "one run per row when the map does not mark anything: {after:?}");
+    assert!(!after[2][0]["font"].as_str().unwrap().contains("Bold"), "{after:?}");
+}
+
+/// Markup that cannot be honoured is reported, not silently swallowed, and its tags are never
+/// drawn as text. Two ways it can be wrong: broken tags, and more markers than the row has runs.
+#[test]
+fn translate_reports_markup_it_cannot_honour_and_never_draws_a_tag() {
+    let dir = workdir("translate-markup-broken");
+    let mut a = auto(&dir);
+    let (broken, _) = owner_document(&mut a);
+    let (crowded, _) = owner_document(&mut a);
+    std::fs::write(
+        dir.join("unclosed.json"),
+        "{\"Lost Tech Museum\": \"Museum der Ideen\", \
+          \"The Time Protocol is still in use.\": \"Das Zeitprotokoll gilt noch.\", \
+          \"Every entry stands on a literal quote, and nothing else.\": \
+            \"Jeder Eintrag fusst auf einem <b>Zitat, nichts sonst.\"}",
+    )
+    .unwrap();
+    // Three runs in the row, four markers: there is no fourth style to take the fourth span from.
+    std::fs::write(
+        dir.join("crowded.json"),
+        "{\"Lost Tech Museum\": \"Museum der Ideen\", \
+          \"The Time Protocol is still in use.\": \"Das Zeitprotokoll gilt noch.\", \
+          \"Every entry stands on a literal quote, and nothing else.\": \
+            \"Jeder <b>Eintrag</b> <i>fusst</i> <b>auf</b> <i>einem</i> Zitat.\"}",
+    )
+    .unwrap();
+
+    for (translation, why) in [("unclosed.json", "tag"), ("crowded.json", "marker")] {
+        let doc = if why == "tag" { broken } else { crowded };
+        let report = ok(&mut a, "doc_translate", json!({ "doc": doc, "translations": translation }));
+        assert_eq!(report["formatting_lost"]["count"], 1, "{translation}: {report}");
+        let entry = &report["formatting_lost"]["paragraphs"][0];
+        assert_eq!(entry["page"], 1, "{translation}: {report}");
+        assert_eq!(entry["rect"].as_array().unwrap().len(), 4, "{translation}: with its coordinates: {report}");
+        assert!(entry["reason"].as_str().unwrap().contains(why), "{translation}: the reason names the fault: {report}");
+        let text = page_text(&mut a, doc);
+        assert!(!text[0].contains('<'), "{translation}: no tag is ever drawn: {text:?}");
+        assert!(text[0].contains("Zitat"), "{translation}: the row is still translated: {text:?}");
+    }
+}
