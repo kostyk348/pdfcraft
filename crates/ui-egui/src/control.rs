@@ -39,6 +39,11 @@
 //! - `ui.open {path}`: accept a file open; native opens report `pending: true` until they
 //!   complete and are listed in `ui.state.pending_opens`.
 //! - `ui.screenshot {region?}`: PNG of the window (base64), optionally cropped to a rect.
+//!
+//! A window the platform is not drawing (hidden, minimized, covered, or on another virtual
+//! desktop) runs `logic` only and no egui pass, so nothing that waits for a frame could finish:
+//! those methods first ask the window to come to the front (`ViewportCommand::Minimized(false)`),
+//! and report a clear error only if it stays hidden.
 
 use std::collections::{HashMap, VecDeque};
 use std::sync::mpsc::{Receiver, Sender, channel};
@@ -50,9 +55,20 @@ use serde_json::{Value, json};
 pub type Reply = Result<Value, String>;
 
 /// Seconds to wait for frames (input to be handled, a screenshot to be taken) before reporting
-/// that the window is not being drawn. While a window is hidden, minimized or fully covered,
-/// eframe keeps calling `logic` but runs no egui pass, so input and screenshots wait.
+/// that the window is not being drawn. A window the platform is not drawing (hidden, minimized,
+/// fully covered, or on another virtual desktop) runs `logic` only, and no egui pass happens, so
+/// input and screenshots wait; [`Control::ask_for_a_frame`] first asks such a window to come to
+/// the front, and this is the last word if it stays hidden.
 const NOT_DRAWN_TIMEOUT: f64 = 5.0;
+
+/// How long a request may wait for a frame before the window is asked to come to the front. A
+/// window that is being drawn answers within one frame, so this only passes while no egui pass
+/// runs at all.
+const NOT_DRAWN_GRACE: f64 = 0.25;
+
+/// How often to repeat that request while the window stays hidden (a window manager may ignore
+/// the first one, or throttle it).
+const NOT_DRAWN_NUDGE_EVERY: f64 = 1.0;
 
 /// Wall-clock seconds (egui's own clock stops while the window is not drawn).
 fn now_secs() -> f64 {
@@ -69,7 +85,7 @@ fn now_secs() -> f64 {
 
 fn not_drawn(what: &str) -> String {
     format!(
-        "{what} did not happen within {NOT_DRAWN_TIMEOUT:.0} s: the window is not being drawn (it may be hidden, minimized or covered); bring it to the front and retry"
+        "{what} did not happen within {NOT_DRAWN_TIMEOUT:.0} s: the window is not being drawn (the window was asked to come to the front, and it may still be hidden, minimized, covered or on another desktop); bring it to the front and retry"
     )
 }
 
@@ -147,6 +163,8 @@ enum Pending {
     Frames {
         /// Answer once this many egui passes have run (the injected input has been handled).
         until_pass: u64,
+        /// Passes when the request was queued: with no pass since, the window is not being drawn.
+        start_pass: u64,
         since: f64,
         reply: Sender<Reply>,
         value: Value,
@@ -154,8 +172,10 @@ enum Pending {
     Screenshot {
         tag: u64,
         region: Option<egui::Rect>,
+        /// Passes when the request was queued: with no pass since, the window is not being drawn.
+        start_pass: u64,
         reply: Sender<Reply>,
-        /// When it was requested (egui time, seconds).
+        /// When it was requested (wall-clock seconds).
         since: f64,
     },
 }
@@ -166,6 +186,8 @@ pub struct Control {
     shared: Arc<Mutex<Shared>>,
     pending: Vec<Pending>,
     next_tag: u64,
+    /// When the window was last asked to come to the front (wall-clock seconds).
+    last_nudge: Option<f64>,
 }
 
 /// Install the control channel on `ctx`: returns the app half and a client.
@@ -174,7 +196,7 @@ pub fn attach(ctx: &egui::Context) -> (Control, ControlClient) {
     ctx.add_plugin(ControlPlugin { shared: shared.clone() });
     ctx.enable_accesskit();
     let (tx, rx) = channel();
-    (Control { rx, shared, pending: Vec::new(), next_tag: 1 }, ControlClient { tx, ctx: ctx.clone() })
+    (Control { rx, shared, pending: Vec::new(), next_tag: 1, last_nudge: None }, ControlClient { tx, ctx: ctx.clone() })
 }
 
 /// What a request needs from the app (implemented by `PdfCraftApp`).
@@ -198,20 +220,50 @@ impl Control {
                     let _ = req.reply.send(r);
                 }
                 Handled::AfterFrames(frames, value) => {
-                    let until_pass = self.passes() + u64::from(frames);
-                    self.pending.push(Pending::Frames { until_pass, since: now_secs(), reply: req.reply, value });
+                    let start_pass = self.passes();
+                    let until_pass = start_pass + u64::from(frames);
+                    self.pending.push(Pending::Frames { until_pass, start_pass, since: now_secs(), reply: req.reply, value });
                 }
                 Handled::Screenshot(region) => {
                     let tag = self.next_tag;
                     self.next_tag += 1;
                     ctx.send_viewport_cmd(egui::ViewportCommand::Screenshot(egui::UserData::new(tag)));
-                    self.pending.push(Pending::Screenshot { tag, region, reply: req.reply, since: now_secs() });
+                    self.pending.push(Pending::Screenshot { tag, region, start_pass: self.passes(), reply: req.reply, since: now_secs() });
                 }
             }
         }
         if !self.pending.is_empty() {
+            self.ask_for_a_frame(ctx);
             ctx.request_repaint();
         }
+    }
+
+    /// Ask a window that is not being drawn to come to the front.
+    ///
+    /// While a window is hidden, minimized, fully covered or on another virtual desktop, eframe
+    /// runs [`eframe::App::logic`] (and so [`Self::tick`]) but no egui pass at all: injected input
+    /// is never handled, and no screenshot is ever painted. Nothing queued for a later frame could
+    /// therefore finish, and the request would fail on the first attempt — so ask for the window
+    /// the way the timeout error tells a human to ("bring it to the front"): `Minimized(false)`
+    /// restores a minimized window, and on X11 it activates it (`_NET_ACTIVE_WINDOW`), which also
+    /// brings it back to the current desktop. Repeated, because a window manager may ignore or
+    /// throttle the first request; [`NOT_DRAWN_TIMEOUT`] stays the last word.
+    ///
+    /// Nothing is sent while passes are running, so a window that is being drawn costs nothing.
+    fn ask_for_a_frame(&mut self, ctx: &egui::Context) {
+        let passes = self.passes();
+        let now = now_secs();
+        let stalled = self.pending.iter().any(|p| match p {
+            Pending::Frames { start_pass, since, .. } | Pending::Screenshot { start_pass, since, .. } => {
+                passes == *start_pass && now - since >= NOT_DRAWN_GRACE
+            }
+        });
+        if !stalled || self.last_nudge.is_some_and(|last| now - last < NOT_DRAWN_NUDGE_EVERY) {
+            return;
+        }
+        self.last_nudge = Some(now);
+        ctx.send_viewport_cmd(egui::ViewportCommand::Minimized(false));
+        ctx.request_repaint();
     }
 
     fn finish_pending(&mut self, ctx: &egui::Context) {
@@ -244,16 +296,17 @@ impl Control {
                     let _ = reply.send(Err(not_drawn("handling the input")));
                 }
                 p @ Pending::Frames { .. } => keep.push(p),
-                Pending::Screenshot { tag, region, reply, since } => match shots.iter().find(|(t, _)| *t == tag) {
+                Pending::Screenshot { tag, region, start_pass, reply, since } => match shots.iter().find(|(t, _)| *t == tag) {
                     Some((_, image)) => {
                         let _ = reply.send(screenshot_png(image, region, ppp));
                     }
-                    // The platform skips painting windows that are hidden, minimized or fully
-                    // covered, so no screenshot ever arrives: say so instead of hanging.
+                    // The platform skips painting windows that are not being drawn (hidden,
+                    // minimized or fully covered); `ask_for_a_frame` asks for one first, and this
+                    // is the last word if the window stays hidden: say so instead of hanging.
                     None if now - since > NOT_DRAWN_TIMEOUT => {
                         let _ = reply.send(Err(not_drawn("the screenshot")));
                     }
-                    None => keep.push(Pending::Screenshot { tag, region, reply, since }),
+                    None => keep.push(Pending::Screenshot { tag, region, start_pass, reply, since }),
                 },
             }
         }
@@ -911,6 +964,123 @@ fn random_token() -> std::io::Result<String> {
     let mut bytes = [0u8; 16];
     getrandom::fill(&mut bytes).map_err(|e| std::io::Error::other(e.to_string()))?;
     Ok(bytes.iter().map(|b| format!("{b:02x}")).collect())
+}
+
+#[cfg(test)]
+mod not_drawn_tests {
+    use super::*;
+
+    /// A host that is never asked anything: these tests only wait for frames.
+    struct Idle;
+
+    impl Host for Idle {
+        fn state(&self) -> Value {
+            json!({})
+        }
+
+        fn command(&mut self, _id: &str) -> Reply {
+            Err("this host has no commands".into())
+        }
+
+        fn dock(&mut self, _reset: bool, _params: &Value) -> Reply {
+            Err("this host has no docking".into())
+        }
+
+        fn commands(&self) -> Value {
+            json!({ "commands": [] })
+        }
+
+        fn set(&mut self, _key: &str, _value: &str) -> Reply {
+            Err("this host has no options".into())
+        }
+
+        fn open(&mut self, _path: &str) -> Reply {
+            Err("this host opens no files".into())
+        }
+
+        fn quit(&mut self, _ctx: &egui::Context) -> bool {
+            false
+        }
+    }
+
+    /// The commands the app sent to the root window since the last pass (`run_logic` drains them).
+    fn commands_since_last_pass(ctx: &egui::Context) -> Vec<egui::ViewportCommand> {
+        ctx.run_logic(&egui::RawInput::default(), |_| {}).viewport_commands.get(&egui::ViewportId::ROOT).cloned().unwrap_or_default()
+    }
+
+    fn asked_to_the_front(commands: &[egui::ViewportCommand]) -> bool {
+        commands.iter().any(|c| matches!(c, egui::ViewportCommand::Minimized(false)))
+    }
+
+    /// Nothing is drawn at all, as on a window the window manager keeps hidden: the request is
+    /// not refused on the first attempt — the window is asked to come to the front, which is what
+    /// makes a pass (and so the reply) possible.
+    #[test]
+    fn a_window_that_is_not_drawn_is_asked_to_come_to_the_front() {
+        let ctx = egui::Context::default();
+        let (mut control, client) = attach(&ctx);
+        // `ui.click` at a point needs no widget tree: it waits only for the frames it injects into.
+        let _reply = client.send("ui.click", json!({ "x": 10.0, "y": 20.0 }));
+        // The app answers the request at the start of a frame, and then nothing draws it.
+        control.tick(&ctx, &mut Idle);
+        std::thread::sleep(std::time::Duration::from_secs_f64(NOT_DRAWN_GRACE + 0.1));
+        control.tick(&ctx, &mut Idle);
+        let sent = commands_since_last_pass(&ctx);
+        assert!(asked_to_the_front(&sent), "no pass ran, so the window should have been asked to come to the front: {sent:?}");
+    }
+
+    /// The window is being drawn: it answers within a frame, and is not asked to come to the
+    /// front (which on X11 activates it and would take the focus from the user).
+    #[test]
+    fn a_window_that_is_drawn_is_left_alone() {
+        let ctx = egui::Context::default();
+        let (mut control, client) = attach(&ctx);
+        let _reply = client.send("ui.click", json!({ "x": 10.0, "y": 20.0 }));
+        control.tick(&ctx, &mut Idle);
+        // One pass: the window is being drawn, so the request is answered by frames, not by a nudge.
+        let mut pass = ctx.run_ui(egui::RawInput::default(), |_| {});
+        pass.textures_delta.clear();
+        std::thread::sleep(std::time::Duration::from_secs_f64(NOT_DRAWN_GRACE + 0.1));
+        control.tick(&ctx, &mut Idle);
+        let sent = commands_since_last_pass(&ctx);
+        assert!(!asked_to_the_front(&sent), "the window is being drawn, so it must not be asked: {sent:?}");
+    }
+
+    /// The request is repeated while the window stays hidden (a window manager may ignore the
+    /// first one), and not more often than [`NOT_DRAWN_NUDGE_EVERY`].
+    #[test]
+    fn the_request_is_repeated_but_throttled() {
+        let ctx = egui::Context::default();
+        let (mut control, client) = attach(&ctx);
+        let _reply = client.send("ui.click", json!({ "x": 10.0, "y": 20.0 }));
+        control.tick(&ctx, &mut Idle);
+        std::thread::sleep(std::time::Duration::from_secs_f64(NOT_DRAWN_GRACE + 0.1));
+        control.tick(&ctx, &mut Idle);
+        assert!(asked_to_the_front(&commands_since_last_pass(&ctx)), "the first request");
+        control.tick(&ctx, &mut Idle);
+        assert!(!asked_to_the_front(&commands_since_last_pass(&ctx)), "a second one right after the first is throttled");
+        std::thread::sleep(std::time::Duration::from_secs_f64(NOT_DRAWN_NUDGE_EVERY));
+        control.tick(&ctx, &mut Idle);
+        assert!(asked_to_the_front(&commands_since_last_pass(&ctx)), "and it is asked again while it stays hidden");
+    }
+
+    /// A window that stays hidden after being asked (a window manager may ignore the request) is
+    /// still reported clearly instead of hanging: the timeout is the last word.
+    #[test]
+    fn a_window_that_stays_hidden_is_reported() {
+        let ctx = egui::Context::default();
+        let (mut control, _client) = attach(&ctx);
+        let (reply, answers) = channel();
+        // A request queued longer ago than the timeout, which no pass ever answered.
+        let since = now_secs() - NOT_DRAWN_TIMEOUT - 1.0;
+        control.pending.push(Pending::Frames { until_pass: 100, start_pass: 0, since, reply, value: json!({}) });
+        control.ask_for_a_frame(&ctx);
+        assert!(asked_to_the_front(&commands_since_last_pass(&ctx)), "it is still asked to come to the front first");
+        control.finish_pending(&ctx);
+        let e = answers.try_recv().expect("the request is answered").expect_err("it did not happen");
+        assert!(e.contains("the window is not being drawn"), "{e}");
+        assert!(control.pending.is_empty(), "and it is not left waiting");
+    }
 }
 
 #[cfg(test)]
