@@ -2596,3 +2596,27 @@ key	Space	Tarpas
 	This document is trying to open a local file:	Šis dokumentas bando atverti vietinį failą:
 	Move tag earlier	Perkelti žymą anksčiau
 	Move tag later	Perkelti žymą vėliau
+	Send as email…	Siųsti el. paštu…
+	Send as email	Siųsti el. paštu
+	The message is the one Save as email message… writes, delivered over SMTP. Nothing is sent until you press Send.	Laiškas yra toks pat, kokį sukuria „Išsaugoti kaip el. laišką…“, pristatomas per SMTP. Niekas nesiunčiama, kol nepaspaudžiate Siųsti.
+	Server:	Serveris:
+	Port:	Prievadas:
+	Security:	Sauga:
+	Cc:	Kopija:
+	Subject:	Tema:
+	Body:	Turinys:
+	User name:	Naudotojo vardas:
+	Password:	Slaptažodis:
+	The server needs a user name and password	Serveriui reikia naudotojo vardo ir slaptažodžio
+	Not encrypted: the message travels in the clear	Be šifravimo: laiškas keliauja atviru tekstu
+	Send	Siųsti
+	The port is a number from 1 to 65535	Prievadas yra skaičius nuo 1 iki 65535
+	The server needs a host name	Serveriui reikia pagrindinio kompiuterio vardo
+	A password needs an encrypted connection: choose STARTTLS or TLS	Slaptažodžiui reikia šifruoto ryšio: pasirinkite STARTTLS arba TLS
+	A message needs at least one recipient	Laiškui reikia bent vieno gavėjo
+	The previous message is still being sent	Ankstesnis laiškas dar siunčiamas
+	Message sent to {server} ({bytes} bytes)	Laiškas išsiųstas į {server} ({bytes} baitų)
+	Message sent to {server} ({bytes} bytes); the relay refused {refused}	Laiškas išsiųstas į {server} ({bytes} baitų); serveris atmetė: {refused}
+	Not sent: {reason}	Neišsiųsta: {reason}
+	the session stopped unexpectedly	sesija netikėtai nutrūko
+	Sending an email needs the desktop app: a browser has no mail connection	Norint siųsti el. paštą reikia darbalaukio programos: naršyklė neturi pašto ryšio

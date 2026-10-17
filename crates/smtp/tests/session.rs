@@ -231,16 +231,26 @@ fn a_relay_that_is_not_there_is_an_error_not_a_panic() {
 }
 
 #[test]
-fn security_other_than_plain_is_refused_without_a_connection() {
-    // The port is a live listener, so a connection would be accepted: an Err that is Config, and a
-    // receiver thread that never sees a connection, prove nothing was opened.
-    let listener = TcpListener::bind("127.0.0.1:0").expect("a loopback port");
-    let port = listener.local_addr().expect("the port").port();
-    let err = send(&Server { security: Security::ImplicitTls, ..server(port) }, "pdfcraft@localhost", &["team@example.com".to_string()], &message())
-        .expect_err("tls is not wired in");
-    assert!(matches!(err, Error::Config(_)), "{err:?}");
-    listener.set_nonblocking(true).expect("nonblocking");
-    assert!(matches!(listener.accept(), Err(ref e) if e.kind() == std::io::ErrorKind::WouldBlock), "something connected");
+fn an_encrypted_mode_reaches_the_socket_instead_of_being_refused() {
+    // The port is a live listener: a connection here is the proof that `starttls`/`tls` are carried
+    // out rather than refused up front. The listener says nothing, so the handshake times out and
+    // the error is a transport one (never `Config`), and no message is handed over.
+    for security in [Security::ImplicitTls, Security::StartTls] {
+        let listener = TcpListener::bind("127.0.0.1:0").expect("a loopback port");
+        let port = listener.local_addr().expect("the port").port();
+        let err = send(
+            &Server { timeout: std::time::Duration::from_millis(500), security, ..server(port) },
+            "pdfcraft@localhost",
+            &["team@example.com".to_string()],
+            &message(),
+        )
+        .expect_err("a relay that says nothing cannot carry an encrypted session");
+        assert!(!matches!(err, Error::Config(_)), "{security:?}: {err:?}");
+        match listener.accept() {
+            Ok(_) => {}
+            Err(e) => panic!("{security:?} opened no connection: {e}"),
+        }
+    }
 }
 
 /// The receiver helper itself: a client that speaks the protocol by hand reaches it, so a passing

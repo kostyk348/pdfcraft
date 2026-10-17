@@ -2351,3 +2351,27 @@ animation effects	Off	Ki
 	This document is trying to open a local file:	Ez a dokumentum egy helyi fájlt próbál megnyitni:
 	Move tag earlier	Címke korábbra helyezése
 	Move tag later	Címke későbbre helyezése
+	Send as email…	Küldés e-mailként…
+	Send as email	Küldés e-mailként
+	The message is the one Save as email message… writes, delivered over SMTP. Nothing is sent until you press Send.	Az üzenet ugyanaz, amit a „Mentés e-mail üzenetként…” készít, SMTP-n keresztül kézbesítve. Semmi nem megy ki, amíg a Küldés gombra nem kattint.
+	Server:	Kiszolgáló:
+	Port:	Port:
+	Security:	Biztonság:
+	Cc:	Másolat:
+	Subject:	Tárgy:
+	Body:	Törzs:
+	User name:	Felhasználónév:
+	Password:	Jelszó:
+	The server needs a user name and password	A kiszolgáló felhasználónevet és jelszót kér
+	Not encrypted: the message travels in the clear	Titkosítás nélkül: az üzenet nyílt szövegként halad
+	Send	Küldés
+	The port is a number from 1 to 65535	A port 1 és 65535 közötti szám
+	The server needs a host name	A kiszolgálónak hostnévre van szüksége
+	A password needs an encrypted connection: choose STARTTLS or TLS	A jelszóhoz titkosított kapcsolat kell: válasszon STARTTLS vagy TLS lehetőséget
+	A message needs at least one recipient	Az üzenethez legalább egy címzett kell
+	The previous message is still being sent	Az előző üzenet még küldés alatt áll
+	Message sent to {server} ({bytes} bytes)	Üzenet elküldve ide: {server} ({bytes} bájt)
+	Message sent to {server} ({bytes} bytes); the relay refused {refused}	Üzenet elküldve ide: {server} ({bytes} bájt); a kiszolgáló elutasította: {refused}
+	Not sent: {reason}	Nem küldhető el: {reason}
+	the session stopped unexpectedly	a munkamenet váratlanul megszakadt
+	Sending an email needs the desktop app: a browser has no mail connection	Az e-mail küldéséhez az asztali alkalmazás kell: a böngészőnek nincs levélkapcsolata

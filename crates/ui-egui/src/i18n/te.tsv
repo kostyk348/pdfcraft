@@ -2265,3 +2265,27 @@ animation effects	Off	ఆఫ్
 	This document is trying to open a local file:	ఈ పత్రం ఒక స్థానిక ఫైల్‌ను తెరవడానికి ప్రయత్నిస్తోంది:
 	Move tag earlier	ట్యాగ్‌ను ముందుకు తరలించు
 	Move tag later	ట్యాగ్‌ను వెనుకకు తరలించు
+	Send as email…	ఇమెయిల్గా పంపండి…
+	Send as email	ఇమెయిల్గా పంపండి
+	The message is the one Save as email message… writes, delivered over SMTP. Nothing is sent until you press Send.	సందేశం "ఇమెయిల్ సందేశంగా సేవ్ చేయి…" సృష్టించేదే, SMTP ద్వారా పంపబడుతుంది. మీరు పంపండి నొక్కే వరకు ఏదీ పంపబడదు.
+	Server:	సర్వర్:
+	Port:	పోర్ట్:
+	Security:	భద్రత:
+	Cc:	కాపీ:
+	Subject:	విషయం:
+	Body:	బాడీ:
+	User name:	వినియోగదారు పేరు:
+	Password:	పాస్వర్డ్:
+	The server needs a user name and password	సర్వర్కు వినియోగదారు పేరు మరియు పాస్వర్డ్ కావాలి
+	Not encrypted: the message travels in the clear	గుప్తీకరణ లేదు: సందేశం బహిరంగ వచనంగా వెళ్తుంది
+	Send	పంపండి
+	The port is a number from 1 to 65535	పోర్ట్ 1 నుండి 65535 వరకు ఉన్న సంఖ్య
+	The server needs a host name	సర్వర్కు హోస్ట్ పేరు కావాలి
+	A password needs an encrypted connection: choose STARTTLS or TLS	పాస్వర్డ్కు గుప్తీకృత కనెక్షన్ కావాలి: STARTTLS లేదా TLS ఎంచుకోండి
+	A message needs at least one recipient	సందేశానికి కనీసం ఒక గ్రహీత కావాలి
+	The previous message is still being sent	మునుపటి సందేశం ఇంకా పంపబడుతోంది
+	Message sent to {server} ({bytes} bytes)	సందేశం {server}కు పంపబడింది ({bytes} బైట్లు)
+	Message sent to {server} ({bytes} bytes); the relay refused {refused}	సందేశం {server}కు పంపబడింది ({bytes} బైట్లు); సర్వర్ తిరస్కరించింది: {refused}
+	Not sent: {reason}	పంపబడలేదు: {reason}
+	the session stopped unexpectedly	సెషన్ ఊహించని విధంగా ఆగిపోయింది
+	Sending an email needs the desktop app: a browser has no mail connection	ఇమెయిల్ పంపడానికి డెస్క్టాప్ యాప్ కావాలి: బ్రౌజర్కు మెయిల్ కనెక్షన్ లేదు

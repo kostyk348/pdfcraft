@@ -2315,3 +2315,27 @@ animation effects	Off	Изключени
 	This document is trying to open a local file:	Този документ се опитва да отвори локален файл:
 	Move tag earlier	Преместване на етикета по-рано
 	Move tag later	Преместване на етикета по-късно
+	Send as email…	Изпращане като имейл…
+	Send as email	Изпращане като имейл
+	The message is the one Save as email message… writes, delivered over SMTP. Nothing is sent until you press Send.	Съобщението е същото, което създава „Запазване като имейл съобщение…“, доставено по SMTP. Нищо не се изпраща, докато не натиснете Изпращане.
+	Server:	Сървър:
+	Port:	Порт:
+	Security:	Сигурност:
+	Cc:	Копие:
+	Subject:	Тема:
+	Body:	Текст:
+	User name:	Потребителско име:
+	Password:	Парола:
+	The server needs a user name and password	Сървърът изисква потребителско име и парола
+	Not encrypted: the message travels in the clear	Без криптиране: съобщението пътува като открит текст
+	Send	Изпращане
+	The port is a number from 1 to 65535	Портът е число от 1 до 65535
+	The server needs a host name	Сървърът се нуждае от име на хост
+	A password needs an encrypted connection: choose STARTTLS or TLS	Паролата изисква криптирана връзка: изберете STARTTLS или TLS
+	A message needs at least one recipient	Съобщението се нуждае от поне един получател
+	The previous message is still being sent	Предишното съобщение още се изпраща
+	Message sent to {server} ({bytes} bytes)	Съобщението е изпратено до {server} ({bytes} байта)
+	Message sent to {server} ({bytes} bytes); the relay refused {refused}	Съобщението е изпратено до {server} ({bytes} байта); сървърът отказа: {refused}
+	Not sent: {reason}	Не е изпратено: {reason}
+	the session stopped unexpectedly	сесията прекъсна неочаквано
+	Sending an email needs the desktop app: a browser has no mail connection	Изпращането на имейл изисква настолното приложение: браузърът няма пощенска връзка

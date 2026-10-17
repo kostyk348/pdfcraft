@@ -2426,3 +2426,27 @@ animation effects	Off	Vypnuto
 	This document is trying to open a local file:	Tento dokument se pokouší otevřít místní soubor:
 	Move tag earlier	Přesunout značku dříve
 	Move tag later	Přesunout značku později
+	Send as email…	Odeslat e-mailem…
+	Send as email	Odeslat e-mailem
+	The message is the one Save as email message… writes, delivered over SMTP. Nothing is sent until you press Send.	Zpráva je stejná, jakou vytváří „Uložit jako e-mailovou zprávu…”, doručená přes SMTP. Nic se neodešle, dokud nestisknete Odeslat.
+	Server:	Server:
+	Port:	Port:
+	Security:	Zabezpečení:
+	Cc:	Kopie:
+	Subject:	Předmět:
+	Body:	Text:
+	User name:	Uživatelské jméno:
+	Password:	Heslo:
+	The server needs a user name and password	Server vyžaduje uživatelské jméno a heslo
+	Not encrypted: the message travels in the clear	Bez šifrování: zpráva putuje v otevřeném textu
+	Send	Odeslat
+	The port is a number from 1 to 65535	Port je číslo od 1 do 65535
+	The server needs a host name	Server potřebuje název hostitele
+	A password needs an encrypted connection: choose STARTTLS or TLS	Heslo vyžaduje šifrované připojení: zvolte STARTTLS nebo TLS
+	A message needs at least one recipient	Zpráva potřebuje alespoň jednoho příjemce
+	The previous message is still being sent	Předchozí zpráva se ještě odesílá
+	Message sent to {server} ({bytes} bytes)	Zpráva odeslána na {server} ({bytes} bajtů)
+	Message sent to {server} ({bytes} bytes); the relay refused {refused}	Zpráva odeslána na {server} ({bytes} bajtů); server odmítl: {refused}
+	Not sent: {reason}	Neodesláno: {reason}
+	the session stopped unexpectedly	relace se neočekávaně přerušila
+	Sending an email needs the desktop app: a browser has no mail connection	Odesílání e-mailů vyžaduje desktopovou aplikaci: prohlížeč nemá poštovní připojení

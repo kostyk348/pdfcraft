@@ -2888,9 +2888,6 @@ fn sending_refuses_what_it_cannot_carry_out_and_never_connects() {
         json!({ "doc": d }),
         json!({ "doc": d, "host": "127.0.0.1" }),
         json!({ "doc": d, "host": "127.0.0.1", "to": [] }),
-        // A transport this build has no TLS for is refused before the connection.
-        json!({ "doc": d, "host": "127.0.0.1", "port": port, "to": ["team@example.com"], "security": "tls" }),
-        json!({ "doc": d, "host": "127.0.0.1", "port": port, "to": ["team@example.com"], "security": "starttls" }),
         // A security name that is not a transport at all.
         json!({ "doc": d, "host": "127.0.0.1", "port": port, "to": ["team@example.com"], "security": "maybe" }),
         // A port that is not a port.
@@ -2909,6 +2906,18 @@ fn sending_refuses_what_it_cannot_carry_out_and_never_connects() {
         }
     }
     assert!(matches!(listener.accept(), Err(ref e) if e.kind() == std::io::ErrorKind::WouldBlock), "a refused request still opened a connection");
+
+    // An encrypted transport is no longer refused up front: it reaches the socket. Pointing it at a
+    // port nothing listens on therefore fails at the connection, not as a configuration error.
+    let dead = std::net::TcpListener::bind("127.0.0.1:0").expect("a loopback port");
+    let dead_port = dead.local_addr().expect("the port").port();
+    drop(dead);
+    for security in ["starttls", "tls"] {
+        let outcome = a.call("doc_email_send", &json!({ "doc": d, "host": "127.0.0.1", "port": dead_port, "to": ["team@example.com"], "security": security }));
+        let Err(error) = outcome else { panic!("{security} reached nothing at all") };
+        let text = error.to_string();
+        assert!(text.contains("could not be reached"), "{security}: {text}");
+    }
 
     // And with no intention to send, the composing tool needs no server at all: it only writes a file.
     assert!(ok(&mut a, "doc_email", json!({ "doc": d, "path": "doc.eml", "to": "team@example.com" }))["path"].is_string());

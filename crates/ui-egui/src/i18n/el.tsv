@@ -2362,3 +2362,27 @@ animation effects	Off	Ανενεργά
 	This document is trying to open a local file:	Αυτό το έγγραφο προσπαθεί να ανοίξει ένα τοπικό αρχείο:
 	Move tag earlier	Μετακίνηση ετικέτας νωρίτερα
 	Move tag later	Μετακίνηση ετικέτας αργότερα
+	Send as email…	Αποστολή ως email…
+	Send as email	Αποστολή ως email
+	The message is the one Save as email message… writes, delivered over SMTP. Nothing is sent until you press Send.	Το μήνυμα είναι το ίδιο που δημιουργεί η «Αποθήκευση ως μήνυμα email…», παραδομένο μέσω SMTP. Τίποτα δεν αποστέλλεται μέχρι να πατήσετε Αποστολή.
+	Server:	Διακομιστής:
+	Port:	Θύρα:
+	Security:	Ασφάλεια:
+	Cc:	Κοιν.:
+	Subject:	Θέμα:
+	Body:	Σώμα:
+	User name:	Όνομα χρήστη:
+	Password:	Κωδικός πρόσβασης:
+	The server needs a user name and password	Ο διακομιστής απαιτεί όνομα χρήστη και κωδικό
+	Not encrypted: the message travels in the clear	Χωρίς κρυπτογράφηση: το μήνυμα ταξιδεύει σε ανοιχτό κείμενο
+	Send	Αποστολή
+	The port is a number from 1 to 65535	Η θύρα είναι αριθμός από 1 έως 65535
+	The server needs a host name	Ο διακομιστής χρειάζεται όνομα κεντρικού υπολογιστή
+	A password needs an encrypted connection: choose STARTTLS or TLS	Ο κωδικός απαιτεί κρυπτογραφημένη σύνδεση: επιλέξτε STARTTLS ή TLS
+	A message needs at least one recipient	Το μήνυμα χρειάζεται τουλάχιστον έναν παραλήπτη
+	The previous message is still being sent	Το προηγούμενο μήνυμα αποστέλλεται ακόμη
+	Message sent to {server} ({bytes} bytes)	Το μήνυμα στάλθηκε στο {server} ({bytes} byte)
+	Message sent to {server} ({bytes} bytes); the relay refused {refused}	Το μήνυμα στάλθηκε στο {server} ({bytes} byte); ο διακομιστής απέρριψε: {refused}
+	Not sent: {reason}	Δεν στάλθηκε: {reason}
+	the session stopped unexpectedly	η συνεδρία διακόπηκε απροσδόκητα
+	Sending an email needs the desktop app: a browser has no mail connection	Η αποστολή email απαιτεί την εφαρμογή για υπολογιστή: το πρόγραμμα περιήγησης δεν έχει σύνδεση αλληλογραφίας

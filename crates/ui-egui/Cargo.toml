@@ -33,6 +33,8 @@ base64 = "0.22"
 unicode-bidi = "0.3"
 
 [target.'cfg(not(target_arch = "wasm32"))'.dependencies]
+# File ▸ Send as email…: the SMTP client (it carries its own TLS stack, native targets only).
+pdfcraft-smtp = { workspace = true }
 # Control-channel tokens.
 getrandom = "0.4"
 # Create ▸ Clipboard (images; already in the tree through egui-winit).

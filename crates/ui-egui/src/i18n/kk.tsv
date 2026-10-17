@@ -2350,3 +2350,27 @@ animation effects	Off	Өшірулі
 	This document is trying to open a local file:	Бұл құжат жергілікті файлды ашуға әрекеттеніп жатыр:
 	Move tag earlier	Тегті ертерек жылжыту
 	Move tag later	Тегті кейінірек жылжыту
+	Send as email…	Электрондық пошта ретінде жіберу…
+	Send as email	Электрондық пошта ретінде жіберу
+	The message is the one Save as email message… writes, delivered over SMTP. Nothing is sent until you press Send.	Хабар «Электрондық пошта хабары ретінде сақтау…» жасайтын хабардың дәл өзі және SMTP арқылы жеткізіледі. «Жіберу» түймесін баспайынша ештеңе жіберілмейді.
+	Server:	Сервер:
+	Port:	Порт:
+	Security:	Қауіпсіздік:
+	Cc:	Көшірме:
+	Subject:	Тақырып:
+	Body:	Мәтін:
+	User name:	Пайдаланушы аты:
+	Password:	Құпия сөз:
+	The server needs a user name and password	Сервер пайдаланушы аты мен құпия сөзді талап етеді
+	Not encrypted: the message travels in the clear	Шифрлаусыз: хабар ашық мәтінмен жіберіледі
+	Send	Жіберу
+	The port is a number from 1 to 65535	Порт — 1-ден 65535-ке дейінгі сан
+	The server needs a host name	Серверге хост аты қажет
+	A password needs an encrypted connection: choose STARTTLS or TLS	Құпия сөз шифрланған қосылымды қажет етеді: STARTTLS немесе TLS таңдаңыз
+	A message needs at least one recipient	Хабарға кемінде бір алушы қажет
+	The previous message is still being sent	Алдыңғы хабар әлі жіберілуде
+	Message sent to {server} ({bytes} bytes)	Хабар {server} мекенжайына жіберілді ({bytes} байт)
+	Message sent to {server} ({bytes} bytes); the relay refused {refused}	Хабар {server} мекенжайына жіберілді ({bytes} байт); сервер бас тартты: {refused}
+	Not sent: {reason}	Жіберілмеді: {reason}
+	the session stopped unexpectedly	сессия кенеттен үзілді
+	Sending an email needs the desktop app: a browser has no mail connection	Электрондық пошта жіберу үшін жұмыс үстелі қолданбасы қажет: браузерде пошта қосылымы жоқ

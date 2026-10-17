@@ -407,6 +407,12 @@ impl PdfCraftApp {
                 self.apply_edit(Edit::RemoveMarks { kind });
             }
             "email.message" => self.email_dialog(),
+            // A browser has no sockets at all, so sending is desktop-only; the command stays
+            // registered (the registry is shared) and says so rather than doing nothing.
+            #[cfg(not(target_arch = "wasm32"))]
+            "email.send" => self.email_send_dialog(),
+            #[cfg(target_arch = "wasm32")]
+            "email.send" => self.notify_tr("Sending an email needs the desktop app: a browser has no mail connection"),
             "export.image" => self.dialog = Some(Dialog::Export(crate::export_ui::ExportKind::Image)),
             "export.text" => self.dialog = Some(Dialog::Export(crate::export_ui::ExportKind::Text)),
             "a11y.check" => self.start_accessibility_check(),

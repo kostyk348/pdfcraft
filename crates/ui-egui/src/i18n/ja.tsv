@@ -2352,3 +2352,27 @@ animation effects	Off	オフ
 	This document is trying to open a local file:	この文書はローカルファイルを開こうとしています：
 	Move tag earlier	タグを前へ移動
 	Move tag later	タグを後へ移動
+	Send as email…	メールとして送信…
+	Send as email	メールとして送信
+	The message is the one Save as email message… writes, delivered over SMTP. Nothing is sent until you press Send.	メッセージは「メールメッセージとして保存…」が作成するものと同じで、SMTP で配送されます。「送信」を押すまで何も送信されません。
+	Server:	サーバー:
+	Port:	ポート:
+	Security:	セキュリティ:
+	Cc:	Cc:
+	Subject:	件名:
+	Body:	本文:
+	User name:	ユーザー名:
+	Password:	パスワード:
+	The server needs a user name and password	サーバーはユーザー名とパスワードを要求しています
+	Not encrypted: the message travels in the clear	暗号化なし: メッセージは平文で送られます
+	Send	送信
+	The port is a number from 1 to 65535	ポートは 1〜65535 の数値です
+	The server needs a host name	サーバーのホスト名が必要です
+	A password needs an encrypted connection: choose STARTTLS or TLS	パスワードには暗号化された接続が必要です: STARTTLS または TLS を選んでください
+	A message needs at least one recipient	メッセージには少なくとも 1 人の宛先が必要です
+	The previous message is still being sent	前のメッセージをまだ送信中です
+	Message sent to {server} ({bytes} bytes)	{server} にメッセージを送信しました ({bytes} バイト)
+	Message sent to {server} ({bytes} bytes); the relay refused {refused}	{server} にメッセージを送信しました ({bytes} バイト)。サーバーが拒否しました: {refused}
+	Not sent: {reason}	送信できませんでした: {reason}
+	the session stopped unexpectedly	セッションが予期せず切断されました
+	Sending an email needs the desktop app: a browser has no mail connection	メールの送信にはデスクトップアプリが必要です: ブラウザーにはメール接続がありません

@@ -72,6 +72,8 @@ mod autoscroll;
 mod bidi;
 pub mod bulk_fields;
 mod dialogs;
+#[cfg(not(target_arch = "wasm32"))]
+pub mod email_send;
 mod edit_text_ui;
 mod editing;
 #[cfg(not(target_arch = "wasm32"))]
@@ -336,6 +338,8 @@ pub enum Dialog {
     AuditSpace,
     /// Signatures ▸ Show certificate.
     CertificateViewer,
+    /// File ▸ Send as email… (the SMTP session; native only).
+    EmailSend,
 }
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
@@ -624,6 +628,9 @@ pub struct PdfCraftApp {
     pub split_draft: SplitDraft,
     pub extract_draft: ExtractDraft,
     pub rotate_draft: RotateDraft,
+    /// File ▸ Send as email…: the relay, the envelope and the last session (native only).
+    #[cfg(not(target_arch = "wasm32"))]
+    pub email: email_send::EmailSend,
     /// Summarize Comments: sort order.
     pub summary_sort: pdfcraft_engine::SummarySort,
     /// The signing dialogs' state.
@@ -948,6 +955,8 @@ impl PdfCraftApp {
             split_draft: SplitDraft::default(),
             extract_draft: ExtractDraft::default(),
             rotate_draft: RotateDraft::default(),
+            #[cfg(not(target_arch = "wasm32"))]
+            email: email_send::EmailSend::default(),
             summary_sort: Default::default(),
             sign_draft: None,
             digital_ids: Vec::new(),
@@ -2894,6 +2903,8 @@ impl eframe::App for PdfCraftApp {
             }
         }
         self.poll_export();
+        #[cfg(not(target_arch = "wasm32"))]
+        self.poll_email_send();
         self.poll_ocr();
         self.poll_optimize();
         self.poll_action();

@@ -2374,3 +2374,27 @@ animation effects	Off	Вимкнено
 	This document is trying to open a local file:	Цей документ намагається відкрити локальний файл:
 	Move tag earlier	Перемістити тег раніше
 	Move tag later	Перемістити тег пізніше
+	Send as email…	Надіслати листом…
+	Send as email	Надіслати листом
+	The message is the one Save as email message… writes, delivered over SMTP. Nothing is sent until you press Send.	Лист — той самий, що створює «Зберегти як повідомлення електронної пошти…», доставлений через SMTP. Нічого не надсилається, доки ви не натиснете «Надіслати».
+	Server:	Сервер:
+	Port:	Порт:
+	Security:	Безпека:
+	Cc:	Копія:
+	Subject:	Тема:
+	Body:	Текст:
+	User name:	Ім'я користувача:
+	Password:	Пароль:
+	The server needs a user name and password	Серверу потрібні ім'я користувача й пароль
+	Not encrypted: the message travels in the clear	Без шифрування: лист передається відкритим текстом
+	Send	Надіслати
+	The port is a number from 1 to 65535	Порт — число від 1 до 65535
+	The server needs a host name	Серверу потрібне ім'я хоста
+	A password needs an encrypted connection: choose STARTTLS or TLS	Пароль потребує зашифрованого з'єднання: виберіть STARTTLS або TLS
+	A message needs at least one recipient	Листу потрібен хоча б один одержувач
+	The previous message is still being sent	Попередній лист ще надсилається
+	Message sent to {server} ({bytes} bytes)	Лист надіслано на {server} ({bytes} байтів)
+	Message sent to {server} ({bytes} bytes); the relay refused {refused}	Лист надіслано на {server} ({bytes} байтів); сервер відхилив: {refused}
+	Not sent: {reason}	Не надіслано: {reason}
+	the session stopped unexpectedly	сеанс несподівано перервався
+	Sending an email needs the desktop app: a browser has no mail connection	Для надсилання листа потрібен застосунок для комп'ютера: у браузера немає поштового з'єднання

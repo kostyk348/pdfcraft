@@ -237,14 +237,21 @@ an inline PNG in an HTML body, the PDF attached) and hands it to the SMTP server
 `host`, `port`, `security`, an optional `username`/`password` (AUTH PLAIN), `from`, `to`, `cc` and the
 same `subject`, `body` and `dpi`. Nothing else in the tool table opens a socket.
 
+`security` names the transport: `none` (clear text, only for a relay on this machine or one inside a
+trusted network), `starttls` (RFC 3207: the session is upgraded on the same connection before the
+envelope; usually port 587) or `tls` (RFC 8314 implicit TLS; usually port 465). The certificate is
+always verified against the operating system's roots — there is no "accept anything" switch, in the
+tool or in the client — and a relay whose certificate does not check out comes back as an error with
+nothing sent. Only the TLS tests in `pdfcraft-smtp` trust their own receiver, and they do it with
+`Server::extra_roots`, which *adds* an anchor rather than switching checking off.
+
 A request that cannot be carried out is refused **before** the connection, with the error as a value:
 an address a relay could not read (a space, a line ending, `<`, `>`, a comma, no `@`), a port that is
-not a port, credentials given without their other half, `security` other than `none` (TLS lives in
-the app tier and is not wired in yet, so `starttls`/`tls` say so instead of sending a password in the
-clear), or a document that cannot be rendered. With `crlf` off (the default) the message goes out
-byte for byte, so what a receiver keeps hashes the same as the `.eml`; `crlf true` sends RFC 5321
-line endings, which a relay that rejects bare LF wants. Results carry the recipients the relay took,
-its reply, the session log (credentials redacted), the byte count and the message's SHA-256. See
+not a port, credentials given without their other half, a `security` name that is not a transport, or
+a document that cannot be rendered. With `crlf` off (the default) the message goes out byte for byte,
+so what a receiver keeps hashes the same as the `.eml`; `crlf true` sends RFC 5321 line endings, which
+a relay that rejects bare LF wants. Results carry the recipients the relay took, its reply, the
+session log (credentials redacted), the byte count and the message's SHA-256. See
 [`pdfcraft-smtp`](../smtp/README.md) for the protocol and what is not implemented.
 
 ## Folder batches

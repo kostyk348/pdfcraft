@@ -2316,3 +2316,27 @@ animation effects	Off	关
 	This document is trying to open a local file:	此文档正尝试打开本地文件：
 	Move tag earlier	将标签前移
 	Move tag later	将标签后移
+	Send as email…	作为电子邮件发送…
+	Send as email	作为电子邮件发送
+	The message is the one Save as email message… writes, delivered over SMTP. Nothing is sent until you press Send.	该邮件与“另存为电子邮件…”生成的完全相同，通过 SMTP 投递。在按下“发送”之前不会发送任何内容。
+	Server:	服务器：
+	Port:	端口：
+	Security:	安全：
+	Cc:	抄送：
+	Subject:	主题：
+	Body:	正文：
+	User name:	用户名：
+	Password:	密码：
+	The server needs a user name and password	服务器需要用户名和密码
+	Not encrypted: the message travels in the clear	未加密：邮件以明文传输
+	Send	发送
+	The port is a number from 1 to 65535	端口是 1 到 65535 之间的数字
+	The server needs a host name	服务器需要主机名
+	A password needs an encrypted connection: choose STARTTLS or TLS	密码需要加密连接：请选择 STARTTLS 或 TLS
+	A message needs at least one recipient	邮件至少需要一个收件人
+	The previous message is still being sent	上一封邮件仍在发送中
+	Message sent to {server} ({bytes} bytes)	邮件已发送至 {server}（{bytes} 字节）
+	Message sent to {server} ({bytes} bytes); the relay refused {refused}	邮件已发送至 {server}（{bytes} 字节）；服务器拒绝了：{refused}
+	Not sent: {reason}	未发送：{reason}
+	the session stopped unexpectedly	会话意外中断
+	Sending an email needs the desktop app: a browser has no mail connection	发送邮件需要桌面应用：浏览器没有邮件连接

@@ -2373,3 +2373,27 @@ animation effects	Off	معطّلة
 	This document is trying to open a local file:	يحاول هذا المستند فتح ملف محلي:
 	Move tag earlier	نقل العلامة للأعلى
 	Move tag later	نقل العلامة للأسفل
+	Send as email…	إرسال كبريد إلكتروني…
+	Send as email	إرسال كبريد إلكتروني
+	The message is the one Save as email message… writes, delivered over SMTP. Nothing is sent until you press Send.	الرسالة هي نفسها التي ينشئها «حفظ كرسالة بريد إلكتروني…»، وتُسلَّم عبر SMTP. لا يُرسَل شيء حتى تضغط إرسال.
+	Server:	الخادم:
+	Port:	المنفذ:
+	Security:	الأمان:
+	Cc:	نسخة:
+	Subject:	الموضوع:
+	Body:	النص:
+	User name:	اسم المستخدم:
+	Password:	كلمة المرور:
+	The server needs a user name and password	يطلب الخادم اسم مستخدم وكلمة مرور
+	Not encrypted: the message travels in the clear	بلا تشفير: تُنقَل الرسالة كنص مكشوف
+	Send	إرسال
+	The port is a number from 1 to 65535	المنفذ رقم من 1 إلى 65535
+	The server needs a host name	يحتاج الخادم إلى اسم مضيف
+	A password needs an encrypted connection: choose STARTTLS or TLS	كلمة المرور تتطلب اتصالاً مشفرًا: اختر STARTTLS أو TLS
+	A message needs at least one recipient	تحتاج الرسالة إلى مستلم واحد على الأقل
+	The previous message is still being sent	ما زالت الرسالة السابقة تُرسَل
+	Message sent to {server} ({bytes} bytes)	أُرسلت الرسالة إلى {server} ({bytes} بايت)
+	Message sent to {server} ({bytes} bytes); the relay refused {refused}	أُرسلت الرسالة إلى {server} ({bytes} بايت)؛ رفض الخادم: {refused}
+	Not sent: {reason}	لم تُرسل: {reason}
+	the session stopped unexpectedly	انقطعت الجلسة على نحو غير متوقع
+	Sending an email needs the desktop app: a browser has no mail connection	إرسال البريد الإلكتروني يحتاج تطبيق سطح المكتب: لا يملك المتصفح اتصال بريد

@@ -2353,3 +2353,27 @@ animation effects	Off	Aus
 	This document is trying to open a local file:	Dieses Dokument versucht, eine lokale Datei zu öffnen:
 	Move tag earlier	Tag früher verschieben
 	Move tag later	Tag später verschieben
+	Send as email…	Als E-Mail senden…
+	Send as email	Als E-Mail senden
+	The message is the one Save as email message… writes, delivered over SMTP. Nothing is sent until you press Send.	Die Nachricht ist dieselbe, die „Als E-Mail-Nachricht speichern…“ erzeugt, nur über SMTP zugestellt. Erst mit „Senden“ wird etwas gesendet.
+	Server:	Server:
+	Port:	Port:
+	Security:	Sicherheit:
+	Cc:	Cc:
+	Subject:	Betreff:
+	Body:	Text:
+	User name:	Benutzername:
+	Password:	Passwort:
+	The server needs a user name and password	Der Server verlangt Benutzername und Passwort
+	Not encrypted: the message travels in the clear	Unverschlüsselt: die Nachricht wird im Klartext übertragen
+	Send	Senden
+	The port is a number from 1 to 65535	Der Port ist eine Zahl von 1 bis 65535
+	The server needs a host name	Der Server braucht einen Hostnamen
+	A password needs an encrypted connection: choose STARTTLS or TLS	Ein Passwort braucht eine verschlüsselte Verbindung: STARTTLS oder TLS wählen
+	A message needs at least one recipient	Eine Nachricht braucht mindestens einen Empfänger
+	The previous message is still being sent	Die vorige Nachricht wird noch gesendet
+	Message sent to {server} ({bytes} bytes)	Nachricht an {server} gesendet ({bytes} Bytes)
+	Message sent to {server} ({bytes} bytes); the relay refused {refused}	Nachricht an {server} gesendet ({bytes} Bytes); der Server lehnte ab: {refused}
+	Not sent: {reason}	Nicht gesendet: {reason}
+	the session stopped unexpectedly	die Sitzung brach unerwartet ab
+	Sending an email needs the desktop app: a browser has no mail connection	E-Mail senden braucht die Desktop-App: ein Browser hat keine Mailverbindung

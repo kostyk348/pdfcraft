@@ -1,24 +1,31 @@
 //! pdfcraft-smtp — delivering a message over SMTP (RFC 5321).
 //!
-//! A client, not a server: it connects, says hello, authenticates when the caller gave it
-//! credentials, hands over the message bytes and quits. It composes nothing (that is
-//! `pdfcraft-eml`) and it holds no configuration of its own — no relay, no credentials, no port:
-//! [`send`] opens a socket only when a caller passes a [`Server`], which is what makes sending an
-//! explicit, opt-in step rather than something a document ever does on its own.
+//! A client, not a server: it connects, says hello, encrypts the session when the caller asked for
+//! it, authenticates when the caller gave it credentials, hands over the message bytes and quits.
+//! It composes nothing (that is `pdfcraft-eml`) and it holds no configuration of its own — no relay,
+//! no credentials, no port: [`send`] opens a socket only when a caller passes a [`Server`], which is
+//! what makes sending an explicit, opt-in step rather than something a document ever does on its
+//! own.
 //!
-//! **Layer:** L0 (standalone, publishable). No dependency beyond the standard library.
+//! **Layer:** L0 (standalone, publishable). No workspace dependency. Transport security is the
+//! workspace's own rustls stack, trusting the operating system's roots (native targets only: a
+//! browser build has no sockets).
 //!
 //! Clean-room from the public RFCs only: RFC 5321 (the SMTP session and the envelope),
-//! RFC 4954 (the `AUTH` extension and its `PLAIN` mechanism). Everything is a returned value:
-//! a bad address, an unreachable relay, a refused recipient and a relay that talks nonsense all
-//! come back as [`Error`], and no path in this crate panics.
+//! RFC 4954 (the `AUTH` extension and its `PLAIN` mechanism), RFC 3207 (`STARTTLS`) and RFC 8314
+//! (implicit TLS, `smtps:`). Everything is a returned value:
+//! a bad address, an unreachable relay, a certificate that does not check out, a refused recipient
+//! and a relay that talks nonsense all come back as [`Error`], and no path in this crate panics.
 
 #![deny(clippy::unwrap_used, clippy::expect_used, clippy::panic, clippy::unimplemented, clippy::todo, clippy::unreachable)]
 
 use std::fmt;
-use std::io::{BufRead, BufReader, Write};
+use std::io::{BufRead, BufReader, Read, Write};
 use std::net::{TcpStream, ToSocketAddrs};
 use std::time::Duration;
+
+#[cfg(not(target_arch = "wasm32"))]
+use std::sync::Arc;
 
 /// A reply is a handful of lines; these bound a relay that keeps talking so the session always ends.
 const MAX_REPLY_LINES: usize = 200;
@@ -34,17 +41,20 @@ const MAX_ADDRESSES: usize = 8;
 /// How the connection is protected.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum Security {
-    /// No transport security: the session runs in the clear. The only one this build carries out.
+    /// No transport security: the session runs in the clear, for a relay on this machine or one
+    /// already inside a trusted network.
     Plain,
-    /// `STARTTLS` (RFC 3207).
+    /// `STARTTLS` (RFC 3207): the session starts in the clear, then the same connection is upgraded
+    /// after `EHLO`, and everything after it — including any password — is encrypted.
     StartTls,
-    /// Implicit TLS, as `smtps://` speaks (RFC 8314).
+    /// Implicit TLS, as `smtps://` speaks (RFC 8314): the handshake comes before the greeting.
     ImplicitTls,
 }
 
 impl Security {
     /// Read a `security` argument: `none`, `starttls` or `tls`. Naming a mode this build cannot
-    /// carry out is not an error here — [`send`] refuses it before opening anything.
+    /// carry out (a browser build has no sockets) is not an error here — [`send`] refuses it
+    /// before opening anything.
     pub fn parse(name: &str) -> Result<Security, Error> {
         match name.trim().to_ascii_lowercase().as_str() {
             "none" => Ok(Security::Plain),
@@ -83,6 +93,11 @@ pub struct Server {
     /// point of a hash-chained receipt. A strict relay that rejects bare LF (`smtpd_forbid_bare_newline`)
     /// wants this on.
     pub crlf: bool,
+    /// Extra certificates the peer's chain may end at, DER-encoded — a relay whose own CA the system
+    /// store does not carry. **Added to** the operating system's roots; verification is never
+    /// switched off, so a certificate that does not check out is still an [`Error::Tls`]. Empty by
+    /// default; tests use it to trust their own receiver.
+    pub extra_roots: Vec<Vec<u8>>,
 }
 
 impl Default for Server {
@@ -96,6 +111,7 @@ impl Default for Server {
             timeout: Duration::from_secs(30),
             client_name: "pdfcraft.local".to_string(),
             crlf: false,
+            extra_roots: Vec::new(),
         }
     }
 }
@@ -129,6 +145,9 @@ pub enum Error {
     Config(String),
     /// The relay could not be resolved or reached.
     Connect(String),
+    /// The encrypted session could not be set up, above all a certificate that did not check out.
+    /// Nothing was sent: the handshake comes before the first command.
+    Tls(String),
     /// The relay sent something that is not an SMTP reply, or stopped in the middle.
     Protocol(String),
     /// The relay refused a command.
@@ -140,6 +159,7 @@ impl fmt::Display for Error {
         match self {
             Error::Config(m) => write!(f, "{m}"),
             Error::Connect(m) => write!(f, "{m}"),
+            Error::Tls(m) => write!(f, "{m}"),
             Error::Protocol(m) => write!(f, "{m}"),
             Error::Refused { command, code, reply } => write!(f, "the server refused {command}: {code} {reply}"),
         }
@@ -150,13 +170,15 @@ impl std::error::Error for Error {}
 
 /// Hand `message` to `server` for `recipients`, as `from`.
 ///
-/// The session is: connect, greeting, `EHLO` (falling back to `HELO`), `AUTH PLAIN` when
+/// The session is: connect, (handshake, for implicit TLS), greeting, `EHLO` (falling back to
+/// `HELO`), `STARTTLS` and a second `EHLO` when the caller asked for it, `AUTH PLAIN` when
 /// credentials were given, `MAIL FROM`, one `RCPT TO` per recipient, `DATA`, the message, `QUIT`.
 /// The message bytes are framed for the transfer and otherwise left alone (see [`Server::crlf`]).
 ///
 /// A configuration mistake — an address a relay could not read, a mode this build does not carry
 /// out, credentials without a user name — comes back as [`Error::Config`] **before** the socket is
-/// opened.
+/// opened; a certificate that does not check out is [`Error::Tls`] and stops the session before
+/// the envelope, so nothing is ever handed to a relay unencrypted by mistake.
 pub fn send(server: &Server, from: &str, recipients: &[String], message: &[u8]) -> Result<Report, Error> {
     let from = address("from", from)?;
     let recipients = envelope(recipients)?;
@@ -165,7 +187,23 @@ pub fn send(server: &Server, from: &str, recipients: &[String], message: &[u8]) 
 
     let mut session = Session::connect(server)?;
     session.greeting()?;
-    let capabilities = session.hello(&server.client_name)?;
+    let mut capabilities = session.hello(&server.client_name)?;
+
+    // RFC 3207 §4.2: once the session is encrypted, what the relay said before is forgotten and
+    // `EHLO` is issued again — a relay may offer different extensions on a protected session.
+    if server.security == Security::StartTls {
+        if !capabilities.iter().any(|word| word == "STARTTLS") {
+            return Err(Error::Config(format!(
+                "the server does not offer STARTTLS (it listed: {}), so this session cannot be encrypted; \
+                 use security \"tls\" for a TLS port (465), or \"none\" only for a relay you trust",
+                if capabilities.is_empty() { "nothing".to_string() } else { capabilities.join(" ") }
+            )));
+        }
+        session = session.starttls(server)?;
+        capabilities = session.hello(&server.client_name)?;
+        session.note("TLS established (RFC 3207 STARTTLS)");
+    }
+
     session.authenticate(server, &capabilities)?;
 
     session.expect(&format!("MAIL FROM:<{from}>"), &[250])?;
@@ -265,12 +303,14 @@ fn check(server: &Server) -> Result<(), Error> {
     if server.port == 0 {
         return Err(Error::Config("port must be 1 to 65535".to_string()));
     }
+    // A browser build has no sockets at all; on a native build both modes are carried out for real.
+    #[cfg(target_arch = "wasm32")]
     match server.security {
         Security::Plain => {}
         Security::StartTls | Security::ImplicitTls => {
             return Err(Error::Config(format!(
-                "security {:?} is not available in this build: the workspace's TLS stack (rustls, rustls-native-certs) lives in the app tier and is not wired into pdfcraft-smtp yet, \
-                 so this client would otherwise send a password in the clear without saying so — pass security \"none\" for a local or already-trusted relay",
+                "security {:?} is not available in this build: a browser has no sockets, so PdfCraft cannot \
+                 send mail from it at all — use the desktop app",
                 server.security.name()
             )));
         }
@@ -372,10 +412,152 @@ impl Reply {
     }
 }
 
+/// The connection under a session: the socket itself, or the same socket carried by rustls.
+enum Stream {
+    Plain(TcpStream),
+    #[cfg(not(target_arch = "wasm32"))]
+    Tls(Box<rustls::StreamOwned<rustls::ClientConnection, TcpStream>>),
+}
+
+impl Read for Stream {
+    fn read(&mut self, buf: &mut [u8]) -> std::io::Result<usize> {
+        match self {
+            Stream::Plain(tcp) => tcp.read(buf),
+            #[cfg(not(target_arch = "wasm32"))]
+            Stream::Tls(tls) => tls.read(buf),
+        }
+    }
+}
+
+impl Write for Stream {
+    fn write(&mut self, buf: &[u8]) -> std::io::Result<usize> {
+        match self {
+            Stream::Plain(tcp) => tcp.write(buf),
+            #[cfg(not(target_arch = "wasm32"))]
+            Stream::Tls(tls) => tls.write(buf),
+        }
+    }
+
+    fn flush(&mut self) -> std::io::Result<()> {
+        match self {
+            Stream::Plain(tcp) => tcp.flush(),
+            #[cfg(not(target_arch = "wasm32"))]
+            Stream::Tls(tls) => tls.flush(),
+        }
+    }
+}
+
+impl Stream {
+    /// The socket underneath, for the one upgrade a session can make.
+    fn into_tcp(self) -> Result<TcpStream, Error> {
+        match self {
+            Stream::Plain(tcp) => Ok(tcp),
+            #[cfg(not(target_arch = "wasm32"))]
+            Stream::Tls(_) => Err(Error::Protocol("the session is already encrypted".to_string())),
+        }
+    }
+}
+
+/// Put `stream` inside TLS and complete the handshake now, so a certificate that does not check out
+/// is reported as itself instead of turning into a protocol error on the first command.
+#[cfg(not(target_arch = "wasm32"))]
+fn handshake(stream: Stream, server: &Server) -> Result<Stream, Error> {
+    let mut tcp = stream.into_tcp()?;
+    let config = client_config(&server.extra_roots)?;
+    let host = server.host.trim();
+    let name = rustls::pki_types::ServerName::try_from(host.to_string())
+        .map_err(|_| Error::Config(format!("{host:?} is not a name or address a certificate can be checked against")))?;
+    let mut session = rustls::ClientConnection::new(config, name)
+        .map_err(|e| Error::Tls(format!("the encrypted session with {host}:{} could not be started: {e}", server.port)))?;
+    while session.is_handshaking() {
+        // The socket's read and write timeouts still apply, so a relay that stalls mid-handshake ends.
+        session.complete_io(&mut tcp).map_err(|e| handshake_error(server, &e))?;
+    }
+    Ok(Stream::Tls(Box::new(rustls::StreamOwned::new(session, tcp))))
+}
+
+/// What the peer's chain may end at: the operating system's roots, plus any the caller named.
+///
+/// Verification is never switched off — a relay whose certificate the system store does not carry is
+/// an error, not a reason to send anyway (AGENTS.md §3: safe by default).
+#[cfg(not(target_arch = "wasm32"))]
+fn client_config(extra_roots: &[Vec<u8>]) -> Result<Arc<rustls::ClientConfig>, Error> {
+    let mut roots = rustls::RootCertStore::empty();
+    // The OS store is the trust base: no root list is bundled with the app (and none may be).
+    let system = rustls_native_certs::load_native_certs();
+    for cert in system.certs {
+        // A root the store refuses as unreadable is simply not trusted; the rest still are.
+        let _ = roots.add(cert);
+    }
+    for der in extra_roots {
+        roots
+            .add(rustls::pki_types::CertificateDer::from(der.clone()))
+            .map_err(|e| Error::Config(format!("a trusted certificate given to the client could not be read: {e}")))?;
+    }
+    if roots.is_empty() {
+        return Err(Error::Config(
+            "no trusted root certificates were found on this system, so an encrypted session could not be checked; \
+             use security \"none\" only for a relay you trust"
+                .to_string(),
+        ));
+    }
+    // Say which provider to use rather than taking a process-wide default: the workspace also has
+    // aws-lc-rs in its graph (through another crate), and picking a default would be ambiguous.
+    let provider = Arc::new(rustls::crypto::ring::default_provider());
+    let config = rustls::ClientConfig::builder_with_provider(provider)
+        .with_safe_default_protocol_versions()
+        .map_err(|e| Error::Tls(format!("the TLS settings could not be built: {e}")))?
+        .with_root_certificates(roots)
+        .with_no_client_auth();
+    Ok(Arc::new(config))
+}
+
+/// A failed handshake, in words a person can act on: above all, which certificate did not check out.
+#[cfg(not(target_arch = "wasm32"))]
+fn handshake_error(server: &Server, error: &std::io::Error) -> Error {
+    let host = server.host.trim();
+    if let Some(inner) = error.get_ref()
+        && let Some(rustls_error) = inner.downcast_ref::<rustls::Error>()
+    {
+        return Error::Tls(format!(
+            "{host}:{} did not pass certificate verification ({}); nothing was sent",
+            server.port,
+            describe(rustls_error)
+        ));
+    }
+    Error::Tls(format!("the encrypted session with {host}:{} could not be set up: {error}", server.port))
+}
+
+#[cfg(not(target_arch = "wasm32"))]
+fn describe(error: &rustls::Error) -> String {
+    use rustls::CertificateError as R;
+    match error {
+        rustls::Error::InvalidCertificate(reason) => match reason {
+            R::UnknownIssuer => "its certificate is not signed by a trusted authority".to_string(),
+            R::Expired => "its certificate has expired".to_string(),
+            R::NotValidYet => "its certificate is not valid yet".to_string(),
+            R::NotValidForName | R::NotValidForNameContext { .. } => "its certificate is for another name".to_string(),
+            R::InvalidPurpose | R::InvalidPurposeContext { .. } => "its certificate is not for a mail server".to_string(),
+            R::BadSignature => "its certificate's signature does not verify".to_string(),
+            R::Revoked => "its certificate has been revoked".to_string(),
+            other => format!("{other}"),
+        },
+        other => format!("{other}"),
+    }
+}
+
+/// A browser build has no TLS stack and no sockets: this is never reached, because `check` refuses
+/// an encrypted mode before a connection is opened. It exists so the one `send` path compiles.
+#[cfg(target_arch = "wasm32")]
+fn handshake(_stream: Stream, _server: &Server) -> Result<Stream, Error> {
+    Err(Error::Config("this build has no TLS, and no sockets at all".to_string()))
+}
+
 /// A live session, and what it said.
 struct Session {
-    reader: BufReader<TcpStream>,
-    writer: TcpStream,
+    /// The connection. Reading goes through the buffer; writing goes to the same stream directly — a
+    /// `BufReader` keeps no output, so the two directions never interleave.
+    reader: BufReader<Stream>,
     log: Vec<String>,
     /// Commands sent, so a relay that keeps asking for more cannot run us in circles.
     commands: usize,
@@ -387,17 +569,17 @@ impl Session {
             .to_socket_addrs()
             .map_err(|e| Error::Connect(format!("{}:{} could not be resolved: {e}", server.host, server.port)))?;
         let mut last: Option<String> = None;
-        let mut stream: Option<TcpStream> = None;
+        let mut tcp: Option<TcpStream> = None;
         for addr in addrs.take(MAX_ADDRESSES) {
             match TcpStream::connect_timeout(&addr, server.timeout) {
                 Ok(s) => {
-                    stream = Some(s);
+                    tcp = Some(s);
                     break;
                 }
                 Err(e) => last = Some(e.to_string()),
             }
         }
-        let stream = stream.ok_or_else(|| {
+        let tcp = tcp.ok_or_else(|| {
             Error::Connect(format!(
                 "{}:{} could not be reached: {}",
                 server.host.trim(),
@@ -405,10 +587,15 @@ impl Session {
                 last.unwrap_or_else(|| "no address".to_string())
             ))
         })?;
-        stream.set_read_timeout(Some(server.timeout)).map_err(|e| Error::Connect(format!("could not set the read timeout: {e}")))?;
-        stream.set_write_timeout(Some(server.timeout)).map_err(|e| Error::Connect(format!("could not set the write timeout: {e}")))?;
-        let writer = stream.try_clone().map_err(|e| Error::Connect(format!("could not use the connection: {e}")))?;
-        Ok(Session { reader: BufReader::new(stream), writer, log: Vec::new(), commands: 0 })
+        tcp.set_read_timeout(Some(server.timeout)).map_err(|e| Error::Connect(format!("could not set the read timeout: {e}")))?;
+        tcp.set_write_timeout(Some(server.timeout)).map_err(|e| Error::Connect(format!("could not set the write timeout: {e}")))?;
+        let stream = Stream::Plain(tcp);
+        // Implicit TLS (RFC 8314): the handshake comes before the relay says anything.
+        let stream = match server.security {
+            Security::ImplicitTls => handshake(stream, server)?,
+            _ => stream,
+        };
+        Ok(Session { reader: BufReader::new(stream), log: Vec::new(), commands: 0 })
     }
 
     fn reply(&mut self) -> Result<Reply, Error> {
@@ -469,15 +656,34 @@ impl Session {
         if self.commands > MAX_COMMANDS {
             return Err(Error::Protocol("the session sent too many commands".to_string()));
         }
-        self.writer.write_all(format!("{line}\r\n").as_bytes()).map_err(|e| Error::Protocol(format!("sending {line} failed: {e}")))?;
-        self.writer.flush().map_err(|e| Error::Protocol(format!("sending {line} failed: {e}")))
+        let stream = self.reader.get_mut();
+        stream.write_all(format!("{line}\r\n").as_bytes()).map_err(|e| Error::Protocol(format!("sending {line} failed: {e}")))?;
+        stream.flush().map_err(|e| Error::Protocol(format!("sending {line} failed: {e}")))
     }
 
     fn write_body(&mut self, payload: &[u8]) -> Result<(), Error> {
         let mut framed = Vec::with_capacity(payload.len() + 8);
         terminate(payload, &mut framed);
         self.commands += 1;
-        self.writer.write_all(&framed).and_then(|()| self.writer.flush()).map_err(|e| Error::Protocol(format!("sending the message failed: {e}")))
+        let stream = self.reader.get_mut();
+        stream.write_all(&framed).and_then(|()| stream.flush()).map_err(|e| Error::Protocol(format!("sending the message failed: {e}")))
+    }
+
+    /// `STARTTLS` (RFC 3207): ask the relay for it, then carry the same socket inside TLS. Consumes
+    /// the session — the encrypted one is a new one, with nothing the plaintext peer said kept.
+    fn starttls(self, server: &Server) -> Result<Session, Error> {
+        let mut plain = self;
+        plain.expect("STARTTLS", &[220])?;
+        // RFC 3207 §4: anything the relay sent after its 220 would be read as plaintext, which the
+        // upgrade cannot carry, so it is a protocol error rather than silently dropped.
+        let buffered = plain.reader.buffer().len();
+        if buffered != 0 {
+            return Err(Error::Protocol(format!(
+                "the server sent {buffered} bytes after accepting STARTTLS, which cannot be carried into the encrypted session"
+            )));
+        }
+        let stream = handshake(plain.reader.into_inner(), server)?;
+        Ok(Session { reader: BufReader::new(stream), log: plain.log, commands: plain.commands })
     }
 
     /// Say hello and keep the greeting in the log.
@@ -651,13 +857,14 @@ mod tests {
     }
 
     #[test]
-    fn tls_is_refused_before_a_socket_is_opened() {
-        // `127.0.0.1:1` would refuse the connection if we ever got that far, so an Err that is
-        // Config rather than Connect is the proof that nothing was opened.
-        let server = Server { host: "127.0.0.1".into(), port: 1, security: Security::StartTls, ..Default::default() };
-        let err = send(&server, "a@b", &["c@d".to_string()], b"Subject: hi\n\nbody\n").expect_err("starttls");
-        assert!(matches!(err, Error::Config(_)), "{err:?}");
-        assert!(err.to_string().contains("starttls"), "{err}");
+    fn a_tls_request_is_carried_out_rather_than_refused_before_the_socket() {
+        // Nothing listens on 127.0.0.1:1, so reaching the connect step — a `Connect` error, not a
+        // `Config` one — is the proof that the encrypted modes are no longer refused up front.
+        for security in [Security::StartTls, Security::ImplicitTls] {
+            let server = Server { host: "127.0.0.1".into(), port: 1, security, ..Default::default() };
+            let err = send(&server, "a@b", &["c@d".to_string()], b"Subject: hi\n\nbody\n").expect_err("unreachable");
+            assert!(matches!(err, Error::Connect(_)), "{security:?}: {err:?}");
+        }
     }
 
     #[test]

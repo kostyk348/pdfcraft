@@ -2348,3 +2348,27 @@ animation effects	Off	Kapalı
 	This document is trying to open a local file:	Bu belge yerel bir dosya açmaya çalışıyor:
 	Move tag earlier	Etiketi daha erken taşı
 	Move tag later	Etiketi daha geç taşı
+	Send as email…	E-posta olarak gönder…
+	Send as email	E-posta olarak gönder
+	The message is the one Save as email message… writes, delivered over SMTP. Nothing is sent until you press Send.	İleti, "E-posta iletisi olarak kaydet…" ile oluşturulanın aynısıdır ve SMTP ile teslim edilir. Gönder'e basmadan hiçbir şey gönderilmez.
+	Server:	Sunucu:
+	Port:	Bağlantı noktası:
+	Security:	Güvenlik:
+	Cc:	Bilgi:
+	Subject:	Konu:
+	Body:	Gövde:
+	User name:	Kullanıcı adı:
+	Password:	Parola:
+	The server needs a user name and password	Sunucu kullanıcı adı ve parola istiyor
+	Not encrypted: the message travels in the clear	Şifrelenmemiş: ileti açık metin olarak gider
+	Send	Gönder
+	The port is a number from 1 to 65535	Bağlantı noktası 1 ile 65535 arasında bir sayıdır
+	The server needs a host name	Sunucu bir ana makine adı gerektiriyor
+	A password needs an encrypted connection: choose STARTTLS or TLS	Parola şifreli bir bağlantı gerektirir: STARTTLS veya TLS seçin
+	A message needs at least one recipient	İletinin en az bir alıcısı olmalı
+	The previous message is still being sent	Önceki ileti hâlâ gönderiliyor
+	Message sent to {server} ({bytes} bytes)	İleti {server} sunucusuna gönderildi ({bytes} bayt)
+	Message sent to {server} ({bytes} bytes); the relay refused {refused}	İleti {server} sunucusuna gönderildi ({bytes} bayt); sunucu reddetti: {refused}
+	Not sent: {reason}	Gönderilmedi: {reason}
+	the session stopped unexpectedly	oturum beklenmedik şekilde kesildi
+	Sending an email needs the desktop app: a browser has no mail connection	E-posta göndermek için masaüstü uygulaması gerekir: tarayıcının posta bağlantısı yok

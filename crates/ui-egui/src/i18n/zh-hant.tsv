@@ -2226,3 +2226,27 @@ animation effects	Off	關
 	This document is trying to open a local file:	此文件正嘗試開啟本機檔案：
 	Move tag earlier	將標記前移
 	Move tag later	將標記後移
+	Send as email…	以電子郵件傳送…
+	Send as email	以電子郵件傳送
+	The message is the one Save as email message… writes, delivered over SMTP. Nothing is sent until you press Send.	郵件與「另存為電子郵件…」所產生的完全相同，透過 SMTP 投遞。在按下「傳送」之前不會送出任何內容。
+	Server:	伺服器：
+	Port:	連接埠：
+	Security:	安全性：
+	Cc:	副本：
+	Subject:	主旨：
+	Body:	內文：
+	User name:	使用者名稱：
+	Password:	密碼：
+	The server needs a user name and password	伺服器需要使用者名稱與密碼
+	Not encrypted: the message travels in the clear	未加密：郵件以明文傳送
+	Send	傳送
+	The port is a number from 1 to 65535	連接埠是 1 到 65535 之間的數字
+	The server needs a host name	伺服器需要主機名稱
+	A password needs an encrypted connection: choose STARTTLS or TLS	密碼需要加密連線：請選擇 STARTTLS 或 TLS
+	A message needs at least one recipient	郵件至少需要一位收件者
+	The previous message is still being sent	上一封郵件仍在傳送中
+	Message sent to {server} ({bytes} bytes)	郵件已傳送至 {server}（{bytes} 位元組）
+	Message sent to {server} ({bytes} bytes); the relay refused {refused}	郵件已傳送至 {server}（{bytes} 位元組）；伺服器拒絕了：{refused}
+	Not sent: {reason}	未傳送：{reason}
+	the session stopped unexpectedly	工作階段意外中斷
+	Sending an email needs the desktop app: a browser has no mail connection	傳送郵件需要桌面應用程式：瀏覽器沒有郵件連線

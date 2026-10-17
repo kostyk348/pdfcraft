@@ -4001,6 +4001,7 @@ dependencies = [
  "pdfcraft-model",
  "pdfcraft-platform",
  "pdfcraft-render",
+ "pdfcraft-smtp",
  "pdfcraft-xfa",
  "png 0.18.1",
  "pollster 1.0.1",

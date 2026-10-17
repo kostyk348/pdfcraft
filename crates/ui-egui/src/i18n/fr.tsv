@@ -2352,3 +2352,27 @@ animation effects	Off	Désactivés
 	This document is trying to open a local file:	Ce document tente d’ouvrir un fichier local :
 	Move tag earlier	Déplacer la balise plus tôt
 	Move tag later	Déplacer la balise plus tard
+	Send as email…	Envoyer par e-mail…
+	Send as email	Envoyer par e-mail
+	The message is the one Save as email message… writes, delivered over SMTP. Nothing is sent until you press Send.	Le message est celui que crée « Enregistrer comme message électronique… », livré par SMTP. Rien n'est envoyé tant que vous n'appuyez pas sur Envoyer.
+	Server:	Serveur :
+	Port:	Port :
+	Security:	Sécurité :
+	Cc:	Copie :
+	Subject:	Objet :
+	Body:	Texte :
+	User name:	Nom d'utilisateur :
+	Password:	Mot de passe :
+	The server needs a user name and password	Le serveur demande un nom d'utilisateur et un mot de passe
+	Not encrypted: the message travels in the clear	Non chiffré : le message circule en clair
+	Send	Envoyer
+	The port is a number from 1 to 65535	Le port est un nombre de 1 à 65535
+	The server needs a host name	Le serveur a besoin d'un nom d'hôte
+	A password needs an encrypted connection: choose STARTTLS or TLS	Un mot de passe exige une connexion chiffrée : choisissez STARTTLS ou TLS
+	A message needs at least one recipient	Un message a besoin d'au moins un destinataire
+	The previous message is still being sent	Le message précédent est encore en cours d'envoi
+	Message sent to {server} ({bytes} bytes)	Message envoyé à {server} ({bytes} octets)
+	Message sent to {server} ({bytes} bytes); the relay refused {refused}	Message envoyé à {server} ({bytes} octets) ; le serveur a refusé : {refused}
+	Not sent: {reason}	Non envoyé : {reason}
+	the session stopped unexpectedly	la session s'est interrompue de façon inattendue
+	Sending an email needs the desktop app: a browser has no mail connection	L'envoi d'e-mails nécessite l'application de bureau : un navigateur n'a pas de connexion mail

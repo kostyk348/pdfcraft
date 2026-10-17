@@ -2265,3 +2265,27 @@ animation effects	Off	Выкл
 	This document is trying to open a local file:	Этот документ пытается открыть локальный файл:
 	Move tag earlier	Переместить тег раньше
 	Move tag later	Переместить тег позже
+	Send as email…	Отправить письмом…
+	Send as email	Отправить письмом
+	The message is the one Save as email message… writes, delivered over SMTP. Nothing is sent until you press Send.	Письмо — то же, что создаёт «Сохранить как сообщение эл. почты…», доставленное по SMTP. Ничего не отправляется, пока вы не нажмёте «Отправить».
+	Server:	Сервер:
+	Port:	Порт:
+	Security:	Безопасность:
+	Cc:	Копия:
+	Subject:	Тема:
+	Body:	Текст:
+	User name:	Имя пользователя:
+	Password:	Пароль:
+	The server needs a user name and password	Серверу нужны имя пользователя и пароль
+	Not encrypted: the message travels in the clear	Без шифрования: письмо передаётся открытым текстом
+	Send	Отправить
+	The port is a number from 1 to 65535	Порт — число от 1 до 65535
+	The server needs a host name	Серверу нужно имя хоста
+	A password needs an encrypted connection: choose STARTTLS or TLS	Пароль требует зашифрованного соединения: выберите STARTTLS или TLS
+	A message needs at least one recipient	Письму нужен хотя бы один получатель
+	The previous message is still being sent	Предыдущее письмо ещё отправляется
+	Message sent to {server} ({bytes} bytes)	Письмо отправлено на {server} ({bytes} байт)
+	Message sent to {server} ({bytes} bytes); the relay refused {refused}	Письмо отправлено на {server} ({bytes} байт); сервер отклонил: {refused}
+	Not sent: {reason}	Не отправлено: {reason}
+	the session stopped unexpectedly	сеанс неожиданно прервался
+	Sending an email needs the desktop app: a browser has no mail connection	Для отправки письма нужно приложение для компьютера: у браузера нет почтового соединения

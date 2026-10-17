@@ -2361,3 +2361,27 @@ animation effects	Off	Disattivati
 	This document is trying to open a local file:	Questo documento sta tentando di aprire un file locale:
 	Move tag earlier	Sposta tag prima
 	Move tag later	Sposta tag dopo
+	Send as email…	Invia come e-mail…
+	Send as email	Invia come e-mail
+	The message is the one Save as email message… writes, delivered over SMTP. Nothing is sent until you press Send.	Il messaggio è quello creato da «Salva come messaggio di posta…», consegnato via SMTP. Nulla viene inviato finché non premi Invia.
+	Server:	Server:
+	Port:	Porta:
+	Security:	Sicurezza:
+	Cc:	Cc:
+	Subject:	Oggetto:
+	Body:	Testo:
+	User name:	Nome utente:
+	Password:	Password:
+	The server needs a user name and password	Il server richiede nome utente e password
+	Not encrypted: the message travels in the clear	Non cifrato: il messaggio viaggia in chiaro
+	Send	Invia
+	The port is a number from 1 to 65535	La porta è un numero da 1 a 65535
+	The server needs a host name	Il server richiede un nome host
+	A password needs an encrypted connection: choose STARTTLS or TLS	Una password richiede una connessione cifrata: scegli STARTTLS o TLS
+	A message needs at least one recipient	Un messaggio richiede almeno un destinatario
+	The previous message is still being sent	Il messaggio precedente è ancora in invio
+	Message sent to {server} ({bytes} bytes)	Messaggio inviato a {server} ({bytes} byte)
+	Message sent to {server} ({bytes} bytes); the relay refused {refused}	Messaggio inviato a {server} ({bytes} byte); il server ha rifiutato: {refused}
+	Not sent: {reason}	Non inviato: {reason}
+	the session stopped unexpectedly	la sessione si è interrotta inaspettatamente
+	Sending an email needs the desktop app: a browser has no mail connection	Per inviare e-mail serve l'app desktop: un browser non ha una connessione di posta

@@ -70,6 +70,7 @@ pub static TOOL_GROUPS: &[ToolGroup] = &[
             title: "Export to",
             items: &[
                 item("Email message (.eml)", "mail", "email.message", Ready),
+                item("Send as email", "send", "email.send", Ready),
                 item("Microsoft Word (.docx)", "file-text", "export.docx", Ready),
                 item("Spreadsheet (.xlsx)", "grid-3x3", "export.xlsx", Planned("M10")),
                 item("Presentation (.pptx)", "presentation", "export.pptx", Ready),

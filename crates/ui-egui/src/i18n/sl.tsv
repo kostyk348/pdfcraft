@@ -2357,3 +2357,27 @@ animation effects	Off	Izklopljeni
 	This document is trying to open a local file:	Ta dokument poskuša odpreti lokalno datoteko:
 	Move tag earlier	Premakni oznako prej
 	Move tag later	Premakni oznako pozneje
+	Send as email…	Pošlji kot e-pošto sporočilo…
+	Send as email	Pošlji kot e-pošto sporočilo
+	The message is the one Save as email message… writes, delivered over SMTP. Nothing is sent until you press Send.	Sporočilo je isto, kot ga ustvari »Shrani kot e-poštno sporočilo…«, dostavljeno prek SMTP. Nič ni poslano, dokler ne pritisnete Pošlji.
+	Server:	Strežnik:
+	Port:	Vrata:
+	Security:	Varnost:
+	Cc:	Kopija:
+	Subject:	Zadeva:
+	Body:	Telo:
+	User name:	Uporabniško ime:
+	Password:	Geslo:
+	The server needs a user name and password	Strežnik zahteva uporabniško ime in geslo
+	Not encrypted: the message travels in the clear	Brez šifriranja: sporočilo potuje v berljivem besedilu
+	Send	Pošlji
+	The port is a number from 1 to 65535	Vrata so število od 1 do 65535
+	The server needs a host name	Strežnik potrebuje ime gostitelja
+	A password needs an encrypted connection: choose STARTTLS or TLS	Geslo zahteva šifrirano povezavo: izberite STARTTLS ali TLS
+	A message needs at least one recipient	Sporočilo potrebuje vsaj enega prejemnika
+	The previous message is still being sent	Prejšnje sporočilo se še pošilja
+	Message sent to {server} ({bytes} bytes)	Sporočilo poslano na {server} ({bytes} bajtov)
+	Message sent to {server} ({bytes} bytes); the relay refused {refused}	Sporočilo poslano na {server} ({bytes} bajtov); strežnik je zavrnil: {refused}
+	Not sent: {reason}	Ni poslano: {reason}
+	the session stopped unexpectedly	seja se je nepričakovano prekinila
+	Sending an email needs the desktop app: a browser has no mail connection	Pošiljanje e-pošte zahteva namizno aplikacijo: brskalnik nima poštne povezave

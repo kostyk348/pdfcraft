@@ -178,7 +178,7 @@ pub fn tools() -> Vec<ToolDef> {
         t(
             "doc_email_send",
             "Send a document as an email message",
-            "Compose the open document as an RFC 822 / MIME message exactly as doc_email does — every page as an inline PNG in an HTML body, the PDF attached — and deliver it over SMTP to host:port. This is the opt-in sending step: doc_email only writes a file, and nothing opens a socket unless this tool is called with a server and at least one recipient. The message goes out byte for byte (crlf true sends RFC 5321 line endings instead, which a strict relay wants), so the receiver's copy is the same bytes as the .eml. security accepts \"none\"; \"starttls\" and \"tls\" are refused before anything is connected, because the workspace's TLS stack is not wired into this client yet. Credentials are used with AUTH PLAIN, and only when the server offers it.",
+            "Compose the open document as an RFC 822 / MIME message exactly as doc_email does — every page as an inline PNG in an HTML body, the PDF attached — and deliver it over SMTP to host:port. This is the opt-in sending step: doc_email only writes a file, and nothing opens a socket unless this tool is called with a server and at least one recipient. The message goes out byte for byte (crlf true sends RFC 5321 line endings instead, which a strict relay wants), so the receiver's copy is the same bytes as the .eml. security accepts \"none\" (clear text, for a relay you trust), \"starttls\" (RFC 3207: the session is upgraded before the envelope) and \"tls\" (RFC 8314 implicit TLS, port 465). The certificate is always verified against the operating system's roots — there is no way to accept any — and a relay that presents one that does not check out is an error with nothing sent. Credentials are used with AUTH PLAIN, and only when the server offers it.",
         )
         .destructive()
         .with(schema(
@@ -186,7 +186,7 @@ pub fn tools() -> Vec<ToolDef> {
                 "doc": doc(),
                 "host": { "type": "string", "minLength": 1, "description": "The SMTP server to send through." },
                 "port": { "type": "integer", "minimum": 1, "maximum": 65535, "description": "Its port (default 25)." },
-                "security": { "type": "string", "enum": ["none", "starttls", "tls"], "description": "Transport security. Only \"none\" is available in this build; the other two are refused before the connection, so a password is never sent in the clear by accident." },
+                "security": { "type": "string", "enum": ["none", "starttls", "tls"], "description": "Transport security: \"none\" (clear text, only for a relay you trust), \"starttls\" (RFC 3207: the session is upgraded before the envelope; usually port 587) or \"tls\" (RFC 8314 implicit TLS; usually port 465). The certificate is always verified against the operating system's roots." },
                 "username": { "type": "string", "description": "AUTH PLAIN user name (needs password too)." },
                 "password": { "type": "string", "description": "AUTH PLAIN password. Never written to the result's log." },
                 "from": { "type": "string", "description": "Sender address (default pdfcraft@localhost)." },
