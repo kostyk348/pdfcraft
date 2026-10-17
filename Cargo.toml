@@ -39,6 +39,7 @@ pdfcraft-js = { path = "crates/js", version = "0.7.0" }
 pdfcraft-compare = { path = "crates/compare", version = "0.7.0" }
 pdfcraft-preflight = { path = "crates/preflight", version = "0.7.0" }
 pdfcraft-export = { path = "crates/export", version = "0.7.0" }
+pdfcraft-translate = { path = "crates/translate", version = "0.7.0" }
 pdfcraft-edit = { path = "crates/edit", version = "0.7.0" }
 pdfcraft-create = { path = "crates/create", version = "0.7.0" }
 pdfcraft-eml = { path = "crates/eml", version = "0.7.0" }

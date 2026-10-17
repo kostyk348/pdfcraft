@@ -73,6 +73,56 @@ its other colours, fonts, values and unknown PDF dictionary keys. `"none"` remov
 or fill colour. Names, rectangles and rotations require the single-field form. Results keep
 `field` for single edits and return `fields` for batches. CLI and MCP use the same tool.
 
+## Translating text in place
+
+`doc_translate {doc, translations?, network?, pages?, font_resource?, min_size?, shrink?, out?}`
+replaces the text of each paragraph with its translation and changes nothing else: every visual row
+keeps its own font resource (so a heading stays bold and a caption italic), its size, its colour and
+its place on the page, and the paragraph keeps its rotation, alignment and box. Rows are never
+merged, split or re-flowed into each other — what the engine draws is the source layout with other
+words in it.
+
+Whether a translation fits is decided by measuring the very rewrite Apply would run, and row by row:
+one row that is too long does not cost the paragraph the rows that do fit. **Nothing is drawn
+smaller unless `shrink` is passed**, and then only the row that does not fit, down to `min_size`
+(default 5 pt); every shrunk row is listed in `shrunk_rows` with the size it got. Without `shrink` a
+row that does not fit is left exactly as it was and reported in `too_long` with its box, its text and
+the translation.
+
+Text comes from `translations` (a JSON object of source string → translation, compared with
+whitespace collapsed) and/or `network` (an explicitly named DeepLX-compatible endpoint). **The map
+opens no socket**, so a run stays reproducible and the tests need no network; the endpoint is built
+only from the `network` argument, the map answers first, and `network_requests` in the result proves
+how many requests the run made (0 when the map covered every paragraph). A backend that cannot
+answer fails the call **before the first edit**: translations are collected for the whole run first,
+so nothing is left half-translated.
+
+```json
+[{"tool": "doc_translate", "args": {"doc": 1, "translations": "de.json", "out": "german.pdf"}}]
+```
+
+```json
+{"Hello world": "Hallo Welt", "Second line": "Zweite Zeile"}
+```
+
+Nothing is skipped silently: `missing` (no translation supplied), `too_long` (does not fit its box —
+with `page`, `rect`, `text` and `translation`) and `failed` (the font cannot show the new characters)
+carry the coordinates a report is read for. Invisible text over a scan (an OCR layer) is counted in
+`invisible` and left alone — drawing a translation on top of the scanned word would only obscure it.
+For a target script no available face can show (Cyrillic or Greek in a build without craft-fonts)
+load a face with `text_font_import` and pass its resource as `font_resource`; the result's `fonts`
+names what the translations were drawn in.
+
+A face with taller metrics than the source's may reach about 15% of the size beyond the paragraph's
+band without counting as an overflow, so a Cyrillic or Greek translation is not refused for Inter's
+descenders; wrapping to another row overshoots by far more and is still caught.
+
+Known limits: per paragraph, so a table's cells translate but its columns do not move; vertical
+writing mode, text inside figures, form fields and annotations are not translated; a row that mixes
+styles (a bold word inside a sentence) keeps the first run's face for the whole translation and is
+listed as `formatting_lost`; one undo step per paragraph. See `parity/acrobat-features.toml`
+`edit.translate-text`.
+
 ## MCP server
 
 **Opt-in only.** Nothing starts it automatically, and it opens no port. It runs while `pdfcraft-cli mcp [--root DIR]` runs, normally launched by an agent from its MCP configuration. It stops when stdin closes. The CLI's `mcp` Cargo feature (on by default) compiles it out entirely when disabled.

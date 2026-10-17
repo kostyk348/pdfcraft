@@ -43,6 +43,16 @@ fn across(line: &TextLine) -> f64 {
     if h.is_finite() && h > 1e-9 { h } else { line.origin.k }
 }
 
+/// Whether a run's baseline is horizontal, i.e. whether its page-space bbox runs along the text:
+/// only then does the bbox's width measure the run's advance and its left edge the pen position.
+fn horizontal(line: &TextLine) -> bool {
+    let m = Matrix(line.origin.tm).then(&Matrix(line.origin.ctm)).0;
+    let degrees = if m[0].is_finite() && m[1].is_finite() { m[1].atan2(m[0]).to_degrees() } else { 0.0 };
+    let degrees = degrees.rem_euclid(360.0);
+    let off = degrees.min((degrees - 180.0).abs()).min((degrees - 360.0).abs());
+    off < 0.01
+}
+
 /// Invisible text (rendering mode 3), as in an OCR layer over a scanned image.
 fn invisible(line: &TextLine) -> bool {
     line.origin.state.render_mode == 3
@@ -434,7 +444,15 @@ pub(super) fn rewrite_styled_block(
             ) * source.origin.state.scale
                 * across(source);
             let changed_face = style.resource.is_some() || overrides.get(&index).is_some_and(|r| r.family.is_some() || r.resource.is_some());
-            let factor = if nominal > 0.0 && !changed_face { ((source.rect[2] - source.rect[0]) / nominal).clamp(0.5, 2.0) } else { 1.0 };
+            // The source bbox's width measures the run's advance only when the baseline is
+            // horizontal; for a turned run that width measures across the baseline, so using it
+            // would squeeze the replacement to a fraction of its size. Turned runs are rebuilt
+            // from the per-character advances instead.
+            let factor = if nominal > 0.0 && !changed_face && horizontal(source) {
+                ((source.rect[2] - source.rect[0]) / nominal).clamp(0.5, 2.0)
+            } else {
+                1.0
+            };
             calibration.insert(index, factor);
         }
     }
@@ -592,7 +610,13 @@ pub(super) fn rewrite_styled_block(
         let w = measured.get(row_index).copied().unwrap_or(0.0);
         let align = style.align.unwrap_or(if centered { crate::added::Align::Center } else { crate::added::Align::Left });
         let original_rect = block.rows.get(row_index).and_then(|row| row_rect(row, lines)).unwrap_or(block.rect);
-        let left = if style.width.is_none() && style.align.is_none() { original_rect[0] } else { block.rect[0] };
+        // A row's bbox starts at its pen position only for a horizontal run: a turned run's bbox
+        // begins one ascent to the side of the baseline, so the pen comes from the source origin.
+        let left = if style.width.is_none() && style.align.is_none() {
+            if horizontal(anchor) { original_rect[0] } else { anchor.origin.x }
+        } else {
+            block.rect[0]
+        };
         let available = if style.width.is_none() && style.align.is_none() { original_rect[2] - original_rect[0] } else { width };
         let mut x = left
             + match align {

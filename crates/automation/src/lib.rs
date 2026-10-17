@@ -27,6 +27,7 @@ mod redact;
 mod signing;
 mod text_cache;
 mod tools;
+mod translate;
 
 use std::collections::HashMap;
 use std::path::{Path, PathBuf};
@@ -504,6 +505,9 @@ impl Automation {
                             "rect": [r(u[0].min(v[0])), r(u[1].min(v[1])), r(u[0].max(v[0])), r(u[1].max(v[1]))],
                             "font": b.base_font,
                             "size": (b.size * 100.0).round() / 100.0,
+                            // Counterclockwise baseline angle in page user space, in degrees: a
+                            // turned paragraph is drawn (and edited) along it.
+                            "rotation": (b.rotation * 100.0).round() / 100.0,
                         })
                     })
                     .collect();
@@ -665,6 +669,7 @@ impl Automation {
             }
             "doc_export_images" | "doc_export_text" | "doc_export_all_images" => self.export(name, &a)?,
             "doc_header_footer" | "doc_watermark" | "doc_background" | "doc_remove_marks" => self.marks(name, &a)?,
+            "doc_translate" => translate::doc_translate(self, &a)?,
             "doc_unprotect" => {
                 let mut out = self.apply(&a, Edit::RemoveProtection)?;
                 out["security"] = security(self.doc(&a)?);

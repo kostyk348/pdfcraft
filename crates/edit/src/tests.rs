@@ -1347,6 +1347,38 @@ fn independent_text_objects_with_different_transforms_stay_separate() {
 }
 
 #[test]
+fn a_turned_run_keeps_its_size_and_baseline_when_rewritten_with_ranges() {
+    // The bbox of a turned run runs across the text, so its width says nothing about the run's
+    // advance and its left edge is not the pen position: a rewrite that used either would squeeze
+    // the replacement and shift it off the baseline.
+    let mut doc = text_page("BT /F1 12 Tf 0 1 -1 0 300 200 Tm (Rotated sign) Tj ET");
+    let before = text::text_lines(&doc, 0).unwrap()[0].clone();
+    let style = BlockStyle {
+        ranges: vec![RangeStyle {
+            range: 0.."Verdreht".len(),
+            family: None,
+            resource: None,
+            size: Some(12.0),
+            color: None,
+            underline: None,
+            char_spacing: None,
+            scale: None,
+        }],
+        ..Default::default()
+    };
+    text::rewrite_block(&mut doc, 0, 0, Some("Verdreht"), &style).unwrap();
+    let doc = reopen(&doc);
+    let after = text::text_lines(&doc, 0).unwrap()[0].clone();
+    assert_eq!(after.text, "Verdreht");
+    assert_eq!(after.size, before.size, "the replacement keeps the run's size");
+    assert_eq!(after.baseline(), before.baseline(), "and starts on the same baseline point");
+    // The band across the baseline is unchanged; only the run along it got shorter.
+    let band = |r: [f64; 4]| r[2] - r[0];
+    assert!((band(after.rect) - band(before.rect)).abs() < 0.01, "{:?} against {:?}", after.rect, before.rect);
+    assert!(after.rect[3] < before.rect[3] - 10.0, "a shorter run along the baseline: {:?} against {:?}", after.rect, before.rect);
+}
+
+#[test]
 fn text_lines_are_found_and_replaced_in_place() {
     let mut doc =
         text_page("BT /F1 12 Tf 72 700 Td (Hello) Tj 40 0 Td [(wor) -20 (ld)] TJ 0 -20 Td (Second line) Tj ET BT /F2 10 Tf 72 600 Td (ab) Tj ET");

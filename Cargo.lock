@@ -3630,6 +3630,7 @@ dependencies = [
  "pdfcraft-platform",
  "pdfcraft-render",
  "pdfcraft-smtp",
+ "pdfcraft-translate",
  "pdfcraft-xfa",
  "png 0.18.1",
  "serde_json",
@@ -3961,6 +3962,19 @@ dependencies = [
 [[package]]
 name = "pdfcraft-smtp"
 version = "0.7.1"
+dependencies = [
+ "rustls",
+ "rustls-native-certs",
+]
+
+[[package]]
+name = "pdfcraft-translate"
+version = "0.7.1"
+dependencies = [
+ "serde_json",
+ "thiserror 2.0.21",
+ "ureq",
+]
 
 [[package]]
 name = "pdfcraft-ui-egui"

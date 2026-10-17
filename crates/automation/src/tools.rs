@@ -1236,7 +1236,7 @@ pub fn tools() -> Vec<ToolDef> {
         t("text_fonts", "List document fonts", "List validated embedded source faces and approved full preview faces for a page. Full registered resources can be selected by text_edit.font_resource; preview_only faces are not PDF resource names.")
             .ro().cmd("edit.edit_text")
             .with(schema(json!({"doc":doc(), "page":{"type":"integer","minimum":1}}), &["doc","page"])),
-        t("text_paragraphs", "List paragraphs", "The paragraphs on a page (adjacent source runs grouped into aligned visual rows, including mixed fonts, sizes and colours): number, text, editor_text (visual rows separated by newlines), rows and source line numbers, box (top-left-origin points), font and size. Use the number with text_edit's paragraph.")
+        t("text_paragraphs", "List paragraphs", "The paragraphs on a page (adjacent source runs grouped into aligned visual rows, including mixed fonts, sizes and colours): number, text, editor_text (visual rows separated by newlines), rows and source line numbers, box (top-left-origin points), font, size and rotation (counterclockwise baseline angle in degrees). Use the number with text_edit's paragraph.")
             .ro()
             .cmd("edit.edit_text")
             .with(schema(json!({ "doc": doc(), "page": { "type": "integer", "minimum": 1 } }), &["doc", "page"])),
@@ -1269,6 +1269,31 @@ pub fn tools() -> Vec<ToolDef> {
             )),
         t("doc_revisions", "List revisions", "List the document's saved revisions (oldest first): each incremental update is one. Returns revision number, where it ends in the file and its size, and which signatures sign exactly that revision.")
             .with(schema(json!({ "doc": doc() }), &["doc"])),
+        t("doc_translate", "Translate text", "Replace the document's text paragraphs with translations in place, keeping each row's font, size, colour and box, and each paragraph's rotation and alignment: only the words change. Text comes from translations, an offline JSON object of source string → translation compared with whitespace collapsed (no network, exactly reproducible), and/or network, an explicit DeepLX-compatible endpoint that is never contacted unless this argument is given; the map answers first and the endpoint covers what it lacks. Nothing is drawn smaller unless shrink is passed, and then only the row that does not fit. Returns translated, unchanged, shrunk, pages, network_requests, fonts used, and the rows left alone: missing (no translation supplied), too_long (does not fit its box, with page, rect, text and translation) and failed (the font cannot show the new characters). Invisible text over a scan (an OCR layer) is counted and left alone. For a target script no standard font can show (Cyrillic, Greek), load a face that has it with text_font_import and pass font_resource. One undo step per paragraph; out writes a full copy atomically and leaves the open document's own file untouched.")
+            .with(schema(
+                json!({
+                    "doc": doc(),
+                    "translations": { "type": "string", "description": "Path to a UTF-8 JSON object of source string → translation (at most 16 MiB and 200000 entries). Relative paths resolve inside --root. Nothing is sent anywhere." },
+                    "network": {
+                        "type": "object",
+                        "description": "An explicitly named DeepLX-compatible endpoint. Passing this argument is the only way this tool makes any request; requests are one per distinct paragraph text.",
+                        "properties": {
+                            "endpoint": { "type": "string", "description": "http:// or https:// URL that receives POST {text, source_lang, target_lang} and answers {code, message, data}." },
+                            "target": { "type": "string", "description": "Target language code, e.g. RU." },
+                            "source": { "type": "string", "description": "Source language code, or auto (the default)." },
+                            "timeout": { "type": "number", "minimum": 1, "maximum": 300, "description": "Seconds per request (default 30)." },
+                        },
+                        "required": ["endpoint", "target"],
+                        "additionalProperties": false,
+                    },
+                    "pages": pages("to translate; every page when omitted"),
+                    "font_resource": { "type": "string", "description": "A page font resource (from text_fonts or text_font_import) that every translation is drawn in. Needed for a script no available face has, e.g. Cyrillic or Greek in a build without craft-fonts." },
+                    "min_size": { "type": "number", "minimum": 0.5, "maximum": 144, "description": "Smallest font size a translation may be drawn at (default 5 points)." },
+                    "shrink": { "type": "boolean", "description": "Allow a row whose translation does not fit to be drawn smaller, as far as min_size. Inside a paragraph only the rows that need it are shrunk, each listed in shrunk_rows with the size it got. Default false: nothing is ever drawn smaller behind the caller's back; a row that does not fit is left as it was and reported in too_long." },
+                    "out": { "type": "string", "description": "Write the result here as a full, atomically written copy. The open document's own file is not changed." },
+                }),
+                &["doc"],
+            )),
         t("doc_open_revision", "Open a revision", "Open saved revision `revision` (1 = the oldest) of a document as a new, unsaved document, to see the file as it was then.")
             .with(schema(json!({ "doc": doc(), "revision": { "type": "integer", "minimum": 1 } }), &["doc", "revision"])),
         t("doc_optimize", "Optimize PDF", "Write an optimized copy to `path` (Acrobat's PDF Optimizer). color / gray: { downsample, ppi, above_ppi, compression: jpeg|zip|retain, quality 1–100 } (defaults: downsample to 150 ppi above 225, JPEG 60). Images are measured where pages draw them and replaced only when smaller. discard_*: thumbnails (default true), alternate_images (true), tags, print_settings; flate_unencoded (true); remove_invalid_links and remove_unreferenced_dests (true); images and forms the pages list but never draw are always dropped (unused_xobjects). discard: Remove Hidden Information categories (metadata, attachments, comments, form-fields, hidden-text, hidden-layers, bookmarks, links-actions-scripts, private-data). Signed documents are refused. The open document is unchanged.")

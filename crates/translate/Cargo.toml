@@ -1,0 +1,18 @@
+[package]
+name = "pdfcraft-translate"
+description = "Layout-preserving translation: an offline JSON map by default, a DeepLX-compatible endpoint only when explicitly asked for"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+
+[lints]
+workspace = true
+
+[dependencies]
+serde_json = { workspace = true }
+thiserror = { workspace = true }
+
+# The opt-in network backend needs the HTTP client that is already in the build. The web build has
+# no sockets, so it is not compiled there at all (see `src/deeplx.rs`).
+[target.'cfg(not(target_arch = "wasm32"))'.dependencies]
+ureq = { version = "3.4", default-features = false, features = ["rustls-no-provider", "_ring"] }

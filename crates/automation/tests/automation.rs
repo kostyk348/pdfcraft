@@ -5923,3 +5923,315 @@ fn absolute_gotor_consent_does_not_bypass_validation_or_passwords() {
     assert_eq!(opened["document"]["encrypted"], true);
     assert_eq!(opened["destination_applied"], true);
 }
+
+// ---- Layout-preserving translation (`doc_translate`) --------------------------------------------
+
+/// One 400×600 pt page whose content stream is `body`, with Helvetica as `/F1`. Every glyph comes
+/// from a standard font, so no font file is embedded and no asset enters the repository.
+fn text_page(body: &str) -> Vec<u8> {
+    let objects: Vec<Vec<u8>> = vec![
+        b"<< /Type /Catalog /Pages 2 0 R >>".to_vec(),
+        b"<< /Type /Pages /Kids [3 0 R] /Count 1 /MediaBox [0 0 400 600] >>".to_vec(),
+        b"<< /Type /Page /Parent 2 0 R /Contents 5 0 R /Resources << /Font << /F1 4 0 R >> >> >>".to_vec(),
+        b"<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica /Encoding /WinAnsiEncoding >>".to_vec(),
+        format!("<< /Length {} >>\nstream\n{body}\nendstream", body.len()).into_bytes(),
+    ];
+    let mut out = b"%PDF-1.7\n".to_vec();
+    let mut offsets = Vec::new();
+    for (i, object) in objects.iter().enumerate() {
+        offsets.push(out.len());
+        out.extend_from_slice(format!("{} 0 obj\n", i + 1).as_bytes());
+        out.extend_from_slice(object);
+        out.extend_from_slice(b"\nendobj\n");
+    }
+    let xref = out.len();
+    out.extend_from_slice(format!("xref\n0 {}\n0000000000 65535 f \n", objects.len() + 1).as_bytes());
+    for offset in offsets {
+        out.extend_from_slice(format!("{offset:010} 00000 n \n").as_bytes());
+    }
+    out.extend_from_slice(format!("trailer\n<< /Size {} /Root 1 0 R >>\nstartxref\n{xref}\n%%EOF\n", objects.len() + 1).as_bytes());
+    out
+}
+
+/// The paragraphs on a page as the tools report them: text, box, size and rotation.
+fn paragraphs(a: &mut Automation, doc: u64) -> Vec<Value> {
+    ok(a, "text_paragraphs", json!({ "doc": doc, "page": 1 }))["paragraphs"].as_array().cloned().unwrap_or_default()
+}
+
+/// Whether `after` lies inside `before` within the half-point tolerance a rewrite is held to.
+#[track_caller]
+fn inside(before: &Value, after: &Value, what: &str) {
+    let rect = |v: &Value| -> Vec<f64> { v["rect"].as_array().unwrap().iter().map(|n| n.as_f64().unwrap()).collect() };
+    let (b, a) = (rect(before), rect(after));
+    assert!(a[0] >= b[0] - 0.51 && a[1] >= b[1] - 0.51 && a[2] <= b[2] + 0.51 && a[3] <= b[3] + 0.51, "{what}: {a:?} left {b:?}");
+}
+
+/// Whether `drawn` stays inside `band`: across the page within half a point, and up it within
+/// `slack` points, which is what a face with taller metrics than the source's may reach.
+fn inside_band(drawn: [f64; 4], band: [f64; 4], slack: f64) -> bool {
+    drawn[0] >= band[0] - 0.5 && drawn[2] <= band[2] + 0.5 && drawn[1] >= band[1] - slack && drawn[3] <= band[3] + slack
+}
+
+/// A reported box as numbers.
+fn rect_of(v: &Value) -> [f64; 4] {
+    let r = v["rect"].as_array().unwrap();
+    [r[0].as_f64().unwrap(), r[1].as_f64().unwrap(), r[2].as_f64().unwrap(), r[3].as_f64().unwrap()]
+}
+
+/// The runs on page 1, as `text_lines` reports them.
+fn text_lines(a: &mut Automation, doc: u64) -> Vec<Value> {
+    ok(a, "text_lines", json!({ "doc": doc, "page": 1 }))["lines"].as_array().cloned().unwrap_or_default()
+}
+
+#[test]
+fn translate_replaces_each_paragraph_in_place_and_keeps_its_box_and_rotation() {
+    let dir = workdir("translate-map");
+    std::fs::write(dir.join("t.pdf"), text_page("BT /F1 12 Tf 72 520 Td (Hello world) Tj ET\nBT /F1 12 Tf 0 1 -1 0 300 200 Tm (Rotated sign) Tj ET"))
+        .unwrap();
+    std::fs::write(dir.join("map.json"), "{\"Hello world\": \"Hallo Welt\", \"Rotated sign\": \"Verdreht\"}").unwrap();
+    let mut a = auto(&dir);
+    let doc = ok(&mut a, "doc_open", json!({ "path": "t.pdf" }))["doc"].as_u64().unwrap();
+    let before = paragraphs(&mut a, doc);
+    assert_eq!(before.len(), 2, "{before:?}");
+    assert_eq!(before[1]["rotation"], 90.0, "the fixture's second paragraph is turned a quarter");
+
+    // A dead endpoint is passed too: the map covers every paragraph, so it must never be asked.
+    let report = ok(
+        &mut a,
+        "doc_translate",
+        json!({
+            "doc": doc,
+            "translations": "map.json",
+            "network": { "endpoint": "http://127.0.0.1:1/translate", "target": "DE", "timeout": 2 },
+        }),
+    );
+    assert_eq!(report["translated"], 2, "{report}");
+    assert_eq!(report["missing"]["count"], 0, "{report}");
+    assert_eq!(report["too_long"]["count"], 0, "{report}");
+    assert_eq!(report["failed"]["count"], 0, "{report}");
+    assert_eq!(report["shrunk"], 0, "both translations fit at the source size: {report}");
+    assert_eq!(report["network_requests"], 0, "a covered map must not touch the endpoint: {report}");
+    assert_eq!(report["document"]["dirty"], true);
+
+    let after = paragraphs(&mut a, doc);
+    assert_eq!(after.len(), before.len(), "a rewrite replaces glyphs, it does not add paragraphs: {after:?}");
+    assert_eq!(after[0]["text"], "Hallo Welt", "{after:?}");
+    assert_eq!(after[1]["text"], "Verdreht", "{after:?}");
+    for (i, (b, a)) in before.iter().zip(after.iter()).enumerate() {
+        inside(b, a, &format!("paragraph {i}"));
+        assert_eq!(a["rotation"], b["rotation"], "paragraph {i} keeps its baseline angle");
+    }
+    // The turned paragraph is extracted on its own line: its baseline runs up the page.
+    assert_eq!(page_text(&mut a, doc), ["Hallo Welt\nVerdreht"], "the drawn text reads back");
+}
+
+#[test]
+fn translate_refuses_what_it_cannot_do_and_names_the_reason() {
+    let dir = workdir("translate-refusals");
+    std::fs::write(dir.join("t.pdf"), text_page("BT /F1 12 Tf 72 520 Td (Hello world) Tj ET")).unwrap();
+    let mut a = auto(&dir);
+    let doc = ok(&mut a, "doc_open", json!({ "path": "t.pdf" }))["doc"].as_u64().unwrap();
+
+    // Neither an offline map nor an endpoint: there is nothing to translate with.
+    assert!(matches!(err(&mut a, "doc_translate", json!({ "doc": doc })), ToolError::InvalidArgs(m) if m.contains("translations")));
+    // An unknown argument is a typo, not a silent no-op.
+    assert!(matches!(
+        err(&mut a, "doc_translate", json!({ "doc": doc, "translation": "map.json" })),
+        ToolError::InvalidArgs(m) if m.contains("translation")
+    ));
+    // A map that is not a map, and an endpoint that is not a URL.
+    std::fs::write(dir.join("bad.json"), "[\"Hello world\"]").unwrap();
+    assert!(matches!(
+        err(&mut a, "doc_translate", json!({ "doc": doc, "translations": "bad.json" })),
+        ToolError::InvalidArgs(m) if m.contains("error.json") || m.contains("must be a JSON object")
+    ));
+    assert!(matches!(
+        err(&mut a, "doc_translate", json!({ "doc": doc, "network": { "endpoint": "127.0.0.1:1", "target": "DE" } })),
+        ToolError::InvalidArgs(m) if m.contains("http")
+    ));
+    assert!(matches!(
+        err(&mut a, "doc_translate", json!({ "doc": doc, "network": { "endpoint": "http://127.0.0.1:1/t", "target": "DE", "source": "EN", "extra": 1 } })),
+        ToolError::InvalidArgs(m) if m.contains("network")
+    ));
+    // `--root` confinement applies to the map it reads.
+    assert!(matches!(
+        err(&mut a, "doc_translate", json!({ "doc": doc, "translations": "../outside.json" })),
+        ToolError::Failed(m) if m.contains("outside the allowed directory")
+    ));
+    assert_eq!(paragraphs(&mut a, doc)[0]["text"], "Hello world", "a refused call changes nothing");
+}
+
+#[test]
+fn translate_fails_before_any_edit_when_the_endpoint_cannot_answer() {
+    let dir = workdir("translate-fail-closed");
+    std::fs::write(dir.join("t.pdf"), text_page("BT /F1 12 Tf 72 520 Td (Hello world) Tj ET\nBT /F1 12 Tf 72 480 Td (Second line) Tj ET")).unwrap();
+    // The map covers the first paragraph only, so the second one needs the endpoint — which is not
+    // listening. Nothing may be written before the translation is complete.
+    std::fs::write(dir.join("map.json"), "{\"Hello world\": \"Hallo Welt\"}").unwrap();
+    let mut a = auto(&dir);
+    let doc = ok(&mut a, "doc_open", json!({ "path": "t.pdf" }))["doc"].as_u64().unwrap();
+    let before = paragraphs(&mut a, doc);
+    let failure = err(
+        &mut a,
+        "doc_translate",
+        json!({
+            "doc": doc,
+            "translations": "map.json",
+            "network": { "endpoint": "http://127.0.0.1:1/translate", "target": "DE", "timeout": 1 },
+        }),
+    );
+    assert!(matches!(&failure, ToolError::Failed(m) if m.contains("Second line") && m.contains("could not translate")), "{failure}");
+    let after = paragraphs(&mut a, doc);
+    assert_eq!(after.len(), before.len());
+    for (b, a) in before.iter().zip(after.iter()) {
+        assert_eq!(a["text"], b["text"], "the failed run translated nothing");
+    }
+    assert_eq!(ok(&mut a, "doc_info", json!({ "doc": doc }))["document"]["dirty"], false, "nothing was edited");
+}
+
+#[test]
+fn translate_writes_cyrillic_through_a_loaded_face_and_reads_it_back_from_the_saved_file() {
+    let dir = workdir("translate-cyrillic");
+    std::fs::write(dir.join("inter.ttf"), include_bytes!("../../../assets/fonts/Inter-Regular.ttf")).unwrap();
+    std::fs::write(dir.join("t.pdf"), text_page("BT /F1 12 Tf 72 520 Td (Hello world) Tj ET")).unwrap();
+    std::fs::write(dir.join("map.json"), "{\"Hello world\": \"Привет\"}").unwrap();
+    let mut a = auto(&dir);
+    let doc = ok(&mut a, "doc_open", json!({ "path": "t.pdf" }))["doc"].as_u64().unwrap();
+    let source = std::fs::read(dir.join("t.pdf")).unwrap();
+    let resource = ok(&mut a, "text_font_import", json!({ "doc": doc, "page": 1, "path": "inter.ttf" }))["resource"].as_str().unwrap().to_owned();
+    let before = paragraphs(&mut a, doc);
+
+    let report = ok(&mut a, "doc_translate", json!({ "doc": doc, "translations": "map.json", "font_resource": resource, "out": "translated.pdf" }));
+    assert_eq!(report["translated"], 1, "{report}");
+    assert_eq!(report["failed"]["count"], 0, "{report}");
+    assert_eq!(report["network_requests"], 0, "{report}");
+    assert_eq!(report["out"]["path"], dir.join("translated.pdf").to_string_lossy().as_ref());
+    let after = paragraphs(&mut a, doc);
+    assert_eq!(after[0]["text"], "Привет", "{after:?}");
+    assert!(after[0]["font"].as_str().unwrap().contains("Inter"), "drawn in the loaded face: {after:?}");
+    assert!(inside_band(rect_of(&after[0]), rect_of(&before[0]), 2.0), "the Cyrillic paragraph keeps its box: {after:?} vs {before:?}");
+    assert_eq!(page_text(&mut a, doc), ["Привет"], "the drawn Cyrillic reads back");
+
+    // The written copy is a real PDF: reopen it and read the same text, through its own ToUnicode.
+    let copy = ok(&mut a, "doc_open", json!({ "path": "translated.pdf" }))["doc"].as_u64().unwrap();
+    assert_eq!(paragraphs(&mut a, copy)[0]["text"], "Привет");
+    assert_eq!(page_text(&mut a, copy), ["Привет"]);
+    // The source file is untouched: `out` writes a copy, never the document's own file.
+    assert_eq!(std::fs::read(dir.join("t.pdf")).unwrap(), source);
+}
+
+#[test]
+fn translate_never_shrinks_behind_the_callers_back_and_reports_what_does_not_fit() {
+    let dir = workdir("translate-fit");
+    std::fs::write(dir.join("t.pdf"), text_page("BT /F1 12 Tf 72 520 Td (Reference) Tj ET\nBT /F1 12 Tf 72 400 Td (Hi) Tj ET")).unwrap();
+    std::fs::write(dir.join("map.json"), "{\"Reference\": \"Reference text\", \"Hi\": \"Supercalifragilisticexpialidocious\"}").unwrap();
+    let mut a = auto(&dir);
+    let doc = ok(&mut a, "doc_open", json!({ "path": "t.pdf" }))["doc"].as_u64().unwrap();
+    let before = paragraphs(&mut a, doc);
+    assert_eq!(before.len(), 2, "{before:?}");
+
+    // Neither translation fits its row at 12 pt. Nothing is drawn smaller unless asked for: both
+    // rows are reported with their box and the reason, and the page is left as it was.
+    let report = ok(&mut a, "doc_translate", json!({ "doc": doc, "translations": "map.json" }));
+    assert_eq!(report["translated"], 0, "{report}");
+    assert_eq!(report["shrunk"], 0, "no silent shrinking: {report}");
+    assert_eq!(report["too_long"]["count"], 2, "{report}");
+    for entry in report["too_long"]["paragraphs"].as_array().unwrap() {
+        assert_eq!(entry["page"], 1);
+        assert!(entry["rect"].as_array().unwrap().len() == 4, "with its coordinates: {entry}");
+        assert!(entry["reason"].as_str().unwrap().contains("shrink"), "and the way out: {entry}");
+    }
+    let unchanged = paragraphs(&mut a, doc);
+    for (b, a) in before.iter().zip(unchanged.iter()) {
+        assert_eq!(a["text"], b["text"], "a row that does not fit is left exactly as it was");
+        assert_eq!(a["size"], b["size"]);
+    }
+
+    // Asked to shrink, the one that can fit in the box is drawn smaller and the impossible one is
+    // still reported.
+    let report = ok(&mut a, "doc_translate", json!({ "doc": doc, "translations": "map.json", "shrink": true }));
+    assert_eq!(report["translated"], 1, "{report}");
+    assert_eq!(report["shrunk"], 1, "the shrunk paragraph is counted, not hidden: {report}");
+    assert_eq!(report["too_long"]["count"], 1, "{report}");
+    let after = paragraphs(&mut a, doc);
+    assert_eq!(after[0]["text"], "Reference text", "{after:?}");
+    assert!(after[0]["size"].as_f64().unwrap() < 12.0, "shrunk, not moved: {after:?}");
+    inside(&before[0], &after[0], "the shrunk paragraph");
+    assert_eq!(after[1]["text"], "Hi", "a row that cannot fit at min_size stays as it was");
+    assert_eq!(after[1]["size"], before[1]["size"]);
+}
+
+/// The owner's document: a large bold heading, two body paragraphs, and a bold word inside one of
+/// them. Every row must keep its own size, weight, box and colour; only the words change. This is
+/// the case the owner found broken: a translated block collapsed into one small paragraph.
+#[test]
+fn translate_keeps_each_rows_size_weight_colour_and_position() {
+    let dir = workdir("translate-format");
+    let mut a = auto(&dir);
+    let html = "<h1>Lost Tech Museum</h1>\
+        <p>The Time Protocol is still in use.</p>\
+        <p>Every entry stands on a literal quote, and <b>nothing</b> else.</p>";
+    let doc = ok(&mut a, "doc_create", json!({ "from": "html", "html": html }))["doc"].as_u64().unwrap();
+    // The created document is one paragraph of three visual rows: a 20 pt bold heading, an 11 pt
+    // body line, and an 11 pt body line made of three runs (plain, bold, plain).
+    let before = paragraphs(&mut a, doc);
+    assert_eq!(before.len(), 1, "{before:?}");
+    let rows: Vec<Vec<usize>> = before[0]["rows"]
+        .as_array()
+        .unwrap()
+        .iter()
+        .map(|row| row.as_array().unwrap().iter().map(|n| n.as_u64().unwrap() as usize).collect())
+        .collect();
+    assert_eq!(rows.len(), 3, "three visual rows: {before:?}");
+    let before_lines = text_lines(&mut a, doc);
+    assert_eq!(before_lines.len(), 5, "five runs in three rows: {before_lines:?}");
+    assert_eq!(before_lines[0]["size"], 20.0, "the heading is 20 pt: {before_lines:?}");
+    assert!(before_lines[0]["font"].as_str().unwrap().contains("Bold"), "and bold: {before_lines:?}");
+    assert_eq!(before_lines[1]["size"], 11.0, "{before_lines:?}");
+    assert!(before_lines[3]["font"].as_str().unwrap().contains("Bold"), "the bold word is its own run: {before_lines:?}");
+
+    std::fs::write(
+        dir.join("map.json"),
+        "{\"Lost Tech Museum\": \"Museum der Ideen\", \
+          \"The Time Protocol is still in use.\": \"Das Zeitprotokoll gilt noch.\", \
+          \"Every entry stands on a literal quote, and nothing else.\": \"Jeder Eintrag fusst auf einem Zitat, nichts sonst.\"}",
+    )
+    .unwrap();
+    let report = ok(&mut a, "doc_translate", json!({ "doc": doc, "translations": "map.json" }));
+    assert_eq!(report["translated"], 1, "one paragraph, rewritten in place: {report}");
+    assert_eq!(report["shrunk"], 0, "nothing is drawn smaller: {report}");
+    assert_eq!(report["too_long"]["count"], 0, "{report}");
+    assert_eq!(report["reverted"], 0, "{report}");
+    assert_eq!(report["network_requests"], 0, "{report}");
+
+    let after = paragraphs(&mut a, doc);
+    assert_eq!(after.len(), before.len(), "no paragraph is merged, split or lost: {after:?}");
+    assert_eq!(after[0]["rows"].as_array().unwrap().len(), 3, "three rows stay three rows: {after:?}");
+    let after_lines = text_lines(&mut a, doc);
+    assert_eq!(after_lines.len(), 3, "one run per translated row: {after_lines:?}");
+    let expected = ["Museum der Ideen", "Das Zeitprotokoll gilt noch.", "Jeder Eintrag fusst auf einem Zitat, nichts sonst."];
+    for (i, line) in after_lines.iter().enumerate() {
+        let source: Vec<&Value> = rows[i].iter().filter_map(|n| before_lines.get(n - 1)).collect();
+        let first = source.first().expect("the row had a first run");
+        assert_eq!(line["text"], expected[i], "row {i}: {after_lines:?}");
+        // The formatting is the source formatting: the heading keeps 20 pt and its bold face, the
+        // body keeps 11 pt, and each row stays in its own band.
+        assert_eq!(line["size"], first["size"], "row {i} keeps its size: {line:?} vs {first:?}");
+        assert_eq!(line["font"], first["font"], "row {i} keeps its face: {line:?} vs {first:?}");
+        let band = source.iter().fold([f64::MAX, f64::MAX, f64::MIN, f64::MIN], |acc, l| {
+            let r = rect_of(l);
+            [acc[0].min(r[0]), acc[1].min(r[1]), acc[2].max(r[2]), acc[3].max(r[3])]
+        });
+        let drawn = rect_of(line);
+        assert!(inside_band(drawn, band, 2.0), "row {i} stays in its band: {drawn:?} vs {band:?}");
+    }
+    // The bold word inside the last paragraph is the one thing a translation cannot carry over, and
+    // it is reported rather than dropped in silence.
+    assert_eq!(report["formatting_lost"]["count"], 1, "the mixed-style row is named: {report}");
+    assert_eq!(report["formatting_lost"]["paragraphs"][0]["row"], 3, "{report}");
+    assert_eq!(
+        page_text(&mut a, doc),
+        ["Museum der Ideen\nDas Zeitprotokoll gilt noch.\nJeder Eintrag fusst auf einem Zitat, nichts sonst."],
+        "the drawn text reads back, the three rows still one paragraph"
+    );
+}
