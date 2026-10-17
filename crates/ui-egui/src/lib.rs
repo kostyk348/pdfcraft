@@ -95,6 +95,7 @@ mod panels;
 mod pickers;
 pub mod prepare;
 mod print_ui;
+pub mod translate_ui;
 mod signature_drag;
 pub mod units;
 mod web_print;
@@ -340,6 +341,8 @@ pub enum Dialog {
     CertificateViewer,
     /// File ▸ Send as email… (the SMTP session; native only).
     EmailSend,
+    /// File ▸ Translate…: the translation map or an endpoint, and the report.
+    Translate,
 }
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
@@ -631,6 +634,8 @@ pub struct PdfCraftApp {
     /// File ▸ Send as email…: the relay, the envelope and the last session (native only).
     #[cfg(not(target_arch = "wasm32"))]
     pub email: email_send::EmailSend,
+    /// File ▸ Translate…: the source (map or endpoint), the font and the last report.
+    pub translate: translate_ui::Translate,
     /// Summarize Comments: sort order.
     pub summary_sort: pdfcraft_engine::SummarySort,
     /// The signing dialogs' state.
@@ -957,6 +962,7 @@ impl PdfCraftApp {
             rotate_draft: RotateDraft::default(),
             #[cfg(not(target_arch = "wasm32"))]
             email: email_send::EmailSend::default(),
+            translate: translate_ui::Translate::default(),
             summary_sort: Default::default(),
             sign_draft: None,
             digital_ids: Vec::new(),
@@ -2905,6 +2911,7 @@ impl eframe::App for PdfCraftApp {
         self.poll_export();
         #[cfg(not(target_arch = "wasm32"))]
         self.poll_email_send();
+        self.poll_translate();
         self.poll_ocr();
         self.poll_optimize();
         self.poll_action();

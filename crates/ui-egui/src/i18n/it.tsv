@@ -2385,3 +2385,44 @@ animation effects	Off	Disattivati
 	Not sent: {reason}	Non inviato: {reason}
 	the session stopped unexpectedly	la sessione si è interrotta inaspettatamente
 	Sending an email needs the desktop app: a browser has no mail connection	Per inviare e-mail serve l'app desktop: un browser non ha una connessione di posta
+# File ▸ Translate…
+	Translation map (JSON file)	Mappa di traduzione (file JSON)
+	The translation map must be UTF-8	La mappa di traduzione deve essere UTF-8
+	Choose a font…	Scegli un carattere…
+	A translation is already running	Una traduzione è già in corso
+	Choose a translation map first	Scegli prima una mappa di traduzione
+	The network service needs an endpoint	Il servizio di rete richiede un indirizzo
+	The network service needs a target language	Il servizio di rete richiede una lingua di destinazione
+	Nothing to translate: the document has no text rows	Niente da tradurre: il documento non ha righe di testo
+	the endpoint stopped unexpectedly	il servizio si è fermato in modo imprevisto
+	Replace the document's text with a translation, keeping each row's font, size, colour and place.	Sostituire il testo del documento con la traduzione, mantenendo per ogni riga carattere, dimensione, colore e posizione.
+	Network service (DeepLX-compatible)	Servizio di rete (compatibile DeepLX)
+	Map:	Mappa:
+	Choose…	Scegli…
+	The map covers {covered} of {rows} rows.	La mappa copre {covered} righe su {rows}.
+	While the network service is off, no request leaves this computer.	Con il servizio di rete spento, nessuna richiesta esce da questo computer.
+	A script the document's own faces cannot draw (Cyrillic, Greek) needs a font; without one those rows fail instead of being drawn.	Una scrittura che i caratteri del documento non disegnano (cirillico, greco) richiede un carattere caricato; senza, quelle righe falliscono invece di essere disegnate.
+	Replace the text in this document	Sostituisci il testo in questo documento
+	Otherwise the translation is written to a new file and this document is left alone.	Altrimenti la traduzione viene scritta in un nuovo file e questo documento resta intatto.
+	Translating…	Traduzione…
+	Written to {path}	Scritto in {path}
+	{rows} rows: {translated} translated, {shrunk} shrunk, {missing} missing	{rows} righe: {translated} tradotte, {shrunk} ridotte, {missing} mancanti
+	Too long:	Troppo lungo:
+	Missing:	Mancante:
+	Formatting lost:	Formattazione persa:
+	Translate…	Traduci…
+	Copy to:	Copia in:
+	The copy needs a file name	La copia richiede un nome di file
+	The copy needs a file of its own: this document would be overwritten	La copia richiede un file proprio: altrimenti questo documento verrebbe sovrascritto
+# File ▸ Translate…: providers
+	DeepLX-compatible service	Servizio compatibile con DeepLX
+	Google Translate	Google Traduttore
+	Service address:	Indirizzo del servizio:
+	API key:	Chiave API:
+	The map answers from a JSON file on this computer; nothing is sent.	La mappa risponde da un file JSON su questo computer; non viene inviato nulla.
+	Nothing is sent until you press Translate, and the report counts every request.	Non viene inviato nulla finché non premi «Traduci»; il rapporto conta ogni richiesta.
+	Leave the address empty for the free service; a google-cloud address is used with your own key. Nothing is sent until you press Translate.	Lascia vuoto l’indirizzo per il servizio gratuito; un indirizzo google-cloud si usa con la tua chiave. Non viene inviato nulla finché non premi «Traduci».
+	Google Translate's backend is not in this build yet, so nothing was sent. Choose the map or a DeepLX-compatible service.	Il motore di Google Traduttore non è ancora in questa build, quindi non è stato inviato nulla. Scegli la mappa o un servizio compatibile con DeepLX.
+	Provider: {provider} · requests: {requests}	Fornitore: {provider} · richieste: {requests}
+	No request left this computer.	Nessuna richiesta ha lasciato questo computer.
+	This provider cannot run	Questo fornitore non può partire

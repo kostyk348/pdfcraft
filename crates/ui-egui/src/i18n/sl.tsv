@@ -2381,3 +2381,44 @@ animation effects	Off	Izklopljeni
 	Not sent: {reason}	Ni poslano: {reason}
 	the session stopped unexpectedly	seja se je nepričakovano prekinila
 	Sending an email needs the desktop app: a browser has no mail connection	Pošiljanje e-pošte zahteva namizno aplikacijo: brskalnik nima poštne povezave
+# File ▸ Translate…
+	Translation map (JSON file)	Prevajalna karta (datoteka JSON)
+	The translation map must be UTF-8	Prevajalna karta mora biti v UTF-8
+	Choose a font…	Izberi pisavo…
+	A translation is already running	Prevajanje že poteka
+	Choose a translation map first	Najprej izberite prevajalno karto
+	The network service needs an endpoint	Omrežna storitev potrebuje naslov
+	The network service needs a target language	Omrežna storitev potrebuje ciljni jezik
+	Nothing to translate: the document has no text rows	Ni česa prevesti: dokument nima besedilnih vrstic
+	the endpoint stopped unexpectedly	storitev se je nepričakovano ustavila
+	Replace the document's text with a translation, keeping each row's font, size, colour and place.	Zamenjaj besedilo dokumenta s prevodom, pri čemer vsaki vrstici ohrani pisavo, velikost, barvo in položaj.
+	Network service (DeepLX-compatible)	Omrežna storitev (združljiva z DeepLX)
+	Map:	Karta:
+	Choose…	Izberi…
+	The map covers {covered} of {rows} rows.	Karta pokriva {covered} od {rows} vrstic.
+	While the network service is off, no request leaves this computer.	Dokler je omrežna storitev izklopljena, nobena zahteva ne zapusti tega računalnika.
+	A script the document's own faces cannot draw (Cyrillic, Greek) needs a font; without one those rows fail instead of being drawn.	Pisava, ki je pisave dokumenta ne narišejo (cirilica, grščina), potrebuje naloženo pisavo; brez nje take vrstice spodletijo, namesto da bi bile narisane.
+	Replace the text in this document	Zamenjaj besedilo v tem dokumentu
+	Otherwise the translation is written to a new file and this document is left alone.	Sicer se prevod zapiše v novo datoteko, ta dokument pa ostane nespremenjen.
+	Translating…	Prevajanje…
+	Written to {path}	Zapisano v {path}
+	{rows} rows: {translated} translated, {shrunk} shrunk, {missing} missing	{rows} vrstic: {translated} prevedenih, {shrunk} pomanjšanih, {missing} brez prevoda
+	Too long:	Predolgo:
+	Missing:	Brez prevoda:
+	Formatting lost:	Izgubljeno oblikovanje:
+	Translate…	Prevedi…
+	Copy to:	Kopiraj v:
+	The copy needs a file name	Kopija potrebuje ime datoteke
+	The copy needs a file of its own: this document would be overwritten	Kopija potrebuje svojo datoteko: sicer bi bil ta dokument prepisan
+# File ▸ Translate…: providers
+	DeepLX-compatible service	Storitev, združljiva z DeepLX
+	Google Translate	Googlov prevajalnik
+	Service address:	Naslov storitve:
+	API key:	Ključ API:
+	The map answers from a JSON file on this computer; nothing is sent.	Zemljevid odgovarja iz datoteke JSON na tem računalniku; nič se ne pošlje.
+	Nothing is sent until you press Translate, and the report counts every request.	Nič se ne pošlje, dokler ne pritisnete »Prevedi«; poročilo šteje vsako zahtevo.
+	Leave the address empty for the free service; a google-cloud address is used with your own key. Nothing is sent until you press Translate.	Naslov pustite prazen za brezplačno storitev; naslov google-cloud se uporablja z vašim lastnim ključem. Nič se ne pošlje, dokler ne pritisnete »Prevedi«.
+	Google Translate's backend is not in this build yet, so nothing was sent. Choose the map or a DeepLX-compatible service.	Googlov prevajalnik še ni v tej gradnji, zato ni bilo nič poslano. Izberite zemljevid ali storitev, združljivo z DeepLX.
+	Provider: {provider} · requests: {requests}	Ponudnik: {provider} · zahtev: {requests}
+	No request left this computer.	Nobena zahteva ni zapustila tega računalnika.
+	This provider cannot run	Ta ponudnik se ne more zagnati

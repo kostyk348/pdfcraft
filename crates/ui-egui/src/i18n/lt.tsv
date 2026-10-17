@@ -2620,3 +2620,43 @@ key	Space	Tarpas
 	Not sent: {reason}	Neišsiųsta: {reason}
 	the session stopped unexpectedly	sesija netikėtai nutrūko
 	Sending an email needs the desktop app: a browser has no mail connection	Norint siųsti el. paštą reikia darbalaukio programos: naršyklė neturi pašto ryšio
+# File ▸ Translate…
+	Translation map (JSON file)	Vertimo žemėlapis (JSON failas)
+	The translation map must be UTF-8	Vertimo žemėlapis turi būti UTF-8
+	Choose a font…	Pasirinkti šriftą…
+	A translation is already running	Vertimas jau vyksta
+	Choose a translation map first	Pirmiausia pasirinkite vertimo žemėlapį
+	The network service needs an endpoint	Tinklo tarnybai reikia adreso
+	The network service needs a target language	Tinklo tarnybai reikia tikslinės kalbos
+	Nothing to translate: the document has no text rows	Nėra ko versti: dokumente nėra teksto eilučių
+	the endpoint stopped unexpectedly	tarnyba netikėtai sustojo
+	Replace the document's text with a translation, keeping each row's font, size, colour and place.	Pakeisti dokumento tekstą vertimu, išsaugant kiekvienos eilutės šriftą, dydį, spalvą ir vietą.
+	Network service (DeepLX-compatible)	Tinklo tarnyba (suderinama su DeepLX)
+	Map:	Žemėlapis:
+	The map covers {covered} of {rows} rows.	Žemėlapis apima {covered} iš {rows} eilučių.
+	While the network service is off, no request leaves this computer.	Kol tinklo tarnyba išjungta, jokia užklausa neišeina iš šio kompiuterio.
+	A script the document's own faces cannot draw (Cyrillic, Greek) needs a font; without one those rows fail instead of being drawn.	Raštui, kurio dokumento šriftai nepavaizduoja (kirilica, graikų), reikia įkelti šriftą; be jo tokios eilutės nepavyksta, o ne nubraižomos.
+	Replace the text in this document	Pakeisti tekstą šiame dokumente
+	Otherwise the translation is written to a new file and this document is left alone.	Priešingu atveju vertimas įrašomas į naują failą, o šis dokumentas lieka nepaliestas.
+	Translating…	Verčiama…
+	Written to {path}	Įrašyta į {path}
+	{rows} rows: {translated} translated, {shrunk} shrunk, {missing} missing	{rows} eilučių: išversta {translated}, sumažinta {shrunk}, neversta {missing}
+	Too long:	Per ilga:
+	Missing:	Neversta:
+	Formatting lost:	Prarastas formatavimas:
+	Translate…	Versti…
+	Copy to:	Kopijuoti į:
+	The copy needs a file name	Kopijai reikia failo pavadinimo
+	The copy needs a file of its own: this document would be overwritten	Kopijai reikia savo failo: kitaip šis dokumentas būtų perrašytas
+# File ▸ Translate…: providers
+	DeepLX-compatible service	Su DeepLX suderinama paslauga
+	Google Translate	„Google“ vertėjas
+	Service address:	Paslaugos adresas:
+	API key:	API raktas:
+	The map answers from a JSON file on this computer; nothing is sent.	Žemėlapis atsako iš JSON failo šiame kompiuteryje; niekas nesiunčiama.
+	Nothing is sent until you press Translate, and the report counts every request.	Niekas nesiunčiama, kol nepaspaudėte „Versti“; ataskaita skaičiuoja kiekvieną užklausą.
+	Leave the address empty for the free service; a google-cloud address is used with your own key. Nothing is sent until you press Translate.	Palikite adresą tuščią nemokamai paslaugai; google-cloud adresas naudojamas su jūsų pačiu raktu. Niekas nesiunčiama, kol nepaspaudėte „Versti“.
+	Google Translate's backend is not in this build yet, so nothing was sent. Choose the map or a DeepLX-compatible service.	„Google“ vertėjo variklio šiame kompiliavime dar nėra, todėl niekas nebuvo išsiųsta. Pasirinkite žemėlapį arba su DeepLX suderinamą paslaugą.
+	Provider: {provider} · requests: {requests}	Teikėjas: {provider} · užklausų: {requests}
+	No request left this computer.	Nė viena užklausa neišėjo iš šio kompiuterio.
+	This provider cannot run	Šis teikėjas negali būti paleistas

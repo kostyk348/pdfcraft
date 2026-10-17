@@ -2397,3 +2397,44 @@ animation effects	Off	معطّلة
 	Not sent: {reason}	لم تُرسل: {reason}
 	the session stopped unexpectedly	انقطعت الجلسة على نحو غير متوقع
 	Sending an email needs the desktop app: a browser has no mail connection	إرسال البريد الإلكتروني يحتاج تطبيق سطح المكتب: لا يملك المتصفح اتصال بريد
+# File ▸ Translate…
+	Translation map (JSON file)	خريطة الترجمة (ملف JSON)
+	The translation map must be UTF-8	يجب أن تكون خريطة الترجمة بترميز UTF-8
+	Choose a font…	اختيار خط…
+	A translation is already running	هناك ترجمة قيد التنفيذ بالفعل
+	Choose a translation map first	اختر خريطة ترجمة أولاً
+	The network service needs an endpoint	تحتاج خدمة الشبكة إلى عنوان
+	The network service needs a target language	تحتاج خدمة الشبكة إلى لغة الهدف
+	Nothing to translate: the document has no text rows	لا يوجد ما يُترجم: المستند لا يحتوي على أسطر نصية
+	the endpoint stopped unexpectedly	توقفت الخدمة بشكل غير متوقع
+	Replace the document's text with a translation, keeping each row's font, size, colour and place.	استبدال نص المستند بالترجمة مع الحفاظ على خط كل سطر وحجمه ولونه وموضعه.
+	Network service (DeepLX-compatible)	خدمة الشبكة (متوافقة مع DeepLX)
+	Map:	الخريطة:
+	Choose…	اختيار…
+	The map covers {covered} of {rows} rows.	تغطي الخريطة {covered} من أصل {rows} سطرًا.
+	While the network service is off, no request leaves this computer.	ما دامت خدمة الشبكة متوقفة، لا يخرج أي طلب من هذا الحاسوب.
+	A script the document's own faces cannot draw (Cyrillic, Greek) needs a font; without one those rows fail instead of being drawn.	الكتابة التي لا ترسمها خطوط المستند (السيريلية واليونانية) تحتاج إلى خط محمّل؛ وبدونه تفشل تلك الأسطر بدل أن تُرسم.
+	Replace the text in this document	استبدال النص في هذا المستند
+	Otherwise the translation is written to a new file and this document is left alone.	وإلا فستُكتب الترجمة في ملف جديد ويبقى هذا المستند دون تغيير.
+	Translating…	جارٍ الترجمة…
+	Written to {path}	كُتب في {path}
+	{rows} rows: {translated} translated, {shrunk} shrunk, {missing} missing	{rows} سطرًا: {translated} مترجم، {shrunk} مصغّر، {missing} بلا ترجمة
+	Too long:	طويل جدًا:
+	Missing:	بلا ترجمة:
+	Formatting lost:	فُقد التنسيق:
+	Translate…	ترجمة…
+	Copy to:	نسخ إلى:
+	The copy needs a file name	تحتاج النسخة إلى اسم ملف
+	The copy needs a file of its own: this document would be overwritten	تحتاج النسخة إلى ملف خاص بها: وإلا فسيُستبدل هذا المستند
+# File ▸ Translate…: providers
+	DeepLX-compatible service	خدمة متوافقة مع DeepLX
+	Google Translate	ترجمة Google
+	Service address:	عنوان الخدمة:
+	API key:	مفتاح API:
+	The map answers from a JSON file on this computer; nothing is sent.	تجيب الخريطة من ملف JSON على هذا الحاسوب؛ لا يُرسل شيء.
+	Nothing is sent until you press Translate, and the report counts every request.	لا يُرسل شيء حتى تضغط «ترجمة»؛ ويعدّ التقرير كل طلب.
+	Leave the address empty for the free service; a google-cloud address is used with your own key. Nothing is sent until you press Translate.	اترك العنوان فارغًا للخدمة المجانية؛ ويُستخدم عنوان google-cloud بمفتاحك الخاص. لا يُرسل شيء حتى تضغط «ترجمة».
+	Google Translate's backend is not in this build yet, so nothing was sent. Choose the map or a DeepLX-compatible service.	محرّك ترجمة Google ليس في هذا الإصدار بعد، لذلك لم يُرسل شيء. اختر الخريطة أو خدمة متوافقة مع DeepLX.
+	Provider: {provider} · requests: {requests}	المزوّد: {provider} · الطلبات: {requests}
+	No request left this computer.	لم يغادر أي طلب هذا الحاسوب.
+	This provider cannot run	لا يمكن تشغيل هذا المزوّد

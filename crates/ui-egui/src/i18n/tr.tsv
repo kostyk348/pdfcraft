@@ -2372,3 +2372,44 @@ animation effects	Off	Kapalı
 	Not sent: {reason}	Gönderilmedi: {reason}
 	the session stopped unexpectedly	oturum beklenmedik şekilde kesildi
 	Sending an email needs the desktop app: a browser has no mail connection	E-posta göndermek için masaüstü uygulaması gerekir: tarayıcının posta bağlantısı yok
+# File ▸ Translate…
+	Translation map (JSON file)	Çeviri eşlemesi (JSON dosyası)
+	The translation map must be UTF-8	Çeviri eşlemesi UTF-8 olmalıdır
+	Choose a font…	Yazı tipi seç…
+	A translation is already running	Zaten bir çeviri çalışıyor
+	Choose a translation map first	Önce bir çeviri eşlemesi seçin
+	The network service needs an endpoint	Ağ hizmeti bir adres gerektiriyor
+	The network service needs a target language	Ağ hizmeti bir hedef dil gerektiriyor
+	Nothing to translate: the document has no text rows	Çevrilecek bir şey yok: belgede metin satırı yok
+	the endpoint stopped unexpectedly	hizmet beklenmedik biçimde durdu
+	Replace the document's text with a translation, keeping each row's font, size, colour and place.	Belgenin metnini çeviriyle değiştir; her satırın yazı tipi, boyutu, rengi ve konumu korunur.
+	Network service (DeepLX-compatible)	Ağ hizmeti (DeepLX uyumlu)
+	Map:	Eşleme:
+	Choose…	Seç…
+	The map covers {covered} of {rows} rows.	Eşleme {rows} satırın {covered} tanesini kapsıyor.
+	While the network service is off, no request leaves this computer.	Ağ hizmeti kapalıyken bu bilgisayardan hiçbir istek çıkmaz.
+	A script the document's own faces cannot draw (Cyrillic, Greek) needs a font; without one those rows fail instead of being drawn.	Belgenin yazı tiplerinin çizemediği bir yazı (Kiril, Yunan) yüklenmiş bir yazı tipi gerektirir; o olmadan bu satırlar çizilmek yerine başarısız olur.
+	Replace the text in this document	Bu belgedeki metni değiştir
+	Otherwise the translation is written to a new file and this document is left alone.	Aksi halde çeviri yeni bir dosyaya yazılır ve bu belge olduğu gibi kalır.
+	Translating…	Çevriliyor…
+	Written to {path}	{path} dosyasına yazıldı
+	{rows} rows: {translated} translated, {shrunk} shrunk, {missing} missing	{rows} satır: {translated} çevrildi, {shrunk} küçültüldü, {missing} çevrilmedi
+	Too long:	Çok uzun:
+	Missing:	Çevrilmeyen:
+	Formatting lost:	Biçimlendirme kayboldu:
+	Translate…	Çevir…
+	Copy to:	Şuraya kopyala:
+	The copy needs a file name	Kopyanın bir dosya adı olmalı
+	The copy needs a file of its own: this document would be overwritten	Kopyanın kendi dosyası olmalı: yoksa bu belgenin üzerine yazılır
+# File ▸ Translate…: providers
+	DeepLX-compatible service	DeepLX uyumlu hizmet
+	Google Translate	Google Çeviri
+	Service address:	Hizmet adresi:
+	API key:	API anahtarı:
+	The map answers from a JSON file on this computer; nothing is sent.	Eşleme bu bilgisayardaki bir JSON dosyasından yanıt verir; hiçbir şey gönderilmez.
+	Nothing is sent until you press Translate, and the report counts every request.	«Çevir» düğmesine basana kadar hiçbir şey gönderilmez; rapor her isteği sayar.
+	Leave the address empty for the free service; a google-cloud address is used with your own key. Nothing is sent until you press Translate.	Ücretsiz hizmet için adresi boş bırakın; google-cloud adresi kendi anahtarınızla kullanılır. «Çevir» düğmesine basana kadar hiçbir şey gönderilmez.
+	Google Translate's backend is not in this build yet, so nothing was sent. Choose the map or a DeepLX-compatible service.	Google Çeviri motoru henüz bu derlemede yok, bu yüzden hiçbir şey gönderilmedi. Eşlemeyi ya da DeepLX uyumlu bir hizmeti seçin.
+	Provider: {provider} · requests: {requests}	Sağlayıcı: {provider} · istek: {requests}
+	No request left this computer.	Hiçbir istek bu bilgisayardan çıkmadı.
+	This provider cannot run	Bu sağlayıcı çalıştırılamaz

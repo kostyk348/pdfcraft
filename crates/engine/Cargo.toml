@@ -35,6 +35,10 @@ pdfcraft-create = { workspace = true }
 pdfcraft-model = { workspace = true }
 pdfcraft-eml = { workspace = true }
 pdfcraft-geom = { workspace = true }
+# File ▸ Translate… and `doc_translate` share one implementation (`translate`), and its map keys,
+# quoting and size candidates are this crate's.
+pdfcraft-translate = { workspace = true }
+serde_json = { workspace = true }
 thiserror = { workspace = true }
 png = "0.18"
 # Already in the graph (url and idna through webbrowser, icu_properties through boa): they show

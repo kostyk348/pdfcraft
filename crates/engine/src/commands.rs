@@ -308,6 +308,7 @@ pub const COMMANDS: &[CommandSpec] = &[
     c("sign.fill.initials.change", "Fill & Sign: change initials", None, None, Nothing, "signature"),
     c("email.message", "Save as email message…", FILE, None, Copying, "mail"),
     c("email.send", "Send as email…", FILE, None, Copying, "send"),
+    c("translate.document", "Translate…", FILE, None, Copying, "languages"),
     c("export.image", "Export to image…", FILE, None, Copying, "image"),
     c("optimize.reduce", "Reduce file size…", FILE, None, Document, "file-down"),
     c("optimize.advanced", "Optimize PDF…", FILE, None, Document, "settings-2"),

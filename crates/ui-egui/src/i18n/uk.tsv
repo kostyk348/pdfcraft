@@ -2398,3 +2398,44 @@ animation effects	Off	Вимкнено
 	Not sent: {reason}	Не надіслано: {reason}
 	the session stopped unexpectedly	сеанс несподівано перервався
 	Sending an email needs the desktop app: a browser has no mail connection	Для надсилання листа потрібен застосунок для комп'ютера: у браузера немає поштового з'єднання
+# File ▸ Translate…
+	Translation map (JSON file)	Карта перекладу (файл JSON)
+	The translation map must be UTF-8	Карта перекладу має бути в UTF-8
+	Choose a font…	Вибрати шрифт…
+	A translation is already running	Переклад уже виконується
+	Choose a translation map first	Спершу виберіть карту перекладу
+	The network service needs an endpoint	Мережевій службі потрібна адреса
+	The network service needs a target language	Мережевій службі потрібна цільова мова
+	Nothing to translate: the document has no text rows	Перекладати нічого: у документі немає текстових рядків
+	the endpoint stopped unexpectedly	служба несподівано зупинилася
+	Replace the document's text with a translation, keeping each row's font, size, colour and place.	Замінити текст документа перекладом, зберігши в кожного рядка шрифт, розмір, колір і положення.
+	Network service (DeepLX-compatible)	Мережева служба (сумісна з DeepLX)
+	Map:	Карта:
+	Choose…	Вибрати…
+	The map covers {covered} of {rows} rows.	Карта покриває {covered} з {rows} рядків.
+	While the network service is off, no request leaves this computer.	Поки мережева служба вимкнена, жоден запит не залишає цей комп'ютер.
+	A script the document's own faces cannot draw (Cyrillic, Greek) needs a font; without one those rows fail instead of being drawn.	Письмо, якого шрифти документа не малюють (кирилиця, грецьке), потребує завантаженого шрифту; без нього такі рядки не малюються, а потрапляють у звіт як помилки.
+	Replace the text in this document	Замінити текст у цьому документі
+	Otherwise the translation is written to a new file and this document is left alone.	Інакше переклад записується в новий файл, а цей документ лишається недоторканим.
+	Translating…	Переклад…
+	Written to {path}	Записано в {path}
+	{rows} rows: {translated} translated, {shrunk} shrunk, {missing} missing	{rows} рядків: перекладено {translated}, зменшено {shrunk}, без перекладу {missing}
+	Too long:	Задовго:
+	Missing:	Без перекладу:
+	Formatting lost:	Оформлення втрачено:
+	Translate…	Перекласти…
+	Copy to:	Копія в:
+	The copy needs a file name	Копії потрібна назва файлу
+	The copy needs a file of its own: this document would be overwritten	Копії потрібен власний файл: інакше цей документ буде перезаписано
+# File ▸ Translate…: providers
+	DeepLX-compatible service	Служба, сумісна з DeepLX
+	Google Translate	Google Перекладач
+	Service address:	Адреса служби:
+	API key:	Ключ API:
+	The map answers from a JSON file on this computer; nothing is sent.	Карта відповідає з файлу JSON на цьому комп’ютері; нічого не надсилається.
+	Nothing is sent until you press Translate, and the report counts every request.	Нічого не надсилається, доки ви не натиснете «Перекласти»; звіт рахує кожен запит.
+	Leave the address empty for the free service; a google-cloud address is used with your own key. Nothing is sent until you press Translate.	Залиште адресу порожньою для безкоштовної служби; адреса google-cloud використовується з вашим власним ключем. Нічого не надсилається, доки ви не натиснете «Перекласти».
+	Google Translate's backend is not in this build yet, so nothing was sent. Choose the map or a DeepLX-compatible service.	Служба Google Translate ще не входить у цю збірку, тому нічого не надіслано. Виберіть карту або службу, сумісну з DeepLX.
+	Provider: {provider} · requests: {requests}	Постачальник: {provider} · запитів: {requests}
+	No request left this computer.	Жоден запит не залишив цей комп’ютер.
+	This provider cannot run	Цей постачальник не може запуститися

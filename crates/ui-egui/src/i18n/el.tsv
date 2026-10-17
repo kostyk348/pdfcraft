@@ -2386,3 +2386,44 @@ animation effects	Off	Ανενεργά
 	Not sent: {reason}	Δεν στάλθηκε: {reason}
 	the session stopped unexpectedly	η συνεδρία διακόπηκε απροσδόκητα
 	Sending an email needs the desktop app: a browser has no mail connection	Η αποστολή email απαιτεί την εφαρμογή για υπολογιστή: το πρόγραμμα περιήγησης δεν έχει σύνδεση αλληλογραφίας
+# File ▸ Translate…
+	Translation map (JSON file)	Χάρτης μετάφρασης (αρχείο JSON)
+	The translation map must be UTF-8	Ο χάρτης μετάφρασης πρέπει να είναι UTF-8
+	Choose a font…	Επιλογή γραμματοσειράς…
+	A translation is already running	Μια μετάφραση εκτελείται ήδη
+	Choose a translation map first	Επιλέξτε πρώτα χάρτη μετάφρασης
+	The network service needs an endpoint	Η υπηρεσία δικτύου χρειάζεται διεύθυνση
+	The network service needs a target language	Η υπηρεσία δικτύου χρειάζεται γλώσσα προορισμού
+	Nothing to translate: the document has no text rows	Δεν υπάρχει τίποτα να μεταφραστεί: το έγγραφο δεν έχει γραμμές κειμένου
+	the endpoint stopped unexpectedly	η υπηρεσία σταμάτησε απροσδόκητα
+	Replace the document's text with a translation, keeping each row's font, size, colour and place.	Αντικατάσταση του κειμένου του εγγράφου με τη μετάφραση, διατηρώντας γραμματοσειρά, μέγεθος, χρώμα και θέση κάθε γραμμής.
+	Network service (DeepLX-compatible)	Υπηρεσία δικτύου (συμβατή με DeepLX)
+	Map:	Χάρτης:
+	Choose…	Επιλογή…
+	The map covers {covered} of {rows} rows.	Ο χάρτης καλύπτει {covered} από {rows} γραμμές.
+	While the network service is off, no request leaves this computer.	Όσο η υπηρεσία δικτύου είναι κλειστή, κανένα αίτημα δεν φεύγει από αυτόν τον υπολογιστή.
+	A script the document's own faces cannot draw (Cyrillic, Greek) needs a font; without one those rows fail instead of being drawn.	Γραφή που οι γραμματοσειρές του εγγράφου δεν σχεδιάζουν (κυριλλικά, ελληνικά) χρειάζεται φορτωμένη γραμματοσειρά· χωρίς αυτή οι γραμμές αποτυγχάνουν αντί να σχεδιαστούν.
+	Replace the text in this document	Αντικατάσταση του κειμένου σε αυτό το έγγραφο
+	Otherwise the translation is written to a new file and this document is left alone.	Διαφορετικά η μετάφραση γράφεται σε νέο αρχείο και αυτό το έγγραφο μένει ανέπαφο.
+	Translating…	Μετάφραση…
+	Written to {path}	Γράφτηκε στο {path}
+	{rows} rows: {translated} translated, {shrunk} shrunk, {missing} missing	{rows} γραμμές: {translated} μεταφρασμένες, {shrunk} σμικρυμένες, {missing} χωρίς μετάφραση
+	Too long:	Πολύ μακρύ:
+	Missing:	Χωρίς μετάφραση:
+	Formatting lost:	Χάθηκε η μορφοποίηση:
+	Translate…	Μετάφραση…
+	Copy to:	Αντιγραφή σε:
+	The copy needs a file name	Το αντίγραφο χρειάζεται όνομα αρχείου
+	The copy needs a file of its own: this document would be overwritten	Το αντίγραφο χρειάζεται δικό του αρχείο· αλλιώς αυτό το έγγραφο θα αντικατασταθεί
+# File ▸ Translate…: providers
+	DeepLX-compatible service	Υπηρεσία συμβατή με DeepLX
+	Google Translate	Google Μετάφραση
+	Service address:	Διεύθυνση υπηρεσίας:
+	API key:	Κλειδί API:
+	The map answers from a JSON file on this computer; nothing is sent.	Ο χάρτης απαντά από ένα αρχείο JSON σε αυτόν τον υπολογιστή· δεν αποστέλλεται τίποτα.
+	Nothing is sent until you press Translate, and the report counts every request.	Τίποτα δεν αποστέλλεται μέχρι να πατήσετε «Μετάφραση»· η αναφορά μετρά κάθε αίτημα.
+	Leave the address empty for the free service; a google-cloud address is used with your own key. Nothing is sent until you press Translate.	Αφήστε τη διεύθυνση κενή για τη δωρεάν υπηρεσία· μια διεύθυνση google-cloud χρησιμοποιείται με το δικό σας κλειδί. Τίποτα δεν αποστέλλεται μέχρι να πατήσετε «Μετάφραση».
+	Google Translate's backend is not in this build yet, so nothing was sent. Choose the map or a DeepLX-compatible service.	Η μηχανή της Google Μετάφρασης δεν υπάρχει ακόμη σε αυτή την έκδοση, οπότε δεν στάλθηκε τίποτα. Διαλέξτε τον χάρτη ή μια υπηρεσία συμβατή με DeepLX.
+	Provider: {provider} · requests: {requests}	Πάροχος: {provider} · αιτήματα: {requests}
+	No request left this computer.	Κανένα αίτημα δεν έφυγε από αυτόν τον υπολογιστή.
+	This provider cannot run	Αυτός ο πάροχος δεν μπορεί να εκτελεστεί

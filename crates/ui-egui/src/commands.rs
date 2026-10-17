@@ -407,6 +407,7 @@ impl PdfCraftApp {
                 self.apply_edit(Edit::RemoveMarks { kind });
             }
             "email.message" => self.email_dialog(),
+            "translate.document" => self.translate_dialog(),
             // A browser has no sockets at all, so sending is desktop-only; the command stays
             // registered (the registry is shared) and says so rather than doing nothing.
             #[cfg(not(target_arch = "wasm32"))]

@@ -2339,3 +2339,44 @@ animation effects	Off	Изключени
 	Not sent: {reason}	Не е изпратено: {reason}
 	the session stopped unexpectedly	сесията прекъсна неочаквано
 	Sending an email needs the desktop app: a browser has no mail connection	Изпращането на имейл изисква настолното приложение: браузърът няма пощенска връзка
+# File ▸ Translate…
+	Translation map (JSON file)	Карта за превод (JSON файл)
+	The translation map must be UTF-8	Картата за превод трябва да е в UTF-8
+	Choose a font…	Избор на шрифт…
+	A translation is already running	Преводът вече върви
+	Choose a translation map first	Първо изберете карта за превод
+	The network service needs an endpoint	Мрежовата услуга се нуждае от адрес
+	The network service needs a target language	Мрежовата услуга се нуждае от целеви език
+	Nothing to translate: the document has no text rows	Няма какво да се превежда: документът няма текстови редове
+	the endpoint stopped unexpectedly	услугата спря неочаквано
+	Replace the document's text with a translation, keeping each row's font, size, colour and place.	Заместете текста на документа с превода, като запазите шрифта, размера, цвета и мястото на всеки ред.
+	Network service (DeepLX-compatible)	Мрежова услуга (съвместима с DeepLX)
+	Map:	Карта:
+	Choose…	Избор…
+	The map covers {covered} of {rows} rows.	Картата покрива {covered} от {rows} реда.
+	While the network service is off, no request leaves this computer.	Докато мрежовата услуга е изключена, нито една заявка не напуска този компютър.
+	A script the document's own faces cannot draw (Cyrillic, Greek) needs a font; without one those rows fail instead of being drawn.	Писменост, която шрифтовете на документа не рисуват (кирилица, гръцка), изисква зареден шрифт; без него тези редове се провалят, вместо да бъдат нарисувани.
+	Replace the text in this document	Заместване на текста в този документ
+	Otherwise the translation is written to a new file and this document is left alone.	Иначе преводът се записва в нов файл, а този документ остава непроменен.
+	Translating…	Превеждане…
+	Written to {path}	Записано в {path}
+	{rows} rows: {translated} translated, {shrunk} shrunk, {missing} missing	{rows} реда: {translated} преведени, {shrunk} смалени, {missing} без превод
+	Too long:	Твърде дълго:
+	Missing:	Без превод:
+	Formatting lost:	Изгубено форматиране:
+	Translate…	Преведи…
+	Copy to:	Копие в:
+	The copy needs a file name	Копието се нуждае от име на файл
+	The copy needs a file of its own: this document would be overwritten	Копието се нуждае от собствен файл: иначе този документ ще бъде презаписан
+# File ▸ Translate…: providers
+	DeepLX-compatible service	Услуга, съвместима с DeepLX
+	Google Translate	Google Преводач
+	Service address:	Адрес на услугата:
+	API key:	API ключ:
+	The map answers from a JSON file on this computer; nothing is sent.	Картата отговаря от JSON файл на този компютър; нищо не се изпраща.
+	Nothing is sent until you press Translate, and the report counts every request.	Нищо не се изпраща, докато не натиснете „Превод“; отчетът брои всяка заявка.
+	Leave the address empty for the free service; a google-cloud address is used with your own key. Nothing is sent until you press Translate.	Оставете адреса празен за безплатната услуга; адресът google-cloud се използва с вашия собствен ключ. Нищо не се изпраща, докато не натиснете „Превод“.
+	Google Translate's backend is not in this build yet, so nothing was sent. Choose the map or a DeepLX-compatible service.	Машината на Google Преводач още не е в тази компилация, затова нищо не е изпратено. Изберете картата или услуга, съвместима с DeepLX.
+	Provider: {provider} · requests: {requests}	Доставчик: {provider} · заявки: {requests}
+	No request left this computer.	Нито една заявка не напусна този компютър.
+	This provider cannot run	Този доставчик не може да стартира

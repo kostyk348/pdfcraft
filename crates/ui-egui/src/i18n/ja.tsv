@@ -2376,3 +2376,44 @@ animation effects	Off	オフ
 	Not sent: {reason}	送信できませんでした: {reason}
 	the session stopped unexpectedly	セッションが予期せず切断されました
 	Sending an email needs the desktop app: a browser has no mail connection	メールの送信にはデスクトップアプリが必要です: ブラウザーにはメール接続がありません
+# File ▸ Translate…
+	Translation map (JSON file)	翻訳マップ (JSON ファイル)
+	The translation map must be UTF-8	翻訳マップは UTF-8 である必要があります
+	Choose a font…	フォントを選択…
+	A translation is already running	翻訳はすでに実行中です
+	Choose a translation map first	先に翻訳マップを選択してください
+	The network service needs an endpoint	ネットワークサービスにはエンドポイントが必要です
+	The network service needs a target language	ネットワークサービスには対象言語が必要です
+	Nothing to translate: the document has no text rows	翻訳するものがありません: この文書にはテキスト行がありません
+	the endpoint stopped unexpectedly	エンドポイントが予期せず停止しました
+	Replace the document's text with a translation, keeping each row's font, size, colour and place.	文書のテキストを翻訳で置き換えます。各行のフォント、サイズ、色、位置はそのまま保たれます。
+	Network service (DeepLX-compatible)	ネットワークサービス (DeepLX 互換)
+	Map:	マップ:
+	Choose…	選択…
+	The map covers {covered} of {rows} rows.	マップは {rows} 行のうち {covered} 行をカバーしています。
+	While the network service is off, no request leaves this computer.	ネットワークサービスがオフの間は、リクエストはこのコンピューターから送信されません。
+	A script the document's own faces cannot draw (Cyrillic, Greek) needs a font; without one those rows fail instead of being drawn.	文書のフォントが描けない文字 (キリル文字、ギリシャ文字) にはフォントが必要です。ない場合、その行は描画されずに失敗として報告されます。
+	Replace the text in this document	この文書のテキストを置き換える
+	Otherwise the translation is written to a new file and this document is left alone.	オフの場合は翻訳を新しいファイルに書き出し、この文書は変更しません。
+	Translating…	翻訳しています…
+	Written to {path}	{path} に書き出しました
+	{rows} rows: {translated} translated, {shrunk} shrunk, {missing} missing	{rows} 行: {translated} 行を翻訳、{shrunk} 行を縮小、{missing} 行は未翻訳
+	Too long:	長すぎます:
+	Missing:	未翻訳:
+	Formatting lost:	書式が失われました:
+	Translate…	翻訳…
+	Copy to:	コピー先:
+	The copy needs a file name	コピーにはファイル名が必要です
+	The copy needs a file of its own: this document would be overwritten	コピー専用のファイルが必要です: この文書は上書きされます
+# File ▸ Translate…: providers
+	DeepLX-compatible service	DeepLX 互換サービス
+	Google Translate	Google 翻訳
+	Service address:	サービスのアドレス:
+	API key:	API キー:
+	The map answers from a JSON file on this computer; nothing is sent.	対応表はこのコンピューター上の JSON ファイルから答えます。何も送信されません。
+	Nothing is sent until you press Translate, and the report counts every request.	「翻訳」を押すまで何も送信されません。レポートはすべての要求を数えます。
+	Leave the address empty for the free service; a google-cloud address is used with your own key. Nothing is sent until you press Translate.	無料サービスを使うときはアドレスを空のままにします。google-cloud のアドレスはご自身のキーで使います。「翻訳」を押すまで何も送信されません。
+	Google Translate's backend is not in this build yet, so nothing was sent. Choose the map or a DeepLX-compatible service.	Google 翻訳のバックエンドはまだこのビルドに含まれていないため、何も送信されませんでした。対応表か DeepLX 互換サービスを選んでください。
+	Provider: {provider} · requests: {requests}	プロバイダー: {provider} · 要求: {requests}
+	No request left this computer.	このコンピューターから出た要求はありません。
+	This provider cannot run	このプロバイダーは実行できません

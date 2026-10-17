@@ -2450,3 +2450,44 @@ animation effects	Off	Vypnuto
 	Not sent: {reason}	Neodesláno: {reason}
 	the session stopped unexpectedly	relace se neočekávaně přerušila
 	Sending an email needs the desktop app: a browser has no mail connection	Odesílání e-mailů vyžaduje desktopovou aplikaci: prohlížeč nemá poštovní připojení
+# File ▸ Translate…
+	Translation map (JSON file)	Překladová mapa (soubor JSON)
+	The translation map must be UTF-8	Překladová mapa musí být v UTF-8
+	Choose a font…	Zvolit písmo…
+	A translation is already running	Překlad už běží
+	Choose a translation map first	Nejdřív zvolte překladovou mapu
+	The network service needs an endpoint	Síťová služba potřebuje adresu koncového bodu
+	The network service needs a target language	Síťová služba potřebuje cílový jazyk
+	Nothing to translate: the document has no text rows	Není co překládat: dokument nemá žádné textové řádky
+	the endpoint stopped unexpectedly	koncový bod se neočekávaně ukončil
+	Replace the document's text with a translation, keeping each row's font, size, colour and place.	Nahradit text dokumentu překladem a zachovat u každého řádku písmo, velikost, barvu i umístění.
+	Network service (DeepLX-compatible)	Síťová služba (kompatibilní s DeepLX)
+	Map:	Mapa:
+	Choose…	Zvolit…
+	The map covers {covered} of {rows} rows.	Mapa pokrývá {covered} z {rows} řádků.
+	While the network service is off, no request leaves this computer.	Dokud je síťová služba vypnutá, neodchází z tohoto počítače žádný požadavek.
+	A script the document's own faces cannot draw (Cyrillic, Greek) needs a font; without one those rows fail instead of being drawn.	Písmo, které dokument nemá (cyrilice, řečtina), potřebuje načtené písmo; bez něj takové řádky selžou, místo aby se vykreslily.
+	Replace the text in this document	Nahradit text v tomto dokumentu
+	Otherwise the translation is written to a new file and this document is left alone.	Jinak se překlad zapíše do nového souboru a tento dokument zůstane beze změny.
+	Translating…	Překládá se…
+	Written to {path}	Zapsáno do {path}
+	{rows} rows: {translated} translated, {shrunk} shrunk, {missing} missing	{rows} řádků: {translated} přeloženo, {shrunk} zmenšeno, {missing} chybí
+	Too long:	Příliš dlouhé:
+	Missing:	Chybí:
+	Formatting lost:	Ztracené formátování:
+	Translate…	Přeložit…
+	Copy to:	Kopírovat do:
+	The copy needs a file name	Kopie potřebuje název souboru
+	The copy needs a file of its own: this document would be overwritten	Kopie potřebuje vlastní soubor: tento dokument by se přepsal
+# File ▸ Translate…: providers
+	DeepLX-compatible service	Služba kompatibilní s DeepLX
+	Google Translate	Překladač Google
+	Service address:	Adresa služby:
+	API key:	Klíč API:
+	The map answers from a JSON file on this computer; nothing is sent.	Mapa odpovídá ze souboru JSON na tomto počítači; nic se neodesílá.
+	Nothing is sent until you press Translate, and the report counts every request.	Nic se neodešle, dokud nestisknete „Přeložit”; sestava počítá každý požadavek.
+	Leave the address empty for the free service; a google-cloud address is used with your own key. Nothing is sent until you press Translate.	Nechte adresu prázdnou pro bezplatnou službu; adresa google-cloud se používá s vaším vlastním klíčem. Nic se neodešle, dokud nestisknete „Přeložit”.
+	Google Translate's backend is not in this build yet, so nothing was sent. Choose the map or a DeepLX-compatible service.	Modul Překladače Google zatím v tomto sestavení není, takže se nic neodeslalo. Zvolte mapu nebo službu kompatibilní s DeepLX.
+	Provider: {provider} · requests: {requests}	Poskytovatel: {provider} · požadavků: {requests}
+	No request left this computer.	Tento počítač neopustil žádný požadavek.
+	This provider cannot run	Tento poskytovatel nemůže běžet

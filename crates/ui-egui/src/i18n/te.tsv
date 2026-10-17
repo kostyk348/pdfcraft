@@ -2289,3 +2289,44 @@ animation effects	Off	ఆఫ్
 	Not sent: {reason}	పంపబడలేదు: {reason}
 	the session stopped unexpectedly	సెషన్ ఊహించని విధంగా ఆగిపోయింది
 	Sending an email needs the desktop app: a browser has no mail connection	ఇమెయిల్ పంపడానికి డెస్క్టాప్ యాప్ కావాలి: బ్రౌజర్కు మెయిల్ కనెక్షన్ లేదు
+# File ▸ Translate…
+	Translation map (JSON file)	అనువాద మ్యాప్ (JSON ఫైల్)
+	The translation map must be UTF-8	అనువాద మ్యాప్ UTF-8 లో ఉండాలి
+	Choose a font…	ఫాంట్ ఎంచుకోండి…
+	A translation is already running	అనువాదం ఇప్పటికే నడుస్తోంది
+	Choose a translation map first	మొదట అనువాద మ్యాప్ ఎంచుకోండి
+	The network service needs an endpoint	నెట్‌వర్క్ సేవకు చిరునామా కావాలి
+	The network service needs a target language	నెట్‌వర్క్ సేవకు లక్ష్య భాష కావాలి
+	Nothing to translate: the document has no text rows	అనువదించడానికి ఏమీ లేదు: ఈ పత్రంలో పాఠ్య వరుసలు లేవు
+	the endpoint stopped unexpectedly	సేవ అనుకోకుండా ఆగిపోయింది
+	Replace the document's text with a translation, keeping each row's font, size, colour and place.	పత్రంలోని పాఠ్యాన్ని అనువాదంతో భర్తీ చేయండి; ప్రతి వరుస యొక్క ఫాంట్, పరిమాణం, రంగు, స్థానం అలాగే ఉంటాయి.
+	Network service (DeepLX-compatible)	నెట్‌వర్క్ సేవ (DeepLX అనుకూలం)
+	Map:	మ్యాప్:
+	Choose…	ఎంచుకోండి…
+	The map covers {covered} of {rows} rows.	మ్యాప్ {rows} వరుసలలో {covered} వరుసలను కవర్ చేస్తుంది.
+	While the network service is off, no request leaves this computer.	నెట్‌వర్క్ సేవ ఆఫ్‌లో ఉన్నప్పుడు ఈ కంప్యూటర్ నుండి ఏ అభ్యర్థనా బయటికి వెళ్లదు.
+	A script the document's own faces cannot draw (Cyrillic, Greek) needs a font; without one those rows fail instead of being drawn.	పత్రంలోని ఫాంట్లు గీయలేని లిపి (సిరిలిక్, గ్రీకు) కోసం ఫాంట్ లోడ్ చేయాలి; అది లేకపోతే ఆ వరుసలు గీయబడకుండా విఫలమవుతాయి.
+	Replace the text in this document	ఈ పత్రంలోని పాఠ్యాన్ని భర్తీ చేయండి
+	Otherwise the translation is written to a new file and this document is left alone.	లేకపోతే అనువాదం కొత్త ఫైల్‌లో రాయబడుతుంది, ఈ పత్రం మారదు.
+	Translating…	అనువదిస్తోంది…
+	Written to {path}	{path} లో రాయబడింది
+	{rows} rows: {translated} translated, {shrunk} shrunk, {missing} missing	{rows} వరుసలు: {translated} అనువదించబడ్డాయి, {shrunk} చిన్నగా చేయబడ్డాయి, {missing} అనువాదం లేవు
+	Too long:	చాలా పొడవు:
+	Missing:	అనువాదం లేదు:
+	Formatting lost:	ఫార్మాటింగ్ పోయింది:
+	Translate…	అనువదించు…
+	Copy to:	కాపీ ఇక్కడికి:
+	The copy needs a file name	కాపీకి ఫైల్ పేరు కావాలి
+	The copy needs a file of its own: this document would be overwritten	కాపీకి దాని సొంత ఫైల్ కావాలి: లేకపోతే ఈ పత్రం పైన రాయబడుతుంది
+# File ▸ Translate…: providers
+	DeepLX-compatible service	DeepLX-అనుకూల సేవ
+	Google Translate	Google అనువాదం
+	Service address:	సేవ చిరునామా:
+	API key:	API కీ:
+	The map answers from a JSON file on this computer; nothing is sent.	మ్యాప్ ఈ కంప్యూటర్‌లోని JSON ఫైల్ నుండి సమాధానం ఇస్తుంది; ఏదీ పంపబడదు.
+	Nothing is sent until you press Translate, and the report counts every request.	మీరు «అనువదించు» నొక్కే వరకు ఏదీ పంపబడదు; నివేదిక ప్రతి అభ్యర్థనను లెక్కిస్తుంది.
+	Leave the address empty for the free service; a google-cloud address is used with your own key. Nothing is sent until you press Translate.	ఉచిత సేవ కోసం చిరునామాను ఖాళీగా ఉంచండి; google-cloud చిరునామా మీ స్వంత కీతో ఉపయోగించబడుతుంది. మీరు «అనువదించు» నొక్కే వరకు ఏదీ పంపబడదు.
+	Google Translate's backend is not in this build yet, so nothing was sent. Choose the map or a DeepLX-compatible service.	Google అనువాదం బ్యాకెండ్ ఇంకా ఈ బిల్డ్‌లో లేదు, కాబట్టి ఏదీ పంపబడలేదు. మ్యాప్ లేదా DeepLX-అనుకూల సేవను ఎంచుకోండి.
+	Provider: {provider} · requests: {requests}	ప్రొవైడర్: {provider} · అభ్యర్థనలు: {requests}
+	No request left this computer.	ఏ అభ్యర్థనా ఈ కంప్యూటర్‌ను విడిచిపోలేదు.
+	This provider cannot run	ఈ ప్రొవైడర్ నడపబడదు

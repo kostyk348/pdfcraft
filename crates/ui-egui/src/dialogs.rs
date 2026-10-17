@@ -948,6 +948,14 @@ fn dialogs(app: &mut PdfCraftApp, ctx: &egui::Context) {
                 close = true;
                 return;
             }
+            // Like the email dialog, this one contacts nothing until Translate is pressed, and a
+            // reason to stay open is shown in place rather than closing the dialog.
+            Dialog::Translate => {
+                ui.set_width(640.0);
+                let max = (ui.ctx().content_rect().height() - 120.0).max(240.0);
+                close = egui::ScrollArea::vertical().max_height(max).show(ui, |ui| crate::translate_ui::body(ui, app, &t)).inner;
+                return;
+            }
             Dialog::Marks(kind) => {
                 ui.set_width(720.0);
                 let (apply, cancel) = crate::marks_ui::body(ui, app, &t, kind);

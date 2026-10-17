@@ -2340,3 +2340,44 @@ animation effects	Off	关
 	Not sent: {reason}	未发送：{reason}
 	the session stopped unexpectedly	会话意外中断
 	Sending an email needs the desktop app: a browser has no mail connection	发送邮件需要桌面应用：浏览器没有邮件连接
+# File ▸ Translate…
+	Translation map (JSON file)	翻译对照表（JSON 文件）
+	The translation map must be UTF-8	翻译对照表必须是 UTF-8
+	Choose a font…	选择字体…
+	A translation is already running	翻译已在运行
+	Choose a translation map first	请先选择翻译对照表
+	The network service needs an endpoint	网络服务需要一个端点
+	The network service needs a target language	网络服务需要目标语言
+	Nothing to translate: the document has no text rows	没有可翻译的内容：此文档没有文本行
+	the endpoint stopped unexpectedly	端点意外停止了
+	Replace the document's text with a translation, keeping each row's font, size, colour and place.	用译文替换文档中的文本，保留每一行的字体、大小、颜色和位置。
+	Network service (DeepLX-compatible)	网络服务（兼容 DeepLX）
+	Map:	对照表：
+	Choose…	选择…
+	The map covers {covered} of {rows} rows.	对照表覆盖 {rows} 行中的 {covered} 行。
+	While the network service is off, no request leaves this computer.	网络服务关闭时，不会有任何请求离开这台计算机。
+	A script the document's own faces cannot draw (Cyrillic, Greek) needs a font; without one those rows fail instead of being drawn.	文档自带的字体无法绘制的文字（西里尔文、希腊文）需要选择字体；否则这些行会失败而不会被绘制。
+	Replace the text in this document	替换此文档中的文本
+	Otherwise the translation is written to a new file and this document is left alone.	否则译文会写入一个新文件，此文档保持不变。
+	Translating…	正在翻译…
+	Written to {path}	已写入 {path}
+	{rows} rows: {translated} translated, {shrunk} shrunk, {missing} missing	{rows} 行：已翻译 {translated} 行，缩小 {shrunk} 行，未翻译 {missing} 行
+	Too long:	太长：
+	Missing:	未翻译：
+	Formatting lost:	格式丢失：
+	Translate…	翻译…
+	Copy to:	副本保存到：
+	The copy needs a file name	副本需要一个文件名
+	The copy needs a file of its own: this document would be overwritten	副本需要一个自己的文件：否则会覆盖此文档
+# File ▸ Translate…: providers
+	DeepLX-compatible service	兼容 DeepLX 的服务
+	Google Translate	Google 翻译
+	Service address:	服务地址：
+	API key:	API 密钥：
+	The map answers from a JSON file on this computer; nothing is sent.	映射表从本机的 JSON 文件作答；不发送任何内容。
+	Nothing is sent until you press Translate, and the report counts every request.	在您按下“翻译”之前不会发送任何内容；报告会计数每一次请求。
+	Leave the address empty for the free service; a google-cloud address is used with your own key. Nothing is sent until you press Translate.	使用免费服务时请将地址留空；google-cloud 地址需使用您自己的密钥。在您按下“翻译”之前不会发送任何内容。
+	Google Translate's backend is not in this build yet, so nothing was sent. Choose the map or a DeepLX-compatible service.	此版本尚未包含 Google 翻译后端，因此没有发送任何内容。请选择映射表或兼容 DeepLX 的服务。
+	Provider: {provider} · requests: {requests}	提供方：{provider} · 请求数：{requests}
+	No request left this computer.	没有任何请求离开这台计算机。
+	This provider cannot run	此提供方无法运行

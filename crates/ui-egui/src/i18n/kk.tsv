@@ -2374,3 +2374,44 @@ animation effects	Off	Өшірулі
 	Not sent: {reason}	Жіберілмеді: {reason}
 	the session stopped unexpectedly	сессия кенеттен үзілді
 	Sending an email needs the desktop app: a browser has no mail connection	Электрондық пошта жіберу үшін жұмыс үстелі қолданбасы қажет: браузерде пошта қосылымы жоқ
+# File ▸ Translate…
+	Translation map (JSON file)	Аударма картасы (JSON файлы)
+	The translation map must be UTF-8	Аударма картасы UTF-8 болуы керек
+	Choose a font…	Қаріпті таңдау…
+	A translation is already running	Аударма әлдеқашан жүріп жатыр
+	Choose a translation map first	Алдымен аударма картасын таңдаңыз
+	The network service needs an endpoint	Желілік қызметке мекенжай керек
+	The network service needs a target language	Желілік қызметке мақсатты тіл керек
+	Nothing to translate: the document has no text rows	Аударатын ештеңе жоқ: құжатта мәтін жолдары жоқ
+	the endpoint stopped unexpectedly	қызмет кенеттен тоқтады
+	Replace the document's text with a translation, keeping each row's font, size, colour and place.	Құжат мәтінін аудармамен ауыстырып, әр жолдың қарпін, өлшемін, түсін және орнын сақтау.
+	Network service (DeepLX-compatible)	Желілік қызмет (DeepLX үйлесімді)
+	Map:	Карта:
+	Choose…	Таңдау…
+	The map covers {covered} of {rows} rows.	Карта {rows} жолдың {covered} жолын қамтиды.
+	While the network service is off, no request leaves this computer.	Желілік қызмет өшірулі тұрғанда бұл компьютерден ешбір сұрау шықпайды.
+	A script the document's own faces cannot draw (Cyrillic, Greek) needs a font; without one those rows fail instead of being drawn.	Құжаттың қаріптері сала алмайтын жазу (кирилл, грек) үшін қаріп жүктеу керек; ол болмаса мұндай жолдар салынбай, қате ретінде көрсетіледі.
+	Replace the text in this document	Осы құжаттағы мәтінді ауыстыру
+	Otherwise the translation is written to a new file and this document is left alone.	Әйтпесе аударма жаңа файлға жазылады, бұл құжат өзгеріссіз қалады.
+	Translating…	Аударылуда…
+	Written to {path}	{path} файлына жазылды
+	{rows} rows: {translated} translated, {shrunk} shrunk, {missing} missing	{rows} жол: {translated} аударылды, {shrunk} кішірейтілді, {missing} аударылмады
+	Too long:	Тым ұзын:
+	Missing:	Аударылмаған:
+	Formatting lost:	Пішімдеу жоғалды:
+	Translate…	Аудару…
+	Copy to:	Көшірме орны:
+	The copy needs a file name	Көшірмеге файл атауы керек
+	The copy needs a file of its own: this document would be overwritten	Көшірмеге өз файлы керек: әйтпесе бұл құжат қайта жазылады
+# File ▸ Translate…: providers
+	DeepLX-compatible service	DeepLX-пен үйлесімді қызмет
+	Google Translate	Google Аударма
+	Service address:	Қызмет мекенжайы:
+	API key:	API кілті:
+	The map answers from a JSON file on this computer; nothing is sent.	Карта осы компьютердегі JSON файлынан жауап береді; ештеңе жіберілмейді.
+	Nothing is sent until you press Translate, and the report counts every request.	«Аудару» түймесін баспайынша ештеңе жіберілмейді; есеп әрбір сұрауды санайды.
+	Leave the address empty for the free service; a google-cloud address is used with your own key. Nothing is sent until you press Translate.	Тегін қызмет үшін мекенжайды бос қалдырыңыз; google-cloud мекенжайы өз кілтіңізбен қолданылады. «Аудару» түймесін баспайынша ештеңе жіберілмейді.
+	Google Translate's backend is not in this build yet, so nothing was sent. Choose the map or a DeepLX-compatible service.	Google Аударма қозғалтқышы бұл құрастырылымда әлі жоқ, сондықтан ештеңе жіберілмеді. Картаны немесе DeepLX-пен үйлесімді қызметті таңдаңыз.
+	Provider: {provider} · requests: {requests}	Провайдер: {provider} · сұраулар: {requests}
+	No request left this computer.	Бұл компьютерден ешбір сұрау шыққан жоқ.
+	This provider cannot run	Бұл провайдер іске қосылмайды

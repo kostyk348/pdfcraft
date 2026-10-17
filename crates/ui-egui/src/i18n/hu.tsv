@@ -2375,3 +2375,44 @@ animation effects	Off	Ki
 	Not sent: {reason}	Nem küldhető el: {reason}
 	the session stopped unexpectedly	a munkamenet váratlanul megszakadt
 	Sending an email needs the desktop app: a browser has no mail connection	Az e-mail küldéséhez az asztali alkalmazás kell: a böngészőnek nincs levélkapcsolata
+# File ▸ Translate…
+	Translation map (JSON file)	Fordítási térkép (JSON-fájl)
+	The translation map must be UTF-8	A fordítási térképnek UTF-8-nak kell lennie
+	Choose a font…	Betűtípus kiválasztása…
+	A translation is already running	Már fut egy fordítás
+	Choose a translation map first	Előbb válasszon fordítási térképet
+	The network service needs an endpoint	A hálózati szolgáltatáshoz cím kell
+	The network service needs a target language	A hálózati szolgáltatáshoz célnyelv kell
+	Nothing to translate: the document has no text rows	Nincs mit lefordítani: a dokumentumban nincsenek szövegsorok
+	the endpoint stopped unexpectedly	a szolgáltatás váratlanul leállt
+	Replace the document's text with a translation, keeping each row's font, size, colour and place.	A dokumentum szövegének cseréje a fordítással, megtartva minden sor betűtípusát, méretét, színét és helyét.
+	Network service (DeepLX-compatible)	Hálózati szolgáltatás (DeepLX-kompatibilis)
+	Map:	Térkép:
+	Choose…	Kiválasztás…
+	The map covers {covered} of {rows} rows.	A térkép {rows} sorból {covered} sort fed le.
+	While the network service is off, no request leaves this computer.	Amíg a hálózati szolgáltatás ki van kapcsolva, egyetlen kérés sem hagyja el ezt a számítógépet.
+	A script the document's own faces cannot draw (Cyrillic, Greek) needs a font; without one those rows fail instead of being drawn.	Az olyan íráshoz (cirill, görög), amelyet a dokumentum betűtípusai nem rajzolnak meg, be kell tölteni egy betűtípust; enélkül az ilyen sorok megrajzolás helyett hibát adnak.
+	Replace the text in this document	A szöveg cseréje ebben a dokumentumban
+	Otherwise the translation is written to a new file and this document is left alone.	Ellenkező esetben a fordítás új fájlba kerül, és ez a dokumentum változatlan marad.
+	Translating…	Fordítás…
+	Written to {path}	Kiírva ide: {path}
+	{rows} rows: {translated} translated, {shrunk} shrunk, {missing} missing	{rows} sor: {translated} lefordítva, {shrunk} kicsinyítve, {missing} hiányzik
+	Too long:	Túl hosszú:
+	Missing:	Hiányzó:
+	Formatting lost:	Elveszett formázás:
+	Translate…	Fordítás…
+	Copy to:	Másolás ide:
+	The copy needs a file name	A másolatnak fájlnév kell
+	The copy needs a file of its own: this document would be overwritten	A másolatnak saját fájl kell: különben ez a dokumentum felülíródna
+# File ▸ Translate…: providers
+	DeepLX-compatible service	DeepLX-kompatibilis szolgáltatás
+	Google Translate	Google Fordító
+	Service address:	Szolgáltatás címe:
+	API key:	API-kulcs:
+	The map answers from a JSON file on this computer; nothing is sent.	A térkép egy JSON-fájlból válaszol ezen a számítógépen; semmi nem kerül elküldésre.
+	Nothing is sent until you press Translate, and the report counts every request.	Semmi nem kerül elküldésre, amíg a „Fordítás” gombra nem kattint; a jelentés minden kérést számol.
+	Leave the address empty for the free service; a google-cloud address is used with your own key. Nothing is sent until you press Translate.	Hagyja üresen a címet az ingyenes szolgáltatáshoz; a google-cloud címet a saját kulcsával használja. Semmi nem kerül elküldésre, amíg a „Fordítás” gombra nem kattint.
+	Google Translate's backend is not in this build yet, so nothing was sent. Choose the map or a DeepLX-compatible service.	A Google Fordító motorja még nincs ebben a buildben, ezért semmi nem került elküldésre. Válassza a térképet vagy egy DeepLX-kompatibilis szolgáltatást.
+	Provider: {provider} · requests: {requests}	Szolgáltató: {provider} · kérések: {requests}
+	No request left this computer.	Egyetlen kérés sem hagyta el ezt a számítógépet.
+	This provider cannot run	Ez a szolgáltató nem indítható
