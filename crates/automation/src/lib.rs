@@ -356,6 +356,7 @@ impl Automation {
             "doc_create" => self.doc_create(&a)?,
             "doc_email" => self.doc_email(&a)?,
             "doc_email_send" => self.doc_email_send(&a)?,
+            "doc_email_check" => self.doc_email_check(&a)?,
             "doc_flatten" => {
                 let (comments, fields) = (a.opt_bool("comments")?.unwrap_or(true), a.opt_bool("fields")?.unwrap_or(true));
                 if !comments && !fields {
@@ -1580,6 +1581,40 @@ impl Automation {
             "stuffed_lines": report.stuffed_lines,
             "reply": report.reply,
             "log": report.log,
+        }))
+    }
+
+    /// Check that a relay would accept the message without sending one: connect, say hello,
+    /// encrypt the session as asked and log in when credentials were given, then quit. The session
+    /// is the one `doc_email_send` opens and it stops before `MAIL FROM`, so a user (or an agent)
+    /// finds out about a wrong port, a certificate that does not check out or a refused password
+    /// without a message being handed over — and the receiver ends up with nothing either way.
+    fn doc_email_check(&mut self, a: &Args) -> Result<Value> {
+        let host = a.str("host")?.trim().to_string();
+        let port = a.opt_int("port")?.unwrap_or(25);
+        let port = u16::try_from(port).map_err(|_| ToolError::InvalidArgs(format!("port must be 1 to 65535 (got {port})")))?;
+        let security = pdfcraft_smtp::Security::parse(a.opt_str("security")?.unwrap_or("none")).map_err(|e| ToolError::InvalidArgs(e.to_string()))?;
+        let timeout = a.opt_int("timeout_ms")?.unwrap_or(30_000);
+        let timeout = u64::try_from(timeout)
+            .map_err(|_| ToolError::InvalidArgs(format!("timeout_ms must be a positive number of milliseconds (got {timeout})")))?;
+        let server = pdfcraft_smtp::Server {
+            host,
+            port,
+            security,
+            username: a.opt_str("username")?.map(str::to_owned),
+            password: a.opt_str("password")?.map(str::to_owned),
+            timeout: std::time::Duration::from_millis(timeout),
+            ..Default::default()
+        };
+        let checked = pdfcraft_smtp::verify(&server).map_err(failed)?;
+        Ok(json!({
+            "ok": true,
+            "sent": false,
+            "host": checked.host,
+            "port": checked.port,
+            "authenticated": checked.authenticated,
+            "capabilities": checked.capabilities,
+            "log": checked.log,
         }))
     }
 

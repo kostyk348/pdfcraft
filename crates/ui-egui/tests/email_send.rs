@@ -13,7 +13,7 @@ use std::thread::JoinHandle;
 use egui_kittest::Harness;
 use egui_kittest::kittest::Queryable;
 use pdfcraft_engine::EmailOptions;
-use pdfcraft_ui_egui::email_send::{Outcome, Transport};
+use pdfcraft_ui_egui::email_send::{CheckOutcome, Outcome, Transport};
 use pdfcraft_ui_egui::{Dialog, PdfCraftApp};
 
 /// A one-page PDF with a little text, so the message has a page to render.
@@ -289,4 +289,143 @@ fn the_receiver_helper_understands_a_by_hand_client() {
     let record = receiver.join().expect("the receiver thread");
     // The CRLF in front of the `.` is the framing, so the relay keeps the line as sent.
     assert_eq!(record.payload, b"by hand");
+}
+
+/// The dialog fills the server in from the map: typing a Gmail address is enough to know the
+/// server, the port and the transport, and nothing on the machine is consulted for it.
+#[test]
+fn the_provider_of_the_from_address_fills_in_the_server_port_and_transport() {
+    let mut h = harness();
+    assert!(h.state_mut().execute("email.send"));
+    h.run_steps(2);
+
+    let from = h.get_by_label("From:");
+    from.focus();
+    from.type_text("user@gmail.com");
+    h.run_steps(3);
+
+    let draft = &h.state().email.draft;
+    assert_eq!(draft.host, "smtp.gmail.com", "{draft:?}");
+    assert_eq!(draft.port, "465", "{draft:?}");
+    assert_eq!(draft.transport, Transport::Tls, "{draft:?}");
+    // And the one thing a person needs to know before trying: Gmail wants an app password.
+    assert!(h.query_by_label_contains("needs an app password").is_some(), "the app-password hint is not on screen");
+    assert!(h.query_by_label_contains("account user@gmail.com").is_some(), "the hint does not name the address");
+}
+
+/// A domain no provider is listed for fills in nothing — and takes back what a previous preset put
+/// there, so a half-filled dialog never names somebody else's relay.
+#[test]
+fn an_address_from_a_domain_nobody_lists_fills_in_nothing() {
+    let mut h = harness();
+    assert!(h.state_mut().execute("email.send"));
+    h.state_mut().email.draft.from = "user@gmail.com".to_string();
+    h.run_steps(3);
+    assert_eq!(h.state().email.draft.host, "smtp.gmail.com");
+
+    h.state_mut().email.draft.from = "ada@example.com".to_string();
+    h.run_steps(3);
+    let draft = &h.state().email.draft;
+    assert!(draft.host.is_empty(), "an unknown domain kept a server: {draft:?}");
+    assert!(draft.port.is_empty(), "an unknown domain kept a port: {draft:?}");
+    assert_eq!(draft.transport, Transport::None, "{draft:?}");
+}
+
+/// A box a person typed into is theirs: a later address fills in the rest and leaves it alone.
+#[test]
+fn a_server_typed_by_hand_is_not_overwritten_by_a_later_address() {
+    let mut h = harness();
+    assert!(h.state_mut().execute("email.send"));
+    h.state_mut().email.draft.from = "ada@example.com".to_string();
+    h.run_steps(2);
+    // What a person does when their provider is not in the list.
+    let server = h.get_by_label("Server:");
+    server.focus();
+    server.type_text("relay.example.com");
+    h.run_steps(2);
+    assert_eq!(h.state().email.draft.host, "relay.example.com");
+
+    // A Gmail address then fills in the port and the transport around the typed server.
+    h.state_mut().email.draft.from = "user@gmail.com".to_string();
+    h.run_steps(3);
+    let draft = &h.state().email.draft;
+    assert_eq!(draft.host, "relay.example.com", "the typed server was overwritten: {draft:?}");
+    assert_eq!(draft.port, "465", "{draft:?}");
+    assert_eq!(draft.transport, Transport::Tls, "{draft:?}");
+}
+
+/// Gmail's hint opens the page where the app password is made, in the system browser — the dialog
+/// itself never fetches it.
+#[test]
+fn the_gmail_hint_opens_the_app_password_page() {
+    let mut h = harness();
+    assert!(h.state_mut().execute("email.send"));
+    h.state_mut().email.draft.from = "user@gmail.com".to_string();
+    h.run_steps(3);
+
+    h.get_by_label("Open app passwords").click();
+    h.run_steps(2);
+    assert_eq!(h.state().last_opened_url.as_deref(), Some("https://myaccount.google.com/apppasswords"));
+    // Nothing was sent and no message is claimed: only a page was opened.
+    assert!(h.state().email.outcome.is_none() && h.state().email.checked.is_none());
+}
+
+/// Check connection: the relay is reached, the session ends at `QUIT` and **no message is
+/// delivered** — the receiver here keeps everything it is told, and it is told nothing.
+#[test]
+fn checking_the_connection_reaches_the_relay_and_delivers_nothing() {
+    let (port, receiver) = receive();
+    let mut h = harness();
+    assert!(h.state_mut().execute("email.send"));
+    fill(&mut h, port, Transport::None);
+    h.run_steps(2);
+
+    h.get_by_label("Check connection").click();
+    support::wait_until(&mut h, "the connection check to finish", |app| app.email.checked.is_some());
+    h.run_steps(1);
+
+    match h.state().email.checked.clone().expect("the check") {
+        CheckOutcome::Ok { host, port: checked, authenticated } => {
+            assert_eq!(host, "127.0.0.1");
+            assert_eq!(checked, port);
+            assert!(!authenticated, "no password was entered, so none can have been checked");
+        }
+        other => panic!("the connection check did not succeed: {other:?}"),
+    }
+    let toast = h.state().toast.as_ref().map(|t| t.0.clone()).unwrap_or_default();
+    assert!(toast.starts_with("Connection to 127.0.0.1:"), "{toast}");
+    assert!(toast.contains("no password was checked"), "{toast}");
+    // The dialog stays open: a check is not a send.
+    assert!(matches!(h.state().dialog, Some(Dialog::EmailSend)), "{:?}", h.state().dialog);
+    assert!(h.state().email.outcome.is_none());
+
+    let record = receiver.join().expect("the receiver finished");
+    assert_eq!(record.commands, vec!["EHLO pdfcraft.local".to_string(), "QUIT".to_string()], "a check went further than the login");
+    assert!(record.payload.is_empty(), "a check delivered a message: {:?}", record.payload);
+}
+
+/// A relay that is not there is a readable answer, not a frozen window and not a panic.
+#[test]
+fn checking_an_unreachable_server_says_so() {
+    // A port that was bound and released: nothing listens on it now.
+    let listener = TcpListener::bind("127.0.0.1:0").expect("a loopback port");
+    let port = listener.local_addr().expect("the port").port();
+    drop(listener);
+
+    let mut h = harness();
+    assert!(h.state_mut().execute("email.send"));
+    fill(&mut h, port, Transport::None);
+    h.run_steps(2);
+
+    h.get_by_label("Check connection").click();
+    support::wait_until(&mut h, "the check to give up", |app| app.email.checked.is_some());
+    h.run_steps(1);
+
+    match h.state().email.checked.clone().expect("the check") {
+        CheckOutcome::Failed(reason) => assert!(reason.contains("could not be reached"), "{reason}"),
+        other => panic!("an unreachable server did not fail the check: {other:?}"),
+    }
+    let toast = h.state().toast.as_ref().map(|t| t.0.clone()).unwrap_or_default();
+    assert!(toast.starts_with("Could not connect:"), "{toast}");
+    assert!(matches!(h.state().dialog, Some(Dialog::EmailSend)));
 }

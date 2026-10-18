@@ -2425,3 +2425,15 @@ animation effects	Off	Izklopljeni
 	Provider: {provider} · requests: {requests}	Ponudnik: {provider} · zahtev: {requests}
 	No request left this computer.	Nobena zahteva ni zapustila tega računalnika.
 	This provider cannot run	Ta ponudnik se ne more zagnati
+	Provider:	Ponudnik:
+	Check connection	Preveri povezavo
+	Checking…	Preverjanje…
+	A session is already running; wait for it to finish	Seja že poteka; počakajte, da se konča
+	{provider} needs an app password, not the account's password (two-step verification must be on): account {address} → Security → App passwords.	{provider} zahteva geslo aplikacije in ne gesla računa (vklopljeno mora biti dvostopenjsko preverjanje): račun {address} → Varnost → Gesla aplikacij.
+	Open app passwords	Odpri gesla aplikacij
+	Connection to {server} is fine, and the login was accepted	Povezava z {server} je v redu in prijava je bila sprejeta
+	Connection to {server} is fine (no password was checked)	Povezava z {server} je v redu (geslo ni bilo preverjeno)
+	The certificate could not be checked: {reason}	Potrdila ni bilo mogoče preveriti: {reason}
+	The server refused the login: {reason}	Strežnik je prijavo zavrnil: {reason}
+	Could not connect: {reason}	Povezava ni uspela: {reason}
+	the check stopped unexpectedly	preverjanje se je nepričakovano prekinilo

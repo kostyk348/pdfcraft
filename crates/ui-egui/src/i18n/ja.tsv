@@ -2420,3 +2420,15 @@ animation effects	Off	オフ
 	Provider: {provider} · requests: {requests}	プロバイダー: {provider} · 要求: {requests}
 	No request left this computer.	このコンピューターから出た要求はありません。
 	This provider cannot run	このプロバイダーは実行できません
+	Provider:	プロバイダー:
+	Check connection	接続を確認
+	Checking…	確認中…
+	A session is already running; wait for it to finish	セッションが実行中です。終わるまでお待ちください
+	{provider} needs an app password, not the account's password (two-step verification must be on): account {address} → Security → App passwords.	{provider} はアカウントのパスワードではなくアプリ パスワードが必要です（2 段階認証を有効にする必要があります）: アカウント {address} → セキュリティ → アプリ パスワード
+	Open app passwords	アプリ パスワードを開く
+	Connection to {server} is fine, and the login was accepted	{server} への接続は正常で、ログインも受け付けられました
+	Connection to {server} is fine (no password was checked)	{server} への接続は正常です（パスワードは確認していません）
+	The certificate could not be checked: {reason}	証明書を確認できませんでした: {reason}
+	The server refused the login: {reason}	サーバーがログインを拒否しました: {reason}
+	Could not connect: {reason}	接続できませんでした: {reason}
+	the check stopped unexpectedly	確認が予期せず停止しました

@@ -273,6 +273,13 @@ a relay that rejects bare LF wants. Results carry the recipients the relay took,
 session log (credentials redacted), the byte count and the message's SHA-256. See
 [`pdfcraft-smtp`](../smtp/README.md) for the protocol and what is not implemented.
 
+`doc_email_check` is the same session without the message: `host`, `port`, `security` and the
+credentials, no document needed, nothing composed. It connects, says hello, encrypts the session as
+asked, logs in when it was given a user name and a password, and quits before `MAIL FROM` — so an
+agent can prove that a server, a port, a transport or a password works before a send, and the relay
+ends up with nothing. It returns `sent: false`, whether the login was actually carried out, the
+extensions the relay listed and the session log (credentials redacted).
+
 ## Folder batches
 
 `doc_batch` runs conversion, OCR and compression over files and optionally recursive

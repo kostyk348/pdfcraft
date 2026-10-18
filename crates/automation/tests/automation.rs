@@ -2827,6 +2827,106 @@ fn smtp_receiver() -> (u16, std::thread::JoinHandle<Received>) {
     (port, handle)
 }
 
+/// A relay that advertises `AUTH PLAIN` and accepts the credentials, so a check can prove it logs
+/// in; it keeps every command, so the test can show that no message went out.
+fn smtp_receiver_with_auth() -> (u16, std::thread::JoinHandle<Received>) {
+    use std::io::{BufRead, BufReader, Write};
+
+    let listener = std::net::TcpListener::bind("127.0.0.1:0").expect("a loopback port");
+    let port = listener.local_addr().expect("the port").port();
+    let handle = std::thread::spawn(move || {
+        let (mut stream, _) = listener.accept().expect("one connection");
+        let mut reader = BufReader::new(stream.try_clone().expect("a second handle"));
+        let _ = stream.write_all(b"220 receiver.test ESMTP pdfcraft-test\r\n");
+        let mut commands: Vec<String> = Vec::new();
+        let mut payload: Vec<u8> = Vec::new();
+        loop {
+            let mut line = String::new();
+            if reader.read_line(&mut line).expect("a command line") == 0 {
+                return Received { payload, commands };
+            }
+            let command = line.trim_end_matches(['\r', '\n']).to_string();
+            commands.push(command.clone());
+            let upper = command.to_ascii_uppercase();
+            let reply: &[u8] = match upper.as_str() {
+                _ if upper.starts_with("EHLO") => b"250-receiver.test\r\n250-AUTH PLAIN LOGIN\r\n250 SIZE 10485760\r\n",
+                _ if upper.starts_with("AUTH") => b"235 2.7.0 accepted\r\n",
+                _ if upper.starts_with("MAIL FROM") => b"250 2.1.0 sender ok\r\n",
+                "DATA" => b"354 end data with <CRLF>.<CRLF>\r\n",
+                "QUIT" => b"221 2.0.0 bye\r\n",
+                _ => b"500 5.5.1 command not recognised\r\n",
+            };
+            if stream.write_all(reply).is_err() {
+                return Received { payload, commands };
+            }
+            if upper == "QUIT" {
+                return Received { payload, commands };
+            }
+            if upper == "DATA" {
+                loop {
+                    let mut chunk = Vec::new();
+                    if reader.read_until(b'\n', &mut chunk).expect("message data") == 0 || chunk == b".\r\n" {
+                        break;
+                    }
+                    payload.extend_from_slice(&chunk);
+                }
+                let _ = stream.write_all(b"250 2.0.0 ok: queued as 8\r\n");
+            }
+        }
+    });
+    (port, handle)
+}
+
+/// The headless half of the dialog's Check connection button: the login is made and the relay is
+/// handed no message, so a person (or an agent) can find out whether the settings work before
+/// writing anything. No document is opened: checking a server reads nothing.
+#[test]
+fn checking_an_email_server_takes_the_login_and_sends_nothing() {
+    let dir = workdir("doc-email-check");
+    let (port, receiver) = smtp_receiver_with_auth();
+    let mut a = auto(&dir);
+
+    let r = ok(&mut a, "doc_email_check", json!({ "host": "127.0.0.1", "port": port, "username": "ada", "password": "hunter2", "timeout_ms": 5000 }));
+    assert_eq!(r["ok"], json!(true));
+    assert_eq!(r["sent"], json!(false), "a check must not claim to have sent anything: {r}");
+    assert_eq!(r["authenticated"], json!(true));
+    assert_eq!(r["host"], json!("127.0.0.1"));
+    assert_eq!(r["port"].as_u64(), Some(port as u64));
+    assert!(!r.to_string().contains("hunter2"), "the password reached the result: {r}");
+
+    let record = receiver.join().expect("the receiver thread");
+    println!("the relay was sent: {:?}", record.commands);
+    assert_eq!(
+        record.commands,
+        vec!["EHLO pdfcraft.local".to_string(), "AUTH PLAIN AGFkYQBodW50ZXIy".to_string(), "QUIT".to_string()],
+        "a check must stop after the login"
+    );
+    assert!(record.payload.is_empty(), "the relay kept a message: {:?}", String::from_utf8_lossy(&record.payload));
+}
+
+#[test]
+fn checking_an_email_server_refuses_what_it_cannot_carry_out() {
+    let dir = workdir("doc-email-check-refusal");
+    let mut a = auto(&dir);
+    // A port that is not a port, a security name that is not a transport, and no server at all.
+    for args in [json!({ "host": "127.0.0.1", "port": 99999 }), json!({ "host": "127.0.0.1", "security": "maybe" }), json!({})] {
+        let outcome = a.call("doc_email_check", &args);
+        assert!(outcome.is_err(), "{args} should have been refused");
+        if let Err(error) = outcome {
+            println!("refused: {error}");
+        }
+    }
+    // A server nothing listens on is a readable failure, not a panic and not a hang.
+    let dead = std::net::TcpListener::bind("127.0.0.1:0").expect("a loopback port");
+    let dead_port = dead.local_addr().expect("the port").port();
+    drop(dead);
+    let Err(error) = a.call("doc_email_check", &json!({ "host": "127.0.0.1", "port": dead_port, "timeout_ms": 1000 })) else {
+        panic!("a check against a dead port succeeded");
+    };
+    println!("unreachable: {error}");
+    assert!(error.to_string().contains("could not be reached"), "{error}");
+}
+
 fn sha256(bytes: &[u8]) -> String {
     use sha2::{Digest, Sha256};
     Sha256::digest(bytes).iter().map(|b| format!("{b:02x}")).collect()

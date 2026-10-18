@@ -2434,3 +2434,15 @@ animation effects	Off	Desativados
 	Provider: {provider} · requests: {requests}	Provedor: {provider} · requisições: {requests}
 	No request left this computer.	Nenhuma requisição saiu deste computador.
 	This provider cannot run	Este provedor não pode ser executado
+	Provider:	Provedor:
+	Check connection	Testar conexão
+	Checking…	Testando…
+	A session is already running; wait for it to finish	Já há uma sessão em andamento; espere que ela termine
+	{provider} needs an app password, not the account's password (two-step verification must be on): account {address} → Security → App passwords.	{provider} exige uma senha de app e não a senha da conta (a verificação em duas etapas precisa estar ativada): conta {address} → Segurança → Senhas de app.
+	Open app passwords	Abrir senhas de app
+	Connection to {server} is fine, and the login was accepted	A conexão com {server} está boa e o login foi aceito
+	Connection to {server} is fine (no password was checked)	A conexão com {server} está boa (nenhuma senha foi verificada)
+	The certificate could not be checked: {reason}	Não foi possível verificar o certificado: {reason}
+	The server refused the login: {reason}	O servidor recusou o login: {reason}
+	Could not connect: {reason}	Não foi possível conectar: {reason}
+	the check stopped unexpectedly	o teste parou inesperadamente

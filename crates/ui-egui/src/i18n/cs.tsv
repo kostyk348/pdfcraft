@@ -2494,3 +2494,15 @@ animation effects	Off	Vypnuto
 	Provider: {provider} · requests: {requests}	Poskytovatel: {provider} · požadavků: {requests}
 	No request left this computer.	Tento počítač neopustil žádný požadavek.
 	This provider cannot run	Tento poskytovatel nemůže běžet
+	Provider:	Poskytovatel:
+	Check connection	Ověřit připojení
+	Checking…	Ověřování…
+	A session is already running; wait for it to finish	Relace už běží; počkejte, až skončí
+	{provider} needs an app password, not the account's password (two-step verification must be on): account {address} → Security → App passwords.	{provider} vyžaduje heslo aplikace, ne heslo účtu (musí být zapnuté dvoufázové ověření): účet {address} → Zabezpečení → Hesla aplikací.
+	Open app passwords	Otevřít hesla aplikací
+	Connection to {server} is fine, and the login was accepted	Připojení k {server} funguje a přihlášení bylo přijato
+	Connection to {server} is fine (no password was checked)	Připojení k {server} funguje (heslo se neověřovalo)
+	The certificate could not be checked: {reason}	Certifikát se nepodařilo ověřit: {reason}
+	The server refused the login: {reason}	Server přihlášení odmítl: {reason}
+	Could not connect: {reason}	Připojení se nezdařilo: {reason}
+	the check stopped unexpectedly	ověřování se nečekaně přerušilo

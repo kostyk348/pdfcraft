@@ -2333,3 +2333,15 @@ animation effects	Off	ఆఫ్
 	Provider: {provider} · requests: {requests}	ప్రొవైడర్: {provider} · అభ్యర్థనలు: {requests}
 	No request left this computer.	ఏ అభ్యర్థనా ఈ కంప్యూటర్‌ను విడిచిపోలేదు.
 	This provider cannot run	ఈ ప్రొవైడర్ నడపబడదు
+	Provider:	ప్రొవైడర్:
+	Check connection	కనెక్షన్ను తనిఖీ చేయి
+	Checking…	తనిఖీ అవుతోంది…
+	A session is already running; wait for it to finish	ఇప్పటికే ఒక సెషన్ నడుస్తోంది; అది పూర్తయ్యే వరకు వేచి ఉండండి
+	{provider} needs an app password, not the account's password (two-step verification must be on): account {address} → Security → App passwords.	{provider} కు ఖాతా పాస్వర్డ్ కాదు, యాప్ పాస్వర్డ్ కావాలి (రెండు-దశల ధృవీకరణ ఆన్లో ఉండాలి): ఖాతా {address} → భద్రత → యాప్ పాస్వర్డ్లు.
+	Open app passwords	యాప్ పాస్వర్డ్లను తెరువు
+	Connection to {server} is fine, and the login was accepted	{server} కు కనెక్షన్ బాగుంది, లాగిన్ ఆమోదించబడింది
+	Connection to {server} is fine (no password was checked)	{server} కు కనెక్షన్ బాగుంది (పాస్వర్డ్ తనిఖీ చేయలేదు)
+	The certificate could not be checked: {reason}	ధృవపత్రాన్ని తనిఖీ చేయలేకపోయాం: {reason}
+	The server refused the login: {reason}	సర్వర్ లాగిన్ను తిరస్కరించింది: {reason}
+	Could not connect: {reason}	కనెక్ట్ చేయలేకపోయాం: {reason}
+	the check stopped unexpectedly	తనిఖీ ఊహించని విధంగా ఆగిపోయింది

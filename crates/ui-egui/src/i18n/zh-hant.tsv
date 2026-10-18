@@ -2294,3 +2294,15 @@ animation effects	Off	關
 	Provider: {provider} · requests: {requests}	提供者：{provider} · 請求數：{requests}
 	No request left this computer.	沒有任何請求離開這台電腦。
 	This provider cannot run	此提供者無法執行
+	Provider:	服務商：
+	Check connection	檢查連線
+	Checking…	檢查中…
+	A session is already running; wait for it to finish	已有工作階段在進行，請等它結束
+	{provider} needs an app password, not the account's password (two-step verification must be on): account {address} → Security → App passwords.	{provider} 需要應用程式密碼，而不是帳戶密碼（必須開啟兩步驟驗證）：帳戶 {address} → 安全性 → 應用程式密碼。
+	Open app passwords	開啟應用程式密碼
+	Connection to {server} is fine, and the login was accepted	與 {server} 的連線正常，登入也被接受
+	Connection to {server} is fine (no password was checked)	與 {server} 的連線正常（未檢查密碼）
+	The certificate could not be checked: {reason}	無法驗證憑證：{reason}
+	The server refused the login: {reason}	伺服器拒絕了登入：{reason}
+	Could not connect: {reason}	無法連線：{reason}
+	the check stopped unexpectedly	檢查意外停止了

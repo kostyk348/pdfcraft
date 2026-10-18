@@ -2663,3 +2663,15 @@ key	Space	Tarpas
 	Provider: {provider} · requests: {requests}	Teikėjas: {provider} · užklausų: {requests}
 	No request left this computer.	Nė viena užklausa neišėjo iš šio kompiuterio.
 	This provider cannot run	Šis teikėjas negali būti paleistas
+	Provider:	Teikėjas:
+	Check connection	Patikrinti ryšį
+	Checking…	Tikrinama…
+	A session is already running; wait for it to finish	Seansas jau vyksta; palaukite, kol jis baigsis
+	{provider} needs an app password, not the account's password (two-step verification must be on): account {address} → Security → App passwords.	„{provider}“ reikalauja programos slaptažodžio, o ne paskyros slaptažodžio (turi būti įjungtas dviejų žingsnių patvirtinimas): paskyra {address} → Saugumas → Programų slaptažodžiai.
+	Open app passwords	Atidaryti programų slaptažodžius
+	Connection to {server} is fine, and the login was accepted	Ryšys su {server} veikia, o prisijungimas priimtas
+	Connection to {server} is fine (no password was checked)	Ryšys su {server} veikia (slaptažodis netikrintas)
+	The certificate could not be checked: {reason}	Nepavyko patikrinti sertifikato: {reason}
+	The server refused the login: {reason}	Serveris atmetė prisijungimą: {reason}
+	Could not connect: {reason}	Nepavyko prisijungti: {reason}
+	the check stopped unexpectedly	tikrinimas netikėtai nutrūko

@@ -200,6 +200,22 @@ pub fn tools() -> Vec<ToolDef> {
             }),
             &["doc", "host", "to"],
         )),
+        t(
+            "doc_email_check",
+            "Check an email server without sending anything",
+            "Open the session doc_email_send would — connect, greet, EHLO, upgrade to STARTTLS or TLS as asked, AUTH PLAIN when a user name and password are given — and quit before MAIL FROM. Nothing is composed and no message is handed over, so this is how to find out whether a server, a port, a transport or a password works before a real send; the receiver ends up with nothing either way. The result carries the extensions the server listed and the session log (credentials redacted). No document is read or changed.",
+        )
+        .with(schema(
+            json!({
+                "host": { "type": "string", "minLength": 1, "description": "The SMTP server to check." },
+                "port": { "type": "integer", "minimum": 1, "maximum": 65535, "description": "Its port (default 25)." },
+                "security": { "type": "string", "enum": ["none", "starttls", "tls"], "description": "Transport security to check: \"none\" (clear text), \"starttls\" (RFC 3207, usually 587) or \"tls\" (RFC 8314 implicit TLS, usually 465). The certificate is always verified against the operating system's roots." },
+                "username": { "type": "string", "description": "AUTH PLAIN user name (needs password too)." },
+                "password": { "type": "string", "description": "AUTH PLAIN password. Never written to the result's log." },
+                "timeout_ms": { "type": "integer", "minimum": 1000, "maximum": 600000, "description": "Budget for connecting and for each reply (default 30000)." }
+            }),
+            &["host"],
+        )),
         t("doc_set_info", "Set document metadata", "Set a document information entry such as Title, Author, Subject or Keywords; an empty value removes it. When the file has XMP metadata, the matching XMP property (dc:title, dc:creator, dc:description, pdf:Keywords, xmp:CreatorTool, pdf:Producer) is changed too, so viewers that read XMP first show the new value. Undoable.")
             .with(schema(json!({ "doc": doc(), "key": { "type": "string" }, "value": { "type": "string" } }), &["doc", "key", "value"])),
         t("page_render", "Render a page", "Render one page to a PNG image (default 96 dpi, at most 600).")

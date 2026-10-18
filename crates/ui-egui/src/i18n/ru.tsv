@@ -2333,3 +2333,15 @@ animation effects	Off	Выкл
 	Provider: {provider} · requests: {requests}	Поставщик: {provider} · запросов: {requests}
 	No request left this computer.	Ни один запрос не покинул этот компьютер.
 	This provider cannot run	Этот поставщик не может запуститься
+	Provider:	Провайдер:
+	Check connection	Проверить соединение
+	Checking…	Проверка…
+	A session is already running; wait for it to finish	Сеанс уже идёт — дождитесь его завершения
+	{provider} needs an app password, not the account's password (two-step verification must be on): account {address} → Security → App passwords.	{provider}: нужен пароль приложения, а не пароль аккаунта (должна быть включена двухэтапная проверка). Аккаунт {address} → Безопасность → Пароли приложений.
+	Open app passwords	Открыть пароли приложений
+	Connection to {server} is fine, and the login was accepted	Соединение с {server} в порядке, сервер принял логин
+	Connection to {server} is fine (no password was checked)	Соединение с {server} в порядке (пароль не проверялся)
+	The certificate could not be checked: {reason}	Не удалось проверить сертификат: {reason}
+	The server refused the login: {reason}	Сервер отклонил логин: {reason}
+	Could not connect: {reason}	Не удалось подключиться: {reason}
+	the check stopped unexpectedly	проверка неожиданно прервалась

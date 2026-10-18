@@ -2442,3 +2442,15 @@ animation effects	Off	Вимкнено
 	Provider: {provider} · requests: {requests}	Постачальник: {provider} · запитів: {requests}
 	No request left this computer.	Жоден запит не залишив цей комп’ютер.
 	This provider cannot run	Цей постачальник не може запуститися
+	Provider:	Провайдер:
+	Check connection	Перевірити з'єднання
+	Checking…	Перевірка…
+	A session is already running; wait for it to finish	Сеанс уже триває — дочекайтеся його завершення
+	{provider} needs an app password, not the account's password (two-step verification must be on): account {address} → Security → App passwords.	{provider}: потрібен пароль застосунку, а не пароль облікового запису (має бути ввімкнена двоетапна перевірка). Обліковий запис {address} → Безпека → Паролі застосунків.
+	Open app passwords	Відкрити паролі застосунків
+	Connection to {server} is fine, and the login was accepted	З'єднання з {server} в порядку, сервер прийняв логін
+	Connection to {server} is fine (no password was checked)	З'єднання з {server} в порядку (пароль не перевірявся)
+	The certificate could not be checked: {reason}	Не вдалося перевірити сертифікат: {reason}
+	The server refused the login: {reason}	Сервер відхилив логін: {reason}
+	Could not connect: {reason}	Не вдалося підключитися: {reason}
+	the check stopped unexpectedly	перевірка несподівано перервалася

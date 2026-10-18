@@ -2416,3 +2416,15 @@ animation effects	Off	Kapalı
 	Provider: {provider} · requests: {requests}	Sağlayıcı: {provider} · istek: {requests}
 	No request left this computer.	Hiçbir istek bu bilgisayardan çıkmadı.
 	This provider cannot run	Bu sağlayıcı çalıştırılamaz
+	Provider:	Sağlayıcı:
+	Check connection	Bağlantıyı denetle
+	Checking…	Denetleniyor…
+	A session is already running; wait for it to finish	Zaten bir oturum sürüyor; bitmesini bekleyin
+	{provider} needs an app password, not the account's password (two-step verification must be on): account {address} → Security → App passwords.	{provider} hesabın şifresini değil uygulama şifresini ister (iki adımlı doğrulama açık olmalı): hesap {address} → Güvenlik → Uygulama şifreleri.
+	Open app passwords	Uygulama şifrelerini aç
+	Connection to {server} is fine, and the login was accepted	{server} bağlantısı sorunsuz ve oturum açma kabul edildi
+	Connection to {server} is fine (no password was checked)	{server} bağlantısı sorunsuz (şifre denetlenmedi)
+	The certificate could not be checked: {reason}	Sertifika denetlenemedi: {reason}
+	The server refused the login: {reason}	Sunucu oturum açmayı reddetti: {reason}
+	Could not connect: {reason}	Bağlanılamadı: {reason}
+	the check stopped unexpectedly	denetim beklenmedik şekilde durdu

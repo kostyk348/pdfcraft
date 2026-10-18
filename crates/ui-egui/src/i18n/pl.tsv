@@ -2400,3 +2400,15 @@ animation effects	Off	Wyłączone
 	Provider: {provider} · requests: {requests}	Dostawca: {provider} · żądań: {requests}
 	No request left this computer.	Żadne żądanie nie opuściło tego komputera.
 	This provider cannot run	Ten dostawca nie może zostać uruchomiony
+	Provider:	Dostawca:
+	Check connection	Sprawdź połączenie
+	Checking…	Sprawdzanie…
+	A session is already running; wait for it to finish	Sesja już trwa; poczekaj, aż się zakończy
+	{provider} needs an app password, not the account's password (two-step verification must be on): account {address} → Security → App passwords.	{provider} wymaga hasła aplikacji, a nie hasła konta (włączona musi być weryfikacja dwuetapowa): konto {address} → Bezpieczeństwo → Hasła aplikacji.
+	Open app passwords	Otwórz hasła aplikacji
+	Connection to {server} is fine, and the login was accepted	Połączenie z {server} działa, a logowanie zostało przyjęte
+	Connection to {server} is fine (no password was checked)	Połączenie z {server} działa (hasło nie było sprawdzane)
+	The certificate could not be checked: {reason}	Nie udało się sprawdzić certyfikatu: {reason}
+	The server refused the login: {reason}	Serwer odrzucił logowanie: {reason}
+	Could not connect: {reason}	Nie udało się połączyć: {reason}
+	the check stopped unexpectedly	sprawdzanie przerwano nieoczekiwanie

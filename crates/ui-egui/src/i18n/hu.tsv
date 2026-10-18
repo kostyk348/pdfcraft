@@ -2419,3 +2419,15 @@ animation effects	Off	Ki
 	Provider: {provider} · requests: {requests}	Szolgáltató: {provider} · kérések: {requests}
 	No request left this computer.	Egyetlen kérés sem hagyta el ezt a számítógépet.
 	This provider cannot run	Ez a szolgáltató nem indítható
+	Provider:	Szolgáltató:
+	Check connection	Kapcsolat ellenőrzése
+	Checking…	Ellenőrzés…
+	A session is already running; wait for it to finish	Már fut egy munkamenet; várja meg, amíg befejeződik
+	{provider} needs an app password, not the account's password (two-step verification must be on): account {address} → Security → App passwords.	A(z) {provider} alkalmazásjelszót kér, nem a fiók jelszavát (a kétlépcsős azonosításnak be kell lennie kapcsolva): fiók {address} → Biztonság → Alkalmazásjelszavak.
+	Open app passwords	Alkalmazásjelszavak megnyitása
+	Connection to {server} is fine, and the login was accepted	A(z) {server} kapcsolat rendben van, és a bejelentkezést elfogadta
+	Connection to {server} is fine (no password was checked)	A(z) {server} kapcsolat rendben van (jelszót nem ellenőriztünk)
+	The certificate could not be checked: {reason}	A tanúsítványt nem sikerült ellenőrizni: {reason}
+	The server refused the login: {reason}	A kiszolgáló elutasította a bejelentkezést: {reason}
+	Could not connect: {reason}	Nem sikerült csatlakozni: {reason}
+	the check stopped unexpectedly	az ellenőrzés váratlanul leállt

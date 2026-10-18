@@ -2418,3 +2418,15 @@ animation effects	Off	Өшірулі
 	Provider: {provider} · requests: {requests}	Провайдер: {provider} · сұраулар: {requests}
 	No request left this computer.	Бұл компьютерден ешбір сұрау шыққан жоқ.
 	This provider cannot run	Бұл провайдер іске қосылмайды
+	Provider:	Провайдер:
+	Check connection	Қосылымды тексеру
+	Checking…	Тексерілуде…
+	A session is already running; wait for it to finish	Сеанс әлдеқашан жүріп жатыр; аяқталуын күтіңіз
+	{provider} needs an app password, not the account's password (two-step verification must be on): account {address} → Security → App passwords.	{provider} тіркелгі құпия сөзін емес, қосымша құпия сөзін талап етеді (екі қадамды тексеру қосулы болуы керек): тіркелгі {address} → Қауіпсіздік → Қосымша құпия сөздері.
+	Open app passwords	Қосымша құпия сөздерін ашу
+	Connection to {server} is fine, and the login was accepted	{server} қосылымы дұрыс, кіру қабылданды
+	Connection to {server} is fine (no password was checked)	{server} қосылымы дұрыс (құпия сөз тексерілмеді)
+	The certificate could not be checked: {reason}	Сертификатты тексеру мүмкін болмады: {reason}
+	The server refused the login: {reason}	Сервер кіруді қабылдамады: {reason}
+	Could not connect: {reason}	Қосылу мүмкін болмады: {reason}
+	the check stopped unexpectedly	тексеру кенеттен тоқтады

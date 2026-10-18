@@ -2421,3 +2421,15 @@ animation effects	Off	Aus
 	Provider: {provider} · requests: {requests}	Anbieter: {provider} · Anfragen: {requests}
 	No request left this computer.	Keine Anfrage hat diesen Rechner verlassen.
 	This provider cannot run	Dieser Anbieter kann nicht starten
+	Provider:	Anbieter:
+	Check connection	Verbindung prüfen
+	Checking…	Wird geprüft…
+	A session is already running; wait for it to finish	Eine Sitzung läuft bereits; warten Sie, bis sie fertig ist
+	{provider} needs an app password, not the account's password (two-step verification must be on): account {address} → Security → App passwords.	{provider} verlangt ein App-Passwort und nicht das Passwort des Kontos (die Bestätigung in zwei Schritten muss eingeschaltet sein): Konto {address} → Sicherheit → App-Passwörter.
+	Open app passwords	App-Passwörter öffnen
+	Connection to {server} is fine, and the login was accepted	Die Verbindung zu {server} steht, und die Anmeldung wurde angenommen
+	Connection to {server} is fine (no password was checked)	Die Verbindung zu {server} steht (ein Passwort wurde nicht geprüft)
+	The certificate could not be checked: {reason}	Das Zertifikat konnte nicht geprüft werden: {reason}
+	The server refused the login: {reason}	Der Server hat die Anmeldung abgelehnt: {reason}
+	Could not connect: {reason}	Verbindung nicht möglich: {reason}
+	the check stopped unexpectedly	die Prüfung wurde unerwartet abgebrochen

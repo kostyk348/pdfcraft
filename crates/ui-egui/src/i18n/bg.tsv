@@ -2383,3 +2383,15 @@ animation effects	Off	Изключени
 	Provider: {provider} · requests: {requests}	Доставчик: {provider} · заявки: {requests}
 	No request left this computer.	Нито една заявка не напусна този компютър.
 	This provider cannot run	Този доставчик не може да стартира
+	Provider:	Доставчик:
+	Check connection	Провери връзката
+	Checking…	Проверка…
+	A session is already running; wait for it to finish	Сесия вече тече; изчакайте да завърши
+	{provider} needs an app password, not the account's password (two-step verification must be on): account {address} → Security → App passwords.	{provider} изисква парола за приложение, а не паролата на акаунта (трябва да е включено двуетапното потвърждение): акаунт {address} → Сигурност → Пароли за приложения.
+	Open app passwords	Отвори паролите за приложения
+	Connection to {server} is fine, and the login was accepted	Връзката с {server} е наред и входът беше приет
+	Connection to {server} is fine (no password was checked)	Връзката с {server} е наред (парола не беше проверявана)
+	The certificate could not be checked: {reason}	Сертификатът не можа да бъде проверен: {reason}
+	The server refused the login: {reason}	Сървърът отхвърли входа: {reason}
+	Could not connect: {reason}	Неуспешно свързване: {reason}
+	the check stopped unexpectedly	проверката прекъсна неочаквано

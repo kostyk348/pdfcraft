@@ -4,9 +4,10 @@ Delivering a message over SMTP (RFC 5321).
 
 - **Layer:** L0 (standalone, publishable). No workspace dependency; transport security is the
   workspace's own `rustls` stack, trusting the operating system's roots.
-- **Status:** the client. It composes nothing (`pdfcraft-eml` does that) and it is never started on
-  its own: `pdfcraft-automation`'s `doc_email_send` and the desktop's File ▸ Send as email… are the
-  only callers, and only when they are given a server and a recipient.
+- **Status:** the client, and the table of providers the dialog fills its boxes from. It composes
+  nothing (`pdfcraft-eml` does that) and it is never started on its own: `pdfcraft-automation`'s
+  `doc_email_send` and `doc_email_check`, and the desktop's File ▸ Send as email… are the only
+  callers, and only when they are given a server (and, for a send, a recipient).
 
 ## Why it is a separate crate
 
@@ -40,6 +41,31 @@ The session is the ordinary one: connect, greeting, `EHLO` (falling back to `HEL
 answers `500`, `502` or `504`), `AUTH PLAIN` when credentials were given, `MAIL FROM`, one
 `RCPT TO` per recipient, `DATA`, the message, `QUIT`. A relay that takes no recipient at all is
 handed no message: the client resets and reports the refusal instead.
+
+`verify` runs the same session and stops after the login — no `MAIL FROM`, no `RCPT TO`, no `DATA` —
+so a caller can find out whether a server, a port, a transport or a password works before composing
+anything, and the relay has nothing to deliver:
+
+```rust
+let checked = pdfcraft_smtp::verify(&server)?;
+checked.host;           // where the check went
+checked.authenticated;  // false when no credentials were given (none can have been checked)
+checked.capabilities;   // the extensions the relay listed on the protected session
+checked.log;            // the session in order, credentials redacted
+```
+
+## The provider table
+
+`PRESETS` is the map the dialog fills its boxes from: per provider a name, the domains that belong to
+it, the submission host, the port that goes with a transport, a second port the provider accepts
+(`Preset::alternative`), and where an application password is made (`Preset::app_password_page`).
+`preset("someone@gmail.com")` finds the entry for an address or a bare domain, in any case and with or
+without a trailing root dot.
+
+Adding a provider is one entry and nothing else: no domain is spelled anywhere in the interface, the
+CLI or this crate's callers, and a domain nobody lists returns `None`, so a caller fills in nothing
+rather than guessing a relay. An entry holds no secret — a host, a port, a transport and a page to
+open in the browser — and every value it fills in still passes [`send`]'s own checks.
 
 **All input is hostile.** An address a relay could not read, a message that carries a stray carriage
 return, a port that is not a port and a relay that answers with nonsense all come back as a returned
@@ -90,10 +116,12 @@ sends.
 ## Tests
 
 `cargo test -p pdfcraft-smtp` runs the unit tests (framing, addresses, the `AUTH PLAIN` token,
-security names, reply parsing), 8 that speak the protocol over a real loopback socket to a receiver in
-`tests/session.rs` (a byte-for-byte delivery, CRLF mode, a relay that refuses every recipient,
-`AUTH PLAIN`, the `HELO` fallback, an unreachable relay, an encrypted mode reaching the socket), and 4
-TLS sessions in `tests/tls.rs` against a loopback receiver with the test certificate in
-`tests/data/`: `STARTTLS` upgraded before the envelope, implicit TLS from the first byte, an
-unverifiable certificate refused with nothing sent, and a relay without `STARTTLS` refused rather than
-left in the clear. No test opens a port outside the loopback interface and none talks to the internet.
+security names, reply parsing, the provider table), 11 that speak the protocol over a real loopback
+socket to a receiver in `tests/session.rs` (a byte-for-byte delivery, CRLF mode, a relay that refuses
+every recipient, `AUTH PLAIN`, the `HELO` fallback, an unreachable relay, an encrypted mode reaching
+the socket, and three connection checks: one that takes the login and hands over no message, one
+without credentials, and one against a relay that is not there), and 4 TLS sessions in
+`tests/tls.rs` against a loopback receiver with the test certificate in `tests/data/`: `STARTTLS`
+upgraded before the envelope, implicit TLS from the first byte, an unverifiable certificate refused
+with nothing sent, and a relay without `STARTTLS` refused rather than left in the clear. No test opens
+a port outside the loopback interface and none talks to the internet.

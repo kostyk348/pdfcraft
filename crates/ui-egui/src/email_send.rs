@@ -77,6 +77,10 @@ struct Hand {
 
 /// What the dialog holds. Every field starts empty: nothing is taken from the machine's settings,
 /// the user's other mail clients or the document.
+///
+/// The server boxes may be filled in from the provider the `From` address belongs to; which of them
+/// came from that and which a person typed is kept beside the draft (see [`Providers`]), so a draft
+/// is only ever what the user sees.
 #[derive(Clone, Default, PartialEq)]
 pub struct Draft {
     pub host: String,
@@ -93,6 +97,12 @@ pub struct Draft {
     pub username: String,
     /// This session only: never saved, never logged, never shown (the field is masked).
     pub password: String,
+}
+
+/// The provider bookkeeping of one dialog: which boxes a person typed into, and which preset last
+/// filled them. Kept beside the draft rather than in it, so the draft stays the fields themselves.
+#[derive(Default)]
+struct Providers {
     /// The `From` value the provider was last looked up for, so the domain is read once per edit
     /// rather than once per frame.
     synced_from: String,
@@ -158,61 +168,63 @@ impl Draft {
             extra_roots: Vec::new(),
         })
     }
+}
 
+impl Providers {
     /// Fill the server boxes in from the provider the `From` address belongs to.
     ///
     /// Run once per frame before the boxes are drawn, and once per edit of `From`. A domain no
     /// provider is listed for leaves them empty — what a previous preset put there is taken back,
     /// while anything a person typed is kept.
-    fn sync_preset(&mut self) {
-        if self.synced_from == self.from {
+    fn sync(&mut self, draft: &mut Draft) {
+        if self.synced_from == draft.from {
             return;
         }
-        self.synced_from = self.from.clone();
-        match pdfcraft_smtp::preset(&self.from) {
-            Some(preset) => self.fill(preset, true),
-            None => self.clear_preset(),
+        self.synced_from = draft.from.clone();
+        match pdfcraft_smtp::preset(&draft.from) {
+            Some(entry) => self.fill(draft, entry, true),
+            None => self.clear(draft),
         }
     }
 
     /// Put a provider's server, port and transport in the boxes. With `sparingly` the boxes a
     /// person typed into keep what they typed (the automatic path, when the address names the
     /// provider); choosing the provider from the list applies all three.
-    fn fill(&mut self, preset: &'static pdfcraft_smtp::Preset, sparingly: bool) {
+    fn fill(&mut self, draft: &mut Draft, entry: &'static pdfcraft_smtp::Preset, sparingly: bool) {
         if !(sparingly && self.hand.host) {
-            self.host = preset.host.to_string();
+            draft.host = entry.host.to_string();
             self.hand.host = false;
         }
         if !(sparingly && self.hand.port) {
-            self.port = preset.port.to_string();
+            draft.port = entry.port.to_string();
             self.hand.port = false;
         }
         if !(sparingly && self.hand.transport) {
-            self.transport = Transport::of(preset.security);
+            draft.transport = Transport::of(entry.security);
             self.hand.transport = false;
         }
-        self.applied = Some(preset);
+        self.applied = Some(entry);
     }
 
     /// Take back what the last preset filled in, and nothing else.
-    fn clear_preset(&mut self) {
-        let Some(preset) = self.applied.take() else { return };
-        if !self.hand.host && self.host == preset.host {
-            self.host.clear();
+    fn clear(&mut self, draft: &mut Draft) {
+        let Some(entry) = self.applied.take() else { return };
+        if !self.hand.host && draft.host == entry.host {
+            draft.host.clear();
         }
-        if !self.hand.port && self.port == preset.port.to_string() {
-            self.port.clear();
+        if !self.hand.port && draft.port == entry.port.to_string() {
+            draft.port.clear();
         }
-        if !self.hand.transport && self.transport == Transport::of(preset.security) {
-            self.transport = Transport::default();
+        if !self.hand.transport && draft.transport == Transport::of(entry.security) {
+            draft.transport = Transport::default();
         }
     }
 
-    /// The provider whose application-password page this draft points at, and that page: the one
+    /// The provider whose application-password page this dialog points at, and that page: the one
     /// part of the hint a person cannot guess. Empty for a provider that takes the account password.
     fn app_password(&self) -> Option<(&'static pdfcraft_smtp::Preset, &'static str)> {
-        let preset = self.applied?;
-        Some((preset, preset.app_password_page?))
+        let entry = self.applied?;
+        Some((entry, entry.app_password_page?))
     }
 }
 
@@ -265,6 +277,8 @@ pub struct EmailSend {
     pub outcome: Option<Outcome>,
     /// The last connection check (`None` before the first one).
     pub checked: Option<CheckOutcome>,
+    /// Which boxes a person typed into, and which provider last filled the others.
+    providers: Providers,
     /// The session running off the frame thread.
     running: Option<std::sync::mpsc::Receiver<Outcome>>,
     /// The connection check running off the frame thread.
@@ -449,8 +463,8 @@ impl PdfCraftApp {
 pub(crate) fn body(ui: &mut egui::Ui, email: &mut EmailSend, t: &Tokens) -> Actions {
     let mut actions = Actions::default();
     let checking = email.checking.is_some();
-    let draft = &mut email.draft;
-    draft.sync_preset();
+    let EmailSend { draft, providers, .. } = email;
+    providers.sync(draft);
 
     ui.label(egui::RichText::new(tl!("Send as email")).font(theme::semibold(18.0)));
     ui.add_space(6.0);
@@ -472,22 +486,22 @@ pub(crate) fn body(ui: &mut egui::Ui, email: &mut EmailSend, t: &Tokens) -> Acti
         // The providers the map knows, so the server, the port and the transport can be picked
         // instead of remembered. Choosing one fills all three; every box stays editable after it.
         ui.label(tl!("Provider:"));
-        let chosen = draft.applied.map_or("—", |preset| preset.name);
+        let chosen = providers.applied.map_or("—", |entry| entry.name);
         egui::ComboBox::from_id_salt("email-provider").selected_text(chosen).show_ui(ui, |ui| {
-            for preset in pdfcraft_smtp::PRESETS {
-                let selected = draft.applied.is_some_and(|applied| applied.name == preset.name);
-                if ui.selectable_label(selected, preset.name).clicked() {
-                    draft.fill(preset, false);
+            for entry in pdfcraft_smtp::PRESETS {
+                let selected = providers.applied.is_some_and(|applied| applied.name == entry.name);
+                if ui.selectable_label(selected, entry.name).clicked() {
+                    providers.fill(draft, entry, false);
                 }
             }
         });
         ui.end_row();
 
         if row(ui, "Server:", &mut draft.host, 300.0).changed() {
-            draft.hand.host = true;
+            providers.hand.host = true;
         }
         if row(ui, "Port:", &mut draft.port, 80.0).changed() {
-            draft.hand.port = true;
+            providers.hand.port = true;
         }
         ui.label(tl!("Security:"));
         let before = draft.transport;
@@ -503,7 +517,7 @@ pub(crate) fn body(ui: &mut egui::Ui, email: &mut EmailSend, t: &Tokens) -> Acti
                 ui.selectable_value(&mut draft.transport, Transport::Tls, "TLS");
             });
         if draft.transport != before {
-            draft.hand.transport = true;
+            providers.hand.transport = true;
         }
         ui.end_row();
         row(ui, "To:", &mut draft.to, 300.0);
@@ -515,13 +529,13 @@ pub(crate) fn body(ui: &mut egui::Ui, email: &mut EmailSend, t: &Tokens) -> Acti
     }
     // The one thing about a provider a person cannot work out from the dialog: it does not take the
     // account's own password, and where the one it does take is made.
-    if let Some((preset, page)) = draft.app_password() {
+    if let Some((entry, page)) = providers.app_password() {
         let typed = draft.from.trim();
-        let account = if typed.is_empty() { preset.name } else { typed };
+        let account = if typed.is_empty() { entry.name } else { typed };
         ui.label(
             egui::RichText::new(crate::i18n::fmt(
                 tl!("{provider} needs an app password, not the account's password (two-step verification must be on): account {address} → Security → App passwords."),
-                &[("provider", preset.name), ("address", account)],
+                &[("provider", entry.name), ("address", account)],
             ))
             .size(12.0)
             .color(t.text_muted),

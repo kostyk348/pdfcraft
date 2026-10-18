@@ -2430,3 +2430,15 @@ animation effects	Off	Ανενεργά
 	Provider: {provider} · requests: {requests}	Πάροχος: {provider} · αιτήματα: {requests}
 	No request left this computer.	Κανένα αίτημα δεν έφυγε από αυτόν τον υπολογιστή.
 	This provider cannot run	Αυτός ο πάροχος δεν μπορεί να εκτελεστεί
+	Provider:	Πάροχος:
+	Check connection	Έλεγχος σύνδεσης
+	Checking…	Έλεγχος…
+	A session is already running; wait for it to finish	Μια συνεδρία εκτελείται ήδη· περιμένετε να ολοκληρωθεί
+	{provider} needs an app password, not the account's password (two-step verification must be on): account {address} → Security → App passwords.	Το {provider} απαιτεί κωδικό εφαρμογής και όχι τον κωδικό του λογαριασμού (η επαλήθευση δύο βημάτων πρέπει να είναι ενεργή): λογαριασμός {address} → Ασφάλεια → Κωδικοί εφαρμογών.
+	Open app passwords	Άνοιγμα κωδικών εφαρμογών
+	Connection to {server} is fine, and the login was accepted	Η σύνδεση με {server} είναι εντάξει και η είσοδος έγινε δεκτή
+	Connection to {server} is fine (no password was checked)	Η σύνδεση με {server} είναι εντάξει (δεν ελέγχθηκε κωδικός)
+	The certificate could not be checked: {reason}	Δεν ήταν δυνατός ο έλεγχος του πιστοποιητικού: {reason}
+	The server refused the login: {reason}	Ο διακομιστής απέρριψε την είσοδο: {reason}
+	Could not connect: {reason}	Δεν ήταν δυνατή η σύνδεση: {reason}
+	the check stopped unexpectedly	ο έλεγχος σταμάτησε απροσδόκητα
