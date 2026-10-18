@@ -43,6 +43,19 @@ ignore = [
     # private-key operations use aws-lc-rs on native targets and are refused in the browser
     # (ADR-0009). Revisit when a fixed `rsa` ships.
     { id = "RUSTSEC-2023-0071", reason = "rsa is used for verification only (ADR-0009)" },
+
+    # zbus_names/zvariant/zvariant_derive are unmaintained-only advisories, not vulnerabilities: the
+    # crates were merged into `zbus` 6.0.0 and have no patched release to move to. All three reach
+    # the graph only through the D-Bus stack: `zbus` 5.19 is pulled by `accesskit_unix`/`atspi` (the
+    # Linux accessibility integration inside `egui-winit`/`eframe`) and by `crates/platform`'s
+    # XDG-portal theme watcher. Dropping our own `zbus` dependency would not remove them
+    # (`cargo tree -i zvariant` still reaches them through `accesskit_unix`), and every published
+    # `accesskit_unix`/`atspi` release still depends on `zbus` 5.x, so there is no version of ours
+    # to bump. Revisit when accessibility moves to `zbus` 6.0.0, where these crates live on as
+    # `zbus::names` and `zbus::wire`.
+    { id = "RUSTSEC-2026-0370", reason = "zvariant: unmaintained only, no fixed release; transitive via zbus 5 from accesskit_unix (Linux accessibility)" },
+    { id = "RUSTSEC-2026-0371", reason = "zbus_names: unmaintained only, no fixed release; transitive via zbus 5 from accesskit_unix/atspi (Linux accessibility)" },
+    { id = "RUSTSEC-2026-0372", reason = "zvariant_derive: unmaintained only, no fixed release; derive macro of zvariant, same zbus 5 path" },
 ]
 
 # egui's default UI fonts (Ubuntu-Light, Hack, emoji-icon-font): font licences on the AGENTS.md
