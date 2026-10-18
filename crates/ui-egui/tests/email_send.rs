@@ -8,12 +8,14 @@ mod support;
 
 use std::io::{BufRead, BufReader, Write};
 use std::net::{TcpListener, TcpStream};
+use std::sync::Arc;
 use std::thread::JoinHandle;
 
 use egui_kittest::Harness;
 use egui_kittest::kittest::Queryable;
 use pdfcraft_engine::EmailOptions;
-use pdfcraft_ui_egui::email_send::{CheckOutcome, Outcome, Transport};
+use pdfcraft_platform::secrets::{MemoryStore, SecretStore, StoreError};
+use pdfcraft_ui_egui::email_send::{CheckOutcome, Draft, Outcome, Transport};
 use pdfcraft_ui_egui::{Dialog, PdfCraftApp};
 
 /// A one-page PDF with a little text, so the message has a page to render.
@@ -41,9 +43,16 @@ fn fixture() -> Vec<u8> {
 }
 
 fn harness() -> Harness<'static, PdfCraftApp> {
-    let mut h = Harness::builder().with_size(egui::vec2(1400.0, 900.0)).build_eframe(|_cc| {
+    harness_with(Arc::new(MemoryStore::new()))
+}
+
+/// The same window, with the password store a test can look inside. The system store is replaced
+/// everywhere in this file: a test never reads or writes the desk the machine is running on.
+fn harness_with(store: Arc<dyn SecretStore>) -> Harness<'static, PdfCraftApp> {
+    let mut h = Harness::builder().with_size(egui::vec2(1400.0, 900.0)).build_eframe(move |_cc| {
         let mut app = PdfCraftApp::new();
         app.set_option("language", "en").unwrap();
+        app.email.store = Arc::clone(&store);
         app.open_bytes("doc.pdf", None, fixture()).unwrap();
         app
     });
@@ -428,4 +437,134 @@ fn checking_an_unreachable_server_says_so() {
     let toast = h.state().toast.as_ref().map(|t| t.0.clone()).unwrap_or_default();
     assert!(toast.starts_with("Could not connect:"), "{toast}");
     assert!(matches!(h.state().dialog, Some(Dialog::EmailSend)));
+}
+
+/// The settings a person fills in when the relay wants a password, and the key they name.
+fn settings() -> Draft {
+    Draft {
+        host: "127.0.0.1".to_string(),
+        port: "587".to_string(),
+        transport: Transport::StartTls,
+        from: "ada@example.com".to_string(),
+        to: "team@example.com".to_string(),
+        subject: "Quarterly report".to_string(),
+        body: "See the attached report.".to_string(),
+        auth: true,
+        username: "ada".to_string(),
+        ..Draft::default()
+    }
+}
+
+const FILED_KEY: &str = "pdfcraft:smtp:starttls://127.0.0.1:587/ada";
+
+/// A password filed for these settings is filled in when the dialog opens, the dialog says where it
+/// came from, and «Forget password» deletes the record and empties the field.
+#[test]
+fn a_filed_password_is_filled_in_and_forgotten() {
+    let store = Arc::new(MemoryStore::new());
+    store.set(FILED_KEY, "app-password").unwrap();
+    let mut h = harness_with(store.clone());
+    assert!(h.state_mut().execute("email.send"));
+    h.state_mut().email.draft = settings();
+    h.run_steps(2);
+    support::wait_until(&mut h, "the store to answer", |app| !app.email.store_pending());
+    h.run_steps(1);
+
+    assert_eq!(h.state().email.draft.password, "app-password", "the filed password is in the field");
+    assert!(h.query_by_label_contains("The saved password is filled in").is_some(), "the dialog says where the password came from");
+    // The field is a password field: the value itself is never drawn.
+    assert!(h.query_by_label_contains("app-password").is_none(), "the password is on screen in clear");
+
+    h.get_by_label("Forget password").click();
+    support::wait_until(&mut h, "the record to go", |_| store.peek(FILED_KEY).is_none());
+    h.run_steps(2);
+    assert!(store.is_empty(), "the record was deleted");
+    assert!(h.state().email.draft.password.is_empty(), "the field is cleared with the record");
+    let toast = h.state().toast.as_ref().map(|t| t.0.clone()).unwrap_or_default();
+    assert!(toast.contains("The password was forgotten"), "the deletion is confirmed: {toast}");
+    // Nothing re-fills the field now that the record is gone.
+    h.run_steps(3);
+    assert!(h.state().email.draft.password.is_empty());
+}
+
+/// A password filed for one relay is never handed to another: the key carries the transport, the
+/// server, the port and the user name.
+#[test]
+fn a_password_filed_for_other_settings_is_not_filled_in() {
+    let store = Arc::new(MemoryStore::new());
+    store.set("pdfcraft:smtp:starttls://a.example:587/ada", "filed-for-a.example").unwrap();
+    let mut h = harness_with(store);
+    assert!(h.state_mut().execute("email.send"));
+    h.state_mut().email.draft = Draft { host: "b.example".to_string(), port: "465".to_string(), transport: Transport::Tls, ..settings() };
+    h.run_steps(2);
+    support::wait_until(&mut h, "the store to answer", |app| !app.email.store_pending());
+    h.run_steps(2);
+    assert!(h.state().email.draft.password.is_empty(), "a password filed for starttls://a.example:587/ada was filled in for tls://b.example:465/ada");
+    assert!(h.query_by_label_contains("The saved password is filled in").is_none());
+    // The dialog is still usable, and «Forget password» is not offered for a record that is not there.
+    assert!(h.query_by_label("Forget password").is_none(), "nothing is filed for these settings");
+}
+
+/// What a person typed is theirs: the store's answer never overwrites the field.
+#[test]
+fn a_password_typed_by_hand_is_not_replaced_by_the_store() {
+    let store = Arc::new(MemoryStore::new());
+    store.set(FILED_KEY, "filed-under-these-settings").unwrap();
+    let mut h = harness_with(store);
+    assert!(h.state_mut().execute("email.send"));
+    h.state_mut().email.draft = Draft { password: "typed-by-hand".to_string(), ..settings() };
+    h.run_steps(2);
+    support::wait_until(&mut h, "the store to answer", |app| !app.email.store_pending());
+    h.run_steps(2);
+    assert_eq!(h.state().email.draft.password, "typed-by-hand", "the typed password was overwritten");
+}
+
+/// A store that cannot answer — no keyring, no session bus, a refusal — says so in the dialog and
+/// blocks nothing: the field stays empty, the boxes stay, and the message goes exactly as before.
+struct Closed;
+
+impl SecretStore for Closed {
+    fn get(&self, _key: &str) -> Result<Option<String>, StoreError> {
+        Err(StoreError::Unavailable("no session bus".to_string()))
+    }
+
+    fn set(&self, _key: &str, _secret: &str) -> Result<(), StoreError> {
+        Err(StoreError::Unavailable("no session bus".to_string()))
+    }
+
+    fn delete(&self, _key: &str) -> Result<(), StoreError> {
+        Err(StoreError::Unavailable("no session bus".to_string()))
+    }
+}
+
+#[test]
+fn a_store_that_refuses_is_said_in_place_and_the_dialog_still_sends() {
+    let (port, receiver) = receive();
+    let mut h = harness_with(Arc::new(Closed));
+    assert!(h.state_mut().execute("email.send"));
+    h.state_mut().email.draft = Draft { host: "127.0.0.1".to_string(), port: port.to_string(), ..settings() };
+    h.run_steps(2);
+    support::wait_until(&mut h, "the store to answer", |app| !app.email.store_pending());
+    h.run_steps(1);
+
+    assert!(h.state().email.draft.password.is_empty(), "a refused store leaves the field empty");
+    assert!(
+        h.query_by_label_contains("The password store could not be used: no session bus").is_some(),
+        "the dialog says why the password was not filled in"
+    );
+    assert!(matches!(h.state().dialog, Some(Dialog::EmailSend)), "the dialog stays open to be filled in by hand");
+
+    // And the message still goes: an unauthenticated relay is what this dialog could always do.
+    h.state_mut().email.draft.auth = false;
+    h.state_mut().email.draft.username.clear();
+    h.state_mut().email.draft.transport = Transport::None;
+    h.run_steps(2);
+    h.state_mut().email.draft.password.clear();
+    h.get_by_label("Send").click();
+    support::wait_until(&mut h, "the session to finish", |app| app.email.outcome.is_some());
+    match h.state().email.outcome.clone().expect("the outcome") {
+        Outcome::Delivered { accepted, .. } => assert_eq!(accepted, vec!["team@example.com".to_string()]),
+        Outcome::Failed(reason) => panic!("a refused password store stopped the message: {reason}"),
+    }
+    receiver.join().expect("the receiver finished");
 }

@@ -2432,3 +2432,13 @@ animation effects	Off	オフ
 	The server refused the login: {reason}	サーバーがログインを拒否しました: {reason}
 	Could not connect: {reason}	接続できませんでした: {reason}
 	the check stopped unexpectedly	確認が予期せず停止しました
+	Remember password	パスワードを記憶する
+	Forget password	パスワードを忘れる
+	The password is saved	パスワードを保存しました
+	The password was forgotten	パスワードを忘れました
+	The password could not be saved: {reason}	パスワードを保存できませんでした: {reason}
+	The password could not be deleted: {reason}	パスワードを削除できませんでした: {reason}
+	The saved password is filled in	保存されたパスワードを入力しました
+	This system has no password store: the password is only kept while this dialog is open	このシステムにはパスワードストアがありません: パスワードはこのダイアログが開いている間だけ保持されます
+	The keyring is locked, so the saved password could not be read	キーリングがロックされているため、保存されたパスワードを読み取れませんでした
+	The password store could not be used: {reason}	パスワードストアを使用できませんでした: {reason}

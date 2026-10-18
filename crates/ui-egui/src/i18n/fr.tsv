@@ -2432,3 +2432,13 @@ animation effects	Off	Désactivés
 	The server refused the login: {reason}	Le serveur a refusé l'identification : {reason}
 	Could not connect: {reason}	Connexion impossible : {reason}
 	the check stopped unexpectedly	la vérification s'est arrêtée de façon inattendue
+	Remember password	Mémoriser le mot de passe
+	Forget password	Oublier le mot de passe
+	The password is saved	Le mot de passe est enregistré
+	The password was forgotten	Le mot de passe a été oublié
+	The password could not be saved: {reason}	Le mot de passe n'a pas pu être enregistré : {reason}
+	The password could not be deleted: {reason}	Le mot de passe n'a pas pu être supprimé : {reason}
+	The saved password is filled in	Le mot de passe enregistré est rempli
+	This system has no password store: the password is only kept while this dialog is open	Ce système n'a pas de coffre de mots de passe : le mot de passe n'est conservé que tant que cette boîte est ouverte
+	The keyring is locked, so the saved password could not be read	Le trousseau est verrouillé, le mot de passe enregistré n'a donc pas pu être lu
+	The password store could not be used: {reason}	Le coffre de mots de passe n'a pas pu être utilisé : {reason}

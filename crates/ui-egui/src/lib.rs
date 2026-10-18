@@ -2913,6 +2913,8 @@ impl eframe::App for PdfCraftApp {
         self.poll_email_send();
         #[cfg(not(target_arch = "wasm32"))]
         self.poll_email_check();
+        #[cfg(not(target_arch = "wasm32"))]
+        self.poll_email_store();
         self.poll_translate();
         self.poll_ocr();
         self.poll_optimize();

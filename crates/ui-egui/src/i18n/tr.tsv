@@ -2428,3 +2428,13 @@ animation effects	Off	Kapalı
 	The server refused the login: {reason}	Sunucu oturum açmayı reddetti: {reason}
 	Could not connect: {reason}	Bağlanılamadı: {reason}
 	the check stopped unexpectedly	denetim beklenmedik şekilde durdu
+	Remember password	Parolayı anımsa
+	Forget password	Parolayı unut
+	The password is saved	Parola kaydedildi
+	The password was forgotten	Parola unutuldu
+	The password could not be saved: {reason}	Parola kaydedilemedi: {reason}
+	The password could not be deleted: {reason}	Parola silinemedi: {reason}
+	The saved password is filled in	Kayıtlı parola dolduruldu
+	This system has no password store: the password is only kept while this dialog is open	Bu sistemde parola deposu yok: parola yalnızca bu iletişim kutusu açıkken tutulur
+	The keyring is locked, so the saved password could not be read	Anahtarlık kilitli olduğundan kayıtlı parola okunamadı
+	The password store could not be used: {reason}	Parola deposu kullanılamadı: {reason}

@@ -17,8 +17,19 @@
 //! `smtp.gmail.com`, `465` and `TLS` in the boxes and Gmail's app-password requirement on screen
 //! before the first attempt. Every box stays editable and an edit is never overwritten; a domain no
 //! provider is listed for fills in nothing.
+//!
+//! **A password can be remembered, opt-in.** «Remember password» is off unless the user turns it on,
+//! and nothing is written when it is turned on: the password is filed only after a send the relay
+//! accepted, in the system's own secret store (`pdfcraft_platform::secrets`), under a key built from
+//! the transport, the server, the port and the user name — so another server, port or user name
+//! never picks it up. Opening the dialog asks the store for that key and puts what it finds in the
+//! masked field, with «Forget password» to delete it. A store that is missing, locked or refusing is
+//! said in place: the dialog stays usable and the password is simply typed by hand.
+
+use std::sync::Arc;
 
 use egui::{Align, Layout};
+use pdfcraft_platform::secrets::{SecretStore, StoreError};
 
 use crate::theme::{self, Tokens};
 use crate::{PdfCraftApp, widgets};
@@ -52,6 +63,15 @@ impl Transport {
             Transport::None => pdfcraft_smtp::Security::Plain,
             Transport::StartTls => pdfcraft_smtp::Security::StartTls,
             Transport::Tls => pdfcraft_smtp::Security::ImplicitTls,
+        }
+    }
+
+    /// The word that names this transport in the key a password is filed under.
+    fn scheme(self) -> &'static str {
+        match self {
+            Transport::None => "plain",
+            Transport::StartTls => "starttls",
+            Transport::Tls => "tls",
         }
     }
 
@@ -134,6 +154,27 @@ impl std::fmt::Debug for Draft {
 }
 
 impl Draft {
+    /// The key the password for these boxes is filed under, or `None` while there is nothing a
+    /// password could belong to.
+    ///
+    /// The transport, the server, the port and the user name are all in it (`pdfcraft:smtp:<transport>
+    /// ://<host>:<port>/<username>`), so a different server, a different port, a different transport
+    /// or a different login asks the store about a different secret: one relay's password is never
+    /// sent to another. The port is the one the session would use, so an empty port box and a typed
+    /// `587` name the same relay.
+    pub fn secret_key(&self) -> Option<String> {
+        if !self.auth {
+            return None;
+        }
+        let host = self.host.trim();
+        let username = self.username.trim();
+        if host.is_empty() || username.is_empty() {
+            return None;
+        }
+        let port = self.port().ok()?;
+        Some(format!("pdfcraft:smtp:{}://{host}:{port}/{username}", self.transport.scheme()))
+    }
+
     /// The port to connect to: the box's number, or the transport's usual one when it is empty.
     fn port(&self) -> Result<u16, String> {
         let text = self.port.trim();
@@ -269,20 +310,331 @@ fn checked(outcome: Result<pdfcraft_smtp::Checked, pdfcraft_smtp::Error>) -> Che
     }
 }
 
-/// The dialog's state and the sessions it started.
+/// What the dialog says about the password store, in a wording the renderer translates. Kept as a
+/// kind rather than a finished sentence so the line reads in the interface's language.
+#[derive(Clone, Debug, PartialEq, Eq)]
+enum Note {
+    /// A password for these settings is filed, and it is in the field.
+    Filed,
+    /// This platform has no password store: remembering is not available at all.
+    Unsupported,
+    /// The store is there but locked.
+    Locked,
+    /// The store refused this exchange; the string is its own detail.
+    Failed(String),
+    /// The password could not be filed after a send the relay accepted.
+    Unsaved(String),
+}
+
+impl Note {
+    fn of(error: &StoreError) -> Self {
+        match error {
+            StoreError::Unsupported => Note::Unsupported,
+            StoreError::Locked => Note::Locked,
+            StoreError::Unavailable(reason) => Note::Failed(reason.clone()),
+        }
+    }
+}
+
+/// What the store answered, for the one notice the app shows. A refusal is already on screen in the
+/// dialog; a save and a deletion are worth saying because the dialog may close in the same frame.
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub(crate) enum Said {
+    /// The password was filed.
+    Kept,
+    /// The filed password was deleted.
+    Forgotten,
+    /// A send the relay accepted, but the password could not be filed; the reason is the store's.
+    SaveFailed(String),
+    /// The password could not be deleted; the reason is the store's.
+    DeleteFailed(String),
+}
+
+/// What the dialog asks the store to do. It is answered on a worker thread: the bus is local and
+/// fast, but it is not something a frame may wait on.
+enum Request {
+    /// Is a password filed under this key?
+    Look { generation: u64, key: String },
+    /// File this password under this key.
+    Keep { generation: u64, key: String, secret: String },
+    /// Delete what is filed under this key.
+    Forget { generation: u64, key: String },
+}
+
+impl Request {
+    fn generation(&self) -> u64 {
+        match self {
+            Request::Look { generation, .. } | Request::Keep { generation, .. } | Request::Forget { generation, .. } => *generation,
+        }
+    }
+
+    fn key(&self) -> &str {
+        match self {
+            Request::Look { key, .. } | Request::Keep { key, .. } | Request::Forget { key, .. } => key,
+        }
+    }
+}
+
+/// Which request an answer belongs to.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+enum Kind {
+    Look,
+    Keep,
+    Forget,
+}
+
+/// What the store answered. It never carries the password: the field already has it, and an answer
+/// can reach a log through a panic message.
+#[derive(Debug)]
+struct Answer {
+    generation: u64,
+    key: String,
+    kind: Kind,
+    result: Result<Option<String>, StoreError>,
+}
+
+/// The one thread that talks to the store, and the queue of work between it and the frame. Started
+/// by the first request and never restarted: a dialog that opens, asks nothing and closes leaves no
+/// thread behind.
 #[derive(Default)]
+struct Vault {
+    requests: Option<std::sync::mpsc::Sender<Request>>,
+    answers: Option<std::sync::mpsc::Receiver<Answer>>,
+}
+
+impl Vault {
+    /// Hand a request to the worker, starting it if this is the first. `Err` only when no thread can
+    /// be started at all, which the dialog says rather than silently doing nothing.
+    fn ask(&mut self, store: &Arc<dyn SecretStore>, ctx: &Option<egui::Context>, request: Request) -> Result<(), ()> {
+        if self.requests.is_none() {
+            let (requests, incoming) = std::sync::mpsc::channel::<Request>();
+            let (outgoing, answers) = std::sync::mpsc::channel::<Answer>();
+            let store = Arc::clone(store);
+            let ctx = ctx.clone();
+            let worker = std::thread::Builder::new().name("pdfcraft-email-store".to_string()).spawn(move || {
+                while let Ok(request) = incoming.recv() {
+                    let answer = answer(&store, &request);
+                    let _ = outgoing.send(answer);
+                    if let Some(ctx) = &ctx {
+                        ctx.request_repaint();
+                    }
+                }
+            });
+            if worker.is_err() {
+                return Err(());
+            }
+            self.requests = Some(requests);
+            self.answers = Some(answers);
+        }
+        self.requests.as_ref().ok_or(())?.send(request).map_err(|_| ())
+    }
+
+    fn next(&mut self) -> Option<Answer> {
+        self.answers.as_mut()?.try_recv().ok()
+    }
+}
+
+/// One exchange with the store, on the worker thread.
+fn answer(store: &Arc<dyn SecretStore>, request: &Request) -> Answer {
+    let (kind, result) = match request {
+        Request::Look { key, .. } => (Kind::Look, store.get(key)),
+        Request::Keep { key, secret, .. } => (Kind::Keep, store.set(key, secret).map(|()| None)),
+        Request::Forget { key, .. } => (Kind::Forget, store.delete(key).map(|()| None)),
+    };
+    Answer { generation: request.generation(), key: request.key().to_string(), kind, result }
+}
+
+/// A send that is still running, and what to file if the relay takes the message.
+struct Sending {
+    outcome: std::sync::mpsc::Receiver<Outcome>,
+    /// The key and the password to file once the relay has accepted the message. `None` unless
+    /// «Remember password» was on when Send was pressed.
+    keep: Option<(String, String)>,
+}
+
+/// The dialog's state and the sessions it started.
 pub struct EmailSend {
     pub draft: Draft,
     /// The last session's outcome (`None` before the first one).
     pub outcome: Option<Outcome>,
     /// The last connection check (`None` before the first one).
     pub checked: Option<CheckOutcome>,
+    /// «Remember password»: off until the user turns it on, and only ever acted on after a send the
+    /// relay accepted. A test replaces the store with an in-memory one.
+    pub store: Arc<dyn SecretStore>,
+    pub remember: bool,
     /// Which boxes a person typed into, and which provider last filled the others.
     providers: Providers,
+    /// The key the draft's settings name right now, and whether the store has a password filed
+    /// under it that this dialog knows about.
+    key: Option<String>,
+    filed: bool,
+    /// What the dialog says about the store, under the password field.
+    note: Option<Note>,
+    /// Counts requests, so an answer to a question a later edit made pointless can be told apart
+    /// from the one the dialog is waiting for.
+    generation: u64,
+    /// The lookup that is in flight, if any, and the key a frame asked about while it ran.
+    awaiting: Option<u64>,
+    deferred: Option<String>,
+    vault: Vault,
     /// The session running off the frame thread.
-    running: Option<std::sync::mpsc::Receiver<Outcome>>,
+    running: Option<Sending>,
     /// The connection check running off the frame thread.
     checking: Option<std::sync::mpsc::Receiver<CheckOutcome>>,
+}
+
+impl Default for EmailSend {
+    fn default() -> Self {
+        Self {
+            draft: Draft::default(),
+            outcome: None,
+            checked: None,
+            store: pdfcraft_platform::secrets::system(),
+            remember: false,
+            providers: Providers::default(),
+            key: None,
+            filed: false,
+            note: None,
+            generation: 0,
+            awaiting: None,
+            deferred: None,
+            vault: Vault::default(),
+            running: None,
+            checking: None,
+        }
+    }
+}
+
+impl EmailSend {
+    /// Follow the key the boxes name, once per frame. When it changes, the password filed under the
+    /// old key is not this session's — a value that came from the store is cleared, a value a person
+    /// typed is kept — and the store is asked about the new one. One lookup at a time; the newest key
+    /// wins, so holding down a key in the server box does not queue a request per keystroke.
+    fn track(&mut self, ctx: &Option<egui::Context>) {
+        let key = self.draft.secret_key();
+        if key == self.key {
+            return;
+        }
+        if self.filed {
+            self.draft.password.clear();
+        }
+        self.filed = false;
+        self.note = None;
+        self.key = key;
+        if let Some(key) = self.key.clone() {
+            self.look(&key, ctx);
+        }
+    }
+
+    fn look(&mut self, key: &str, ctx: &Option<egui::Context>) {
+        if self.awaiting.is_some() {
+            self.deferred = Some(key.to_string());
+            return;
+        }
+        self.generation += 1;
+        let generation = self.generation;
+        let request = Request::Look { generation, key: key.to_string() };
+        match self.vault.ask(&self.store, ctx, request) {
+            Ok(()) => self.awaiting = Some(generation),
+            Err(()) => self.note = Some(Note::Failed("the store worker could not be started".to_string())),
+        }
+    }
+
+    /// File a password the relay has just accepted. Only a send the relay took reaches here, so a
+    /// mistyped password leaves nothing behind.
+    fn keep(&mut self, key: &str, secret: &str, ctx: &Option<egui::Context>) {
+        self.generation += 1;
+        let generation = self.generation;
+        let request = Request::Keep { generation, key: key.to_string(), secret: secret.to_string() };
+        if self.vault.ask(&self.store, ctx, request).is_err() {
+            self.note = Some(Note::Unsaved("the store worker could not be started".to_string()));
+        }
+    }
+
+    /// Delete what is filed under the current key. The field is cleared at once — the user asked for
+    /// the password to be gone — and the store's answer says whether it went.
+    fn forget(&mut self, ctx: &Option<egui::Context>) {
+        let Some(key) = self.key.clone() else { return };
+        self.draft.password.clear();
+        self.filed = false;
+        self.generation += 1;
+        let generation = self.generation;
+        let request = Request::Forget { generation, key };
+        if self.vault.ask(&self.store, ctx, request).is_err() {
+            self.note = Some(Note::Failed("the store worker could not be started".to_string()));
+        }
+    }
+
+    /// Whether a lookup for the current settings is still on its way. The dialog does not act on
+    /// this; it exists because the state is otherwise unobservable, and a test waits on it rather
+    /// than on a timer.
+    pub fn store_pending(&self) -> bool {
+        self.awaiting.is_some() || self.deferred.is_some()
+    }
+
+    /// Take in what the store has answered (every frame) and say what the app should announce.
+    fn poll(&mut self, ctx: &Option<egui::Context>) -> Vec<Said> {
+        let mut said = Vec::new();
+        while let Some(answer) = self.vault.next() {
+            if self.awaiting == Some(answer.generation) {
+                self.awaiting = None;
+            }
+            let current = self.key.as_deref() == Some(answer.key.as_str());
+            let result = answer.result;
+            match (answer.kind, result) {
+                (Kind::Look, Ok(Some(secret))) => {
+                    // A password a person typed is theirs: the store never overwrites it.
+                    if current && self.draft.password.is_empty() {
+                        self.draft.password = secret;
+                        self.filed = true;
+                        self.note = Some(Note::Filed);
+                    }
+                }
+                (Kind::Look, Ok(None)) => {
+                    if current {
+                        self.filed = false;
+                        self.note = None;
+                    }
+                }
+                (Kind::Look, Err(error)) => {
+                    if current {
+                        self.filed = false;
+                        self.note = Some(Note::of(&error));
+                    }
+                }
+                (Kind::Keep, Ok(_)) => {
+                    if current {
+                        self.filed = true;
+                        self.note = Some(Note::Filed);
+                    }
+                    said.push(Said::Kept);
+                }
+                (Kind::Keep, Err(error)) => {
+                    self.note = Some(Note::Unsaved(error.to_string()));
+                    said.push(Said::SaveFailed(error.to_string()));
+                }
+                (Kind::Forget, Ok(_)) => {
+                    if current {
+                        self.filed = false;
+                        self.note = None;
+                    }
+                    said.push(Said::Forgotten);
+                }
+                (Kind::Forget, Err(error)) => {
+                    self.note = Some(Note::of(&error));
+                    said.push(Said::DeleteFailed(error.to_string()));
+                }
+            }
+        }
+        if self.awaiting.is_none()
+            && let Some(key) = self.deferred.take()
+            && self.key.as_deref() == Some(key.as_str())
+        {
+            self.look(&key, ctx);
+        }
+        said
+    }
 }
 
 /// What the dialog's buttons ask the app to do. The caller runs it, so a reason to stay open can be
@@ -292,6 +644,8 @@ pub(crate) struct Actions {
     pub send: bool,
     pub check: bool,
     pub cancel: bool,
+    /// «Forget password»: delete what the store holds for these settings.
+    pub forget: bool,
     /// A page to open in the system browser: the provider's application-password page.
     pub open: Option<&'static str>,
 }
@@ -348,6 +702,10 @@ impl PdfCraftApp {
         };
         let bytes = self.session.email_message(id, &options).map_err(|e| e.to_string())?;
 
+        // What to file once the relay takes the message — and only then: a password the server
+        // refused must leave nothing in the store.
+        let keep = if self.email.remember && !draft.password.is_empty() { draft.secret_key().map(|key| (key, draft.password.clone())) } else { None };
+
         let (tx, rx) = std::sync::mpsc::channel();
         let ctx = self.ctx.clone();
         std::thread::spawn(move || {
@@ -368,7 +726,7 @@ impl PdfCraftApp {
                 ctx.request_repaint();
             }
         });
-        self.email.running = Some(rx);
+        self.email.running = Some(Sending { outcome: rx, keep });
         self.email.outcome = None;
         Ok(())
     }
@@ -402,15 +760,22 @@ impl PdfCraftApp {
     /// in a notice with the reason, never in silence.
     pub(crate) fn poll_email_send(&mut self) {
         {
-            let Some(rx) = self.email.running.take() else { return };
-            let outcome = match rx.try_recv() {
+            let Some(mut sending) = self.email.running.take() else { return };
+            let outcome = match sending.outcome.try_recv() {
                 Ok(outcome) => outcome,
                 Err(std::sync::mpsc::TryRecvError::Empty) => {
-                    self.email.running = Some(rx);
+                    self.email.running = Some(sending);
                     return;
                 }
                 Err(std::sync::mpsc::TryRecvError::Disconnected) => Outcome::Failed(tl!("the session stopped unexpectedly").to_string()),
             };
+            // The relay took the message, so this is the first moment the password may be filed.
+            if matches!(outcome, Outcome::Delivered { .. })
+                && let Some((key, secret)) = sending.keep.take()
+            {
+                let ctx = self.ctx.clone();
+                self.email.keep(&key, &secret, &ctx);
+            }
             match &outcome {
                 Outcome::Delivered { host, port, refused, bytes, .. } => {
                     let server = format!("{host}:{port}");
@@ -457,13 +822,39 @@ impl PdfCraftApp {
         }
         self.email.checked = Some(outcome);
     }
+
+    /// The dialog's «Forget password»: delete what the system store holds for these settings. The
+    /// field is cleared at once — the user asked for the password to be gone — and the answer says
+    /// whether the record went (see [`Self::poll_email_store`]).
+    pub fn forget_email_password(&mut self) {
+        let ctx = self.ctx.clone();
+        self.email.forget(&ctx);
+    }
+
+    /// Pick up what the password store answered (every frame): a password to fill in, a refusal the
+    /// dialog shows in place, or a save and a deletion worth announcing. The store is never asked
+    /// anything from here — only the answers are read.
+    pub(crate) fn poll_email_store(&mut self) {
+        let ctx = self.ctx.clone();
+        for said in self.email.poll(&ctx) {
+            match said {
+                Said::Kept => self.notify(tl!("The password is saved").to_string()),
+                Said::Forgotten => self.notify(tl!("The password was forgotten").to_string()),
+                Said::SaveFailed(reason) => self.notify_fmt("The password could not be saved: {reason}", &[("reason", &reason)]),
+                Said::DeleteFailed(reason) => self.notify_fmt("The password could not be deleted: {reason}", &[("reason", &reason)]),
+            }
+        }
+    }
 }
 
 /// The dialog's fields and buttons.
 pub(crate) fn body(ui: &mut egui::Ui, email: &mut EmailSend, t: &Tokens) -> Actions {
     let mut actions = Actions::default();
+    // The store's view follows the boxes: a changed server, port, transport or user name asks about
+    // a different password, and answers that a later edit overtook never land in the fields.
+    email.track(&Some(ui.ctx().clone()));
     let checking = email.checking.is_some();
-    let EmailSend { draft, providers, .. } = email;
+    let EmailSend { draft, providers, remember, note, filed, .. } = email;
     providers.sync(draft);
 
     ui.label(egui::RichText::new(tl!("Send as email")).font(theme::semibold(18.0)));
@@ -557,8 +948,35 @@ pub(crate) fn body(ui: &mut egui::Ui, email: &mut EmailSend, t: &Tokens) -> Acti
             let l = ui.label(tl!("Password:"));
             ui.add(egui::TextEdit::singleline(&mut draft.password).password(true).desired_width(220.0)).labelled_by(l.id);
             ui.end_row();
+            // The opt-in step: nothing is filed until this is on, and even then only after a send the
+            // relay accepted. A platform with no password store cannot offer it at all.
+            ui.label("");
+            let usable = !matches!(note, Some(Note::Unsupported));
+            ui.add_enabled(usable, widgets::checkbox(remember, tl!("Remember password")));
+            ui.end_row();
         });
+        // A password the store holds for these settings can be deleted from here.
+        if *filed && widgets::pill_button(ui, tl!("Forget password"), false).clicked() {
+            actions.forget = true;
+        }
     });
+    if draft.auth {
+        // Where the password went, or why it did not: the field is always a password field, so the
+        // one thing the dialog must not do is stay silent about a store it could not use.
+        let muted = |ui: &mut egui::Ui, text: String| {
+            ui.label(egui::RichText::new(text).size(12.0).color(t.text_muted));
+        };
+        match note {
+            Some(Note::Filed) => muted(ui, tl!("The saved password is filled in").to_string()),
+            Some(Note::Unsupported) => {
+                muted(ui, tl!("This system has no password store: the password is only kept while this dialog is open").to_string())
+            }
+            Some(Note::Locked) => muted(ui, tl!("The keyring is locked, so the saved password could not be read").to_string()),
+            Some(Note::Failed(reason)) => muted(ui, crate::i18n::fmt(tl!("The password store could not be used: {reason}"), &[("reason", reason)])),
+            Some(Note::Unsaved(reason)) => muted(ui, crate::i18n::fmt(tl!("The password could not be saved: {reason}"), &[("reason", reason)])),
+            None => {}
+        }
+    }
     ui.add_space(12.0);
     ui.with_layout(Layout::right_to_left(Align::Center), |ui| {
         if widgets::pill_button(ui, tl!("Send"), true).clicked() {
@@ -576,4 +994,107 @@ pub(crate) fn body(ui: &mut egui::Ui, email: &mut EmailSend, t: &Tokens) -> Acti
         }
     });
     actions
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use pdfcraft_platform::secrets::MemoryStore;
+    use std::sync::Arc;
+    use std::time::{Duration, Instant};
+
+    fn draft() -> Draft {
+        Draft {
+            host: "a.example".to_string(),
+            port: String::new(),
+            transport: Transport::StartTls,
+            from: "ada@example.com".to_string(),
+            to: "team@example.com".to_string(),
+            auth: true,
+            username: "user1".to_string(),
+            password: "hunter2".to_string(),
+            ..Draft::default()
+        }
+    }
+
+    /// The key is the specification the store is filed under: transport, server, port and user name,
+    /// so any change of them names a different password.
+    #[test]
+    fn the_key_names_the_transport_the_server_the_port_and_the_user() {
+        assert_eq!(draft().secret_key().as_deref(), Some("pdfcraft:smtp:starttls://a.example:587/user1"));
+        assert_eq!(Draft { transport: Transport::Tls, ..draft() }.secret_key().as_deref(), Some("pdfcraft:smtp:tls://a.example:465/user1"));
+        assert_eq!(Draft { port: "2525".to_string(), ..draft() }.secret_key().as_deref(), Some("pdfcraft:smtp:starttls://a.example:2525/user1"));
+        // Nothing a password could belong to: no login, or no server, or no password field at all.
+        assert_eq!(Draft { username: "  ".to_string(), ..draft() }.secret_key(), None);
+        assert_eq!(Draft { host: String::new(), ..draft() }.secret_key(), None);
+        assert_eq!(Draft { auth: false, ..draft() }.secret_key(), None);
+        // A port that is not a port names no relay, so it files nothing.
+        assert_eq!(Draft { port: "not a port".to_string(), ..draft() }.secret_key(), None);
+    }
+
+    /// The whole point of the opt-in: the password is filed after a send the relay accepted, and a
+    /// send it refused leaves nothing behind.
+    #[test]
+    fn a_send_the_relay_took_files_the_password_and_a_refused_one_leaves_nothing() {
+        let key = "pdfcraft:smtp:starttls://a.example:587/user1".to_string();
+        let delivered = Outcome::Delivered {
+            host: "a.example".to_string(),
+            port: 587,
+            accepted: vec!["team@example.com".to_string()],
+            refused: Vec::new(),
+            bytes: 128,
+            reply: "250 2.0.0 message accepted".to_string(),
+        };
+
+        for (outcome, filed) in [(delivered, true), (Outcome::Failed("the relay said no".to_string()), false)] {
+            let store = Arc::new(MemoryStore::new());
+            let mut app = PdfCraftApp::new();
+            app.email.store = store.clone();
+            let (tx, rx) = std::sync::mpsc::channel();
+            app.email.running = Some(Sending { outcome: rx, keep: Some((key.clone(), "hunter2".to_string())) });
+            tx.send(outcome).unwrap();
+            app.poll_email_send();
+            // The store is spoken to off the frame thread, so give the worker the time it takes and
+            // read its answer the way a frame does.
+            let deadline = Instant::now() + if filed { Duration::from_secs(5) } else { Duration::from_millis(300) };
+            while Instant::now() < deadline {
+                app.poll_email_store();
+                if filed && app.toast.as_ref().is_some_and(|toast| toast.0.contains("The password is saved")) {
+                    break;
+                }
+                std::thread::sleep(Duration::from_millis(5));
+            }
+            if filed {
+                assert_eq!(store.peek(&key), Some("hunter2".to_string()), "the accepted send filed the password");
+                let toast = app.toast.as_ref().map(|t| t.0.clone()).unwrap_or_default();
+                assert!(toast.contains("The password is saved"), "{toast}");
+            } else {
+                assert!(store.is_empty(), "a refused send must not leave a password in the store: {:?}", store.peek(&key));
+                let toast = app.toast.as_ref().map(|t| t.0.clone()).unwrap_or_default();
+                assert!(!toast.contains("The password is saved"), "a refused send claimed to save the password: {toast}");
+            }
+        }
+    }
+
+    /// The wire between the frame and the worker carries no password in its diagnostic form: an
+    /// answer can reach a log through a panic message.
+    #[test]
+    fn an_answer_never_carries_the_secret() {
+        let store: Arc<dyn SecretStore> = Arc::new(MemoryStore::new());
+        let request = Request::Keep { generation: 7, key: "pdfcraft:smtp:tls://a.example:465/user1".to_string(), secret: "hunter2".to_string() };
+        let answer = answer(&store, &request);
+        let shown = format!("{answer:?}");
+        assert!(!shown.contains("hunter2"), "{shown}");
+        assert!(shown.contains("pdfcraft:smtp:tls://a.example:465/user1"), "{shown}");
+        // The request does carry it, so it must not print itself: nothing derives Debug for it.
+        let _ = request;
+    }
+
+    /// A password the store refuses is the same refusal the dialog shows; the field is untouched.
+    #[test]
+    fn a_refusal_becomes_the_dialogs_own_note() {
+        assert_eq!(Note::of(&StoreError::Unsupported), Note::Unsupported);
+        assert_eq!(Note::of(&StoreError::Locked), Note::Locked);
+        assert_eq!(Note::of(&StoreError::Unavailable("no session bus".to_string())), Note::Failed("no session bus".to_string()));
+    }
 }

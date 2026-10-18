@@ -2437,3 +2437,13 @@ animation effects	Off	Izklopljeni
 	The server refused the login: {reason}	Strežnik je prijavo zavrnil: {reason}
 	Could not connect: {reason}	Povezava ni uspela: {reason}
 	the check stopped unexpectedly	preverjanje se je nepričakovano prekinilo
+	Remember password	Zapomni si geslo
+	Forget password	Pozabi geslo
+	The password is saved	Geslo je shranjeno
+	The password was forgotten	Geslo je bilo pozabljeno
+	The password could not be saved: {reason}	Gesla ni bilo mogoče shraniti: {reason}
+	The password could not be deleted: {reason}	Gesla ni bilo mogoče izbrisati: {reason}
+	The saved password is filled in	Shranjeno geslo je vstavljeno
+	This system has no password store: the password is only kept while this dialog is open	Ta sistem nima shrambe gesel: geslo se ohrani le, dokler je to okno odprto
+	The keyring is locked, so the saved password could not be read	Ključavnica je zaklenjena, zato shranjenega gesla ni bilo mogoče prebrati
+	The password store could not be used: {reason}	Shrambe gesel ni bilo mogoče uporabiti: {reason}

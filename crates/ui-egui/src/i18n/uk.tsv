@@ -2454,3 +2454,13 @@ animation effects	Off	Вимкнено
 	The server refused the login: {reason}	Сервер відхилив логін: {reason}
 	Could not connect: {reason}	Не вдалося підключитися: {reason}
 	the check stopped unexpectedly	перевірка несподівано перервалася
+	Remember password	Запам'ятати пароль
+	Forget password	Забути пароль
+	The password is saved	Пароль збережено
+	The password was forgotten	Пароль забуто
+	The password could not be saved: {reason}	Не вдалося зберегти пароль: {reason}
+	The password could not be deleted: {reason}	Не вдалося видалити пароль: {reason}
+	The saved password is filled in	Збережений пароль підставлено
+	This system has no password store: the password is only kept while this dialog is open	У цій системі немає сховища паролів: пароль зберігається лише поки відкрито цей діалог
+	The keyring is locked, so the saved password could not be read	Зв'язка ключів заблокована, тому збережений пароль прочитати не вдалося
+	The password store could not be used: {reason}	Не вдалося скористатися сховищем паролів: {reason}

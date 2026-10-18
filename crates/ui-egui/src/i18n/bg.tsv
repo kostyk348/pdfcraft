@@ -2395,3 +2395,13 @@ animation effects	Off	Изключени
 	The server refused the login: {reason}	Сървърът отхвърли входа: {reason}
 	Could not connect: {reason}	Неуспешно свързване: {reason}
 	the check stopped unexpectedly	проверката прекъсна неочаквано
+	Remember password	Запомни паролата
+	Forget password	Забрави паролата
+	The password is saved	Паролата е запазена
+	The password was forgotten	Паролата е забравена
+	The password could not be saved: {reason}	Паролата не можа да бъде запазена: {reason}
+	The password could not be deleted: {reason}	Паролата не можа да бъде изтрита: {reason}
+	The saved password is filled in	Запазената парола е попълнена
+	This system has no password store: the password is only kept while this dialog is open	Тази система няма хранилище за пароли: паролата се пази само докато този диалог е отворен
+	The keyring is locked, so the saved password could not be read	Ключодържателят е заключен, затова запазената парола не можа да бъде прочетена
+	The password store could not be used: {reason}	Хранилището за пароли не можа да бъде използвано: {reason}

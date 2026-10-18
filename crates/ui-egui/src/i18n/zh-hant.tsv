@@ -2306,3 +2306,13 @@ animation effects	Off	關
 	The server refused the login: {reason}	伺服器拒絕了登入：{reason}
 	Could not connect: {reason}	無法連線：{reason}
 	the check stopped unexpectedly	檢查意外停止了
+	Remember password	記住密碼
+	Forget password	忘記密碼
+	The password is saved	密碼已儲存
+	The password was forgotten	密碼已忘記
+	The password could not be saved: {reason}	無法儲存密碼：{reason}
+	The password could not be deleted: {reason}	無法刪除密碼：{reason}
+	The saved password is filled in	已填入儲存的密碼
+	This system has no password store: the password is only kept while this dialog is open	此系統沒有密碼儲存區：密碼只在開啟此對話框期間保留
+	The keyring is locked, so the saved password could not be read	鑰匙圈已鎖定，因此無法讀取儲存的密碼
+	The password store could not be used: {reason}	無法使用密碼儲存區：{reason}

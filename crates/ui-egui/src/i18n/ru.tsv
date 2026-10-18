@@ -2345,3 +2345,13 @@ animation effects	Off	Выкл
 	The server refused the login: {reason}	Сервер отклонил логин: {reason}
 	Could not connect: {reason}	Не удалось подключиться: {reason}
 	the check stopped unexpectedly	проверка неожиданно прервалась
+	Remember password	Запомнить пароль
+	Forget password	Забыть пароль
+	The password is saved	Пароль сохранён
+	The password was forgotten	Пароль забыт
+	The password could not be saved: {reason}	Не удалось сохранить пароль: {reason}
+	The password could not be deleted: {reason}	Не удалось удалить пароль: {reason}
+	The saved password is filled in	Сохранённый пароль подставлен
+	This system has no password store: the password is only kept while this dialog is open	В этой системе нет хранилища паролей: пароль хранится только пока открыт этот диалог
+	The keyring is locked, so the saved password could not be read	Связка ключей заблокирована, поэтому сохранённый пароль прочитать не удалось
+	The password store could not be used: {reason}	Не удалось воспользоваться хранилищем паролей: {reason}

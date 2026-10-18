@@ -2396,3 +2396,13 @@ animation effects	Off	关
 	The server refused the login: {reason}	服务器拒绝了登录：{reason}
 	Could not connect: {reason}	无法连接：{reason}
 	the check stopped unexpectedly	检查意外停止了
+	Remember password	记住密码
+	Forget password	忘记密码
+	The password is saved	密码已保存
+	The password was forgotten	密码已忘记
+	The password could not be saved: {reason}	无法保存密码：{reason}
+	The password could not be deleted: {reason}	无法删除密码：{reason}
+	The saved password is filled in	已填入保存的密码
+	This system has no password store: the password is only kept while this dialog is open	此系统没有密码存储：密码只在打开此对话框期间保留
+	The keyring is locked, so the saved password could not be read	钥匙环已锁定，因此无法读取保存的密码
+	The password store could not be used: {reason}	无法使用密码存储：{reason}

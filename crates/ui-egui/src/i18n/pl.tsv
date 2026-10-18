@@ -2412,3 +2412,13 @@ animation effects	Off	Wyłączone
 	The server refused the login: {reason}	Serwer odrzucił logowanie: {reason}
 	Could not connect: {reason}	Nie udało się połączyć: {reason}
 	the check stopped unexpectedly	sprawdzanie przerwano nieoczekiwanie
+	Remember password	Zapamiętaj hasło
+	Forget password	Zapomnij hasło
+	The password is saved	Hasło zostało zapisane
+	The password was forgotten	Hasło zostało zapomniane
+	The password could not be saved: {reason}	Nie udało się zapisać hasła: {reason}
+	The password could not be deleted: {reason}	Nie udało się usunąć hasła: {reason}
+	The saved password is filled in	Zapisane hasło zostało wpisane
+	This system has no password store: the password is only kept while this dialog is open	Ten system nie ma magazynu haseł: hasło jest przechowywane tylko dopóki to okno jest otwarte
+	The keyring is locked, so the saved password could not be read	Pęk kluczy jest zablokowany, więc nie udało się odczytać zapisanego hasła
+	The password store could not be used: {reason}	Nie udało się użyć magazynu haseł: {reason}

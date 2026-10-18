@@ -2675,3 +2675,13 @@ key	Space	Tarpas
 	The server refused the login: {reason}	Serveris atmetė prisijungimą: {reason}
 	Could not connect: {reason}	Nepavyko prisijungti: {reason}
 	the check stopped unexpectedly	tikrinimas netikėtai nutrūko
+	Remember password	Įsiminti slaptažodį
+	Forget password	Pamiršti slaptažodį
+	The password is saved	Slaptažodis įrašytas
+	The password was forgotten	Slaptažodis pamirštas
+	The password could not be saved: {reason}	Slaptažodžio įrašyti nepavyko: {reason}
+	The password could not be deleted: {reason}	Slaptažodžio ištrinti nepavyko: {reason}
+	The saved password is filled in	Įrašytas slaptažodis įterptas
+	This system has no password store: the password is only kept while this dialog is open	Šioje sistemoje nėra slaptažodžių saugyklos: slaptažodis laikomas tik tol, kol šis dialogas atidarytas
+	The keyring is locked, so the saved password could not be read	Raktinė užrakinta, todėl įrašyto slaptažodžio perskaityti nepavyko
+	The password store could not be used: {reason}	Slaptažodžių saugyklos panaudoti nepavyko: {reason}

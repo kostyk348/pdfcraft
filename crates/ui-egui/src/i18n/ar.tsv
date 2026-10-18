@@ -2453,3 +2453,13 @@ animation effects	Off	معطّلة
 	The server refused the login: {reason}	رفض الخادم تسجيل الدخول: {reason}
 	Could not connect: {reason}	تعذّر الاتصال: {reason}
 	the check stopped unexpectedly	توقف الفحص بشكل غير متوقع
+	Remember password	تذكّر كلمة المرور
+	Forget password	انسَ كلمة المرور
+	The password is saved	تم حفظ كلمة المرور
+	The password was forgotten	تم نسيان كلمة المرور
+	The password could not be saved: {reason}	تعذّر حفظ كلمة المرور: {reason}
+	The password could not be deleted: {reason}	تعذّر حذف كلمة المرور: {reason}
+	The saved password is filled in	تم إدخال كلمة المرور المحفوظة
+	This system has no password store: the password is only kept while this dialog is open	لا يوجد في هذا النظام مخزن لكلمات المرور: تبقى كلمة المرور ما دام هذا الحوار مفتوحًا فقط
+	The keyring is locked, so the saved password could not be read	سلسلة المفاتيح مقفلة، لذا تعذّرت قراءة كلمة المرور المحفوظة
+	The password store could not be used: {reason}	تعذّر استخدام مخزن كلمات المرور: {reason}

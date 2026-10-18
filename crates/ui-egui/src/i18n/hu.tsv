@@ -2431,3 +2431,13 @@ animation effects	Off	Ki
 	The server refused the login: {reason}	A kiszolgáló elutasította a bejelentkezést: {reason}
 	Could not connect: {reason}	Nem sikerült csatlakozni: {reason}
 	the check stopped unexpectedly	az ellenőrzés váratlanul leállt
+	Remember password	Jelszó megjegyzése
+	Forget password	Jelszó elfelejtése
+	The password is saved	A jelszó el van mentve
+	The password was forgotten	A jelszó elfelejtve
+	The password could not be saved: {reason}	A jelszót nem sikerült elmenteni: {reason}
+	The password could not be deleted: {reason}	A jelszót nem sikerült törölni: {reason}
+	The saved password is filled in	Az elmentett jelszó be van illesztve
+	This system has no password store: the password is only kept while this dialog is open	Ezen a rendszeren nincs jelszótár: a jelszó csak addig marad meg, amíg ez az ablak nyitva van
+	The keyring is locked, so the saved password could not be read	A kulcstár zárva van, ezért az elmentett jelszót nem sikerült beolvasni
+	The password store could not be used: {reason}	A jelszótárat nem sikerült használni: {reason}

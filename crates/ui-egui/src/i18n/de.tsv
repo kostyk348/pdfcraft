@@ -2433,3 +2433,13 @@ animation effects	Off	Aus
 	The server refused the login: {reason}	Der Server hat die Anmeldung abgelehnt: {reason}
 	Could not connect: {reason}	Verbindung nicht möglich: {reason}
 	the check stopped unexpectedly	die Prüfung wurde unerwartet abgebrochen
+	Remember password	Passwort merken
+	Forget password	Passwort vergessen
+	The password is saved	Das Passwort ist gespeichert
+	The password was forgotten	Das Passwort wurde vergessen
+	The password could not be saved: {reason}	Das Passwort konnte nicht gespeichert werden: {reason}
+	The password could not be deleted: {reason}	Das Passwort konnte nicht gelöscht werden: {reason}
+	The saved password is filled in	Das gespeicherte Passwort ist eingesetzt
+	This system has no password store: the password is only kept while this dialog is open	Dieses System hat keinen Passwortspeicher: das Passwort bleibt nur erhalten, solange dieser Dialog offen ist
+	The keyring is locked, so the saved password could not be read	Der Schlüsselbund ist gesperrt, daher konnte das gespeicherte Passwort nicht gelesen werden
+	The password store could not be used: {reason}	Der Passwortspeicher konnte nicht verwendet werden: {reason}

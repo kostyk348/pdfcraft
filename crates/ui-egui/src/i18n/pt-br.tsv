@@ -2446,3 +2446,13 @@ animation effects	Off	Desativados
 	The server refused the login: {reason}	O servidor recusou o login: {reason}
 	Could not connect: {reason}	Não foi possível conectar: {reason}
 	the check stopped unexpectedly	o teste parou inesperadamente
+	Remember password	Lembrar a senha
+	Forget password	Esquecer a senha
+	The password is saved	A senha está salva
+	The password was forgotten	A senha foi esquecida
+	The password could not be saved: {reason}	Não foi possível salvar a senha: {reason}
+	The password could not be deleted: {reason}	Não foi possível excluir a senha: {reason}
+	The saved password is filled in	A senha salva foi preenchida
+	This system has no password store: the password is only kept while this dialog is open	Este sistema não tem um cofre de senhas: a senha só é mantida enquanto esta caixa de diálogo estiver aberta
+	The keyring is locked, so the saved password could not be read	O chaveiro está bloqueado, então não foi possível ler a senha salva
+	The password store could not be used: {reason}	Não foi possível usar o cofre de senhas: {reason}

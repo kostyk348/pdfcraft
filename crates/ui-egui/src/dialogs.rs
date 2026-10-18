@@ -943,6 +943,11 @@ fn dialogs(app: &mut PdfCraftApp, ctx: &egui::Context) {
                         Err(why) => app.notify(why),
                     }
                 }
+                // «Forget password»: the record goes, and the store's answer is announced by the
+                // next frame (the dialog stays open either way).
+                if actions.forget {
+                    app.forget_email_password();
+                }
                 if actions.send {
                     match app.send_email() {
                         Ok(()) => close = true,

@@ -2345,3 +2345,13 @@ animation effects	Off	ఆఫ్
 	The server refused the login: {reason}	సర్వర్ లాగిన్ను తిరస్కరించింది: {reason}
 	Could not connect: {reason}	కనెక్ట్ చేయలేకపోయాం: {reason}
 	the check stopped unexpectedly	తనిఖీ ఊహించని విధంగా ఆగిపోయింది
+	Remember password	పాస్‌వర్డ్‌ను గుర్తుంచుకో
+	Forget password	పాస్‌వర్డ్‌ను మర్చిపో
+	The password is saved	పాస్‌వర్డ్ సేవ్ చేయబడింది
+	The password was forgotten	పాస్‌వర్డ్ మర్చిపోబడింది
+	The password could not be saved: {reason}	పాస్‌వర్డ్‌ను సేవ్ చేయలేకపోయాం: {reason}
+	The password could not be deleted: {reason}	పాస్‌వర్డ్‌ను తొలగించలేకపోయాం: {reason}
+	The saved password is filled in	సేవ్ చేసిన పాస్‌వర్డ్ నింపబడింది
+	This system has no password store: the password is only kept while this dialog is open	ఈ సిస్టమ్‌లో పాస్‌వర్డ్ నిల్వ లేదు: ఈ డైలాగ్ తెరిచి ఉన్నప్పుడు మాత్రమే పాస్‌వర్డ్ ఉంచబడుతుంది
+	The keyring is locked, so the saved password could not be read	కీరింగ్ లాక్ చేయబడింది, కాబట్టి సేవ్ చేసిన పాస్‌వర్డ్‌ను చదవలేకపోయాం
+	The password store could not be used: {reason}	పాస్‌వర్డ్ నిల్వను ఉపయోగించలేకపోయాం: {reason}

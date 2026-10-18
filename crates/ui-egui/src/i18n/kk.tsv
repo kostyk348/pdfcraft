@@ -2430,3 +2430,13 @@ animation effects	Off	Өшірулі
 	The server refused the login: {reason}	Сервер кіруді қабылдамады: {reason}
 	Could not connect: {reason}	Қосылу мүмкін болмады: {reason}
 	the check stopped unexpectedly	тексеру кенеттен тоқтады
+	Remember password	Құпия сөзді есте сақтау
+	Forget password	Құпия сөзді ұмыту
+	The password is saved	Құпия сөз сақталды
+	The password was forgotten	Құпия сөз ұмытылды
+	The password could not be saved: {reason}	Құпия сөзді сақтау мүмкін болмады: {reason}
+	The password could not be deleted: {reason}	Құпия сөзді жою мүмкін болмады: {reason}
+	The saved password is filled in	Сақталған құпия сөз қойылды
+	This system has no password store: the password is only kept while this dialog is open	Бұл жүйеде құпия сөздер қоймасы жоқ: құпия сөз тек осы диалог ашық тұрғанда сақталады
+	The keyring is locked, so the saved password could not be read	Кілтсалғыш құлыпталған, сондықтан сақталған құпия сөзді оқу мүмкін болмады
+	The password store could not be used: {reason}	Құпия сөздер қоймасын пайдалану мүмкін болмады: {reason}

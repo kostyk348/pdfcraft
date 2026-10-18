@@ -2442,3 +2442,13 @@ animation effects	Off	Ανενεργά
 	The server refused the login: {reason}	Ο διακομιστής απέρριψε την είσοδο: {reason}
 	Could not connect: {reason}	Δεν ήταν δυνατή η σύνδεση: {reason}
 	the check stopped unexpectedly	ο έλεγχος σταμάτησε απροσδόκητα
+	Remember password	Απομνημόνευση κωδικού
+	Forget password	Λήθη κωδικού
+	The password is saved	Ο κωδικός αποθηκεύτηκε
+	The password was forgotten	Ο κωδικός ξεχάστηκε
+	The password could not be saved: {reason}	Δεν ήταν δυνατή η αποθήκευση του κωδικού: {reason}
+	The password could not be deleted: {reason}	Δεν ήταν δυνατή η διαγραφή του κωδικού: {reason}
+	The saved password is filled in	Ο αποθηκευμένος κωδικός έχει συμπληρωθεί
+	This system has no password store: the password is only kept while this dialog is open	Αυτό το σύστημα δεν έχει χώρο αποθήκευσης κωδικών: ο κωδικός διατηρείται μόνο όσο αυτό το παράθυρο είναι ανοιχτό
+	The keyring is locked, so the saved password could not be read	Η κλειδοθήκη είναι κλειδωμένη, οπότε ο αποθηκευμένος κωδικός δεν μπορούσε να διαβαστεί
+	The password store could not be used: {reason}	Δεν ήταν δυνατή η χρήση του χώρου αποθήκευσης κωδικών: {reason}
