@@ -343,8 +343,9 @@ fn rows(block: &TextBlock, lines: &[TextLine]) -> Vec<Row> {
         let Some(first) = members.first().copied() else { continue };
         let rect = members.iter().fold(first.rect, |acc, l| union(acc, l.rect));
         let runs: Vec<Run> = members.iter().map(|l| Run::of(l)).collect();
-        let mixed =
-            runs.iter().any(|r| r.font != first.font || r.size != first.size || r.color != first.color || r.bold != first.bold || r.italic != first.italic);
+        let mixed = runs
+            .iter()
+            .any(|r| r.font != first.font || r.size != first.size || r.color != first.color || r.bold != first.bold || r.italic != first.italic);
         out.push(Row { text: texts.get(i).copied().unwrap_or_default().trim().to_owned(), rect, first: Run::of(first), runs, mixed });
     }
     out
@@ -383,7 +384,8 @@ impl Marker {
 }
 
 /// The four tags a translation may carry, with the marker each opens or closes.
-const TAGS: [(&str, Marker, bool); 4] = [("<b>", Marker::Bold, true), ("</b>", Marker::Bold, false), ("<i>", Marker::Italic, true), ("</i>", Marker::Italic, false)];
+const TAGS: [(&str, Marker, bool); 4] =
+    [("<b>", Marker::Bold, true), ("</b>", Marker::Bold, false), ("<i>", Marker::Italic, true), ("</i>", Marker::Italic, false)];
 
 fn tag_at(text: &str) -> Option<(Marker, bool, &'static str)> {
     TAGS.into_iter().find(|(tag, _, _)| text.starts_with(tag)).map(|(tag, marker, opening)| (marker, opening, tag))
@@ -746,7 +748,8 @@ pub fn translate(session: &mut Session, id: DocId, options: &Options, backend: &
                     }
                 }
             }
-            let style_for = |ranges: &[RangeStyle]| BlockStyle { ranges: ranges.to_vec(), resource: font_resource.map(str::to_owned), ..BlockStyle::default() };
+            let style_for =
+                |ranges: &[RangeStyle]| BlockStyle { ranges: ranges.to_vec(), resource: font_resource.map(str::to_owned), ..BlockStyle::default() };
             // The largest size in the paragraph, which is how much a face's taller metrics may
             // reach beyond the paragraph's band without counting as an overflow.
             let largest = source_rows.iter().map(|r| r.first.size).fold(0.0_f64, f64::max);

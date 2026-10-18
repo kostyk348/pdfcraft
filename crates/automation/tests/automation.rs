@@ -2913,7 +2913,8 @@ fn sending_refuses_what_it_cannot_carry_out_and_never_connects() {
     let dead_port = dead.local_addr().expect("the port").port();
     drop(dead);
     for security in ["starttls", "tls"] {
-        let outcome = a.call("doc_email_send", &json!({ "doc": d, "host": "127.0.0.1", "port": dead_port, "to": ["team@example.com"], "security": security }));
+        let outcome =
+            a.call("doc_email_send", &json!({ "doc": d, "host": "127.0.0.1", "port": dead_port, "to": ["team@example.com"], "security": security }));
         let Err(error) = outcome else { panic!("{security} reached nothing at all") };
         let text = error.to_string();
         assert!(text.contains("could not be reached"), "{security}: {text}");

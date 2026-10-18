@@ -1,7 +1,10 @@
 //! pdfcraft-smtp — delivering a message over SMTP (RFC 5321).
 //!
 //! A client, not a server: it connects, says hello, encrypts the session when the caller asked for
-//! it, authenticates when the caller gave it credentials, hands over the message bytes and quits.
+//! it, authenticates when the caller gave it credentials, hands over the message bytes and quits —
+//! or, for [`verify`], stops after the login so a person can find out whether the settings work
+//! without sending anything. [`PRESETS`] is the table of common providers (server, port, transport),
+//! so the interface can fill the dialog from an address instead of asking for the documentation.
 //! It composes nothing (that is `pdfcraft-eml`) and it holds no configuration of its own — no relay,
 //! no credentials, no port: [`send`] opens a socket only when a caller passes a [`Server`], which is
 //! what makes sending an explicit, opt-in step rather than something a document ever does on its
@@ -71,6 +74,96 @@ impl Security {
             Security::ImplicitTls => "tls",
         }
     }
+}
+
+/// One mail provider's submission server: the table the interface fills its fields from.
+///
+/// This is the only place a provider is named. The dialog lists [`PRESETS`] by [`Preset::name`],
+/// fills the server, the port and the transport from the entry, and finds the entry for an address
+/// with [`preset`]; adding a provider is one entry here and nothing else. No entry holds a secret:
+/// a host, a port, a transport and a page to open.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub struct Preset {
+    /// The provider's name, as the provider and its users write it (a name, so the interface does
+    /// not translate it).
+    pub name: &'static str,
+    /// The domains that belong to it: what follows the `@`, lowercase.
+    pub domains: &'static [&'static str],
+    /// The submission server.
+    pub host: &'static str,
+    /// The port that goes with [`Preset::security`].
+    pub port: u16,
+    /// The transport the provider expects on that port.
+    pub security: Security,
+    /// A second port the same provider accepts, for a network that blocks the first.
+    pub alternative: Option<(u16, Security)>,
+    /// Where the user makes an application password this provider accepts instead of the
+    /// account's own; `None` for one that takes the account password. The interface shows this as
+    /// a hint and opens it in the system browser; it never reads the page.
+    pub app_password_page: Option<&'static str>,
+}
+
+/// The providers the interface offers, in the order it lists them.
+pub const PRESETS: &[Preset] = &[
+    Preset {
+        name: "Gmail",
+        domains: &["gmail.com", "googlemail.com"],
+        host: "smtp.gmail.com",
+        port: 465,
+        security: Security::ImplicitTls,
+        alternative: Some((587, Security::StartTls)),
+        app_password_page: Some("https://myaccount.google.com/apppasswords"),
+    },
+    Preset {
+        name: "Yandex",
+        domains: &["yandex.ru", "yandex.com", "yandex.by"],
+        host: "smtp.yandex.ru",
+        port: 465,
+        security: Security::ImplicitTls,
+        alternative: None,
+        app_password_page: None,
+    },
+    Preset {
+        name: "Mail.ru",
+        domains: &["mail.ru", "bk.ru", "inbox.ru", "list.ru"],
+        host: "smtp.mail.ru",
+        port: 465,
+        security: Security::ImplicitTls,
+        alternative: None,
+        app_password_page: None,
+    },
+    Preset {
+        name: "Outlook.com",
+        domains: &["outlook.com", "hotmail.com"],
+        host: "smtp-mail.outlook.com",
+        port: 587,
+        security: Security::StartTls,
+        alternative: None,
+        app_password_page: None,
+    },
+    Preset {
+        name: "Live.com",
+        domains: &["live.com"],
+        host: "smtp-mail.outlook.com",
+        port: 587,
+        security: Security::StartTls,
+        alternative: None,
+        app_password_page: None,
+    },
+];
+
+/// The provider an address — or just the domain after its `@` — belongs to.
+///
+/// The domain is compared as it is written after `@`, ignoring case and a trailing root dot. A
+/// domain no entry lists returns `None`: the caller fills in nothing rather than guessing a relay.
+pub fn preset(value: &str) -> Option<&'static Preset> {
+    let value = value.trim();
+    let domain = value.rsplit_once('@').map_or(value, |(_, domain)| domain);
+    let domain = domain.trim_end_matches('.').to_ascii_lowercase();
+    if domain.is_empty() {
+        return None;
+    }
+    PRESETS.iter().find(|entry| entry.domains.iter().any(|known| *known == domain))
 }
 
 /// What to connect to and who to say we are. Every field is an explicit choice by the caller; the
@@ -185,29 +278,9 @@ pub fn send(server: &Server, from: &str, recipients: &[String], message: &[u8]) 
     let (payload, stuffed_lines) = frame(message, server.crlf)?;
     check(server)?;
 
-    let mut session = Session::connect(server)?;
-    session.greeting()?;
-    let mut capabilities = session.hello(&server.client_name)?;
-
-    // RFC 3207 §4.2: once the session is encrypted, what the relay said before is forgotten and
-    // `EHLO` is issued again — a relay may offer different extensions on a protected session.
-    if server.security == Security::StartTls {
-        if !capabilities.iter().any(|word| word == "STARTTLS") {
-            return Err(Error::Config(format!(
-                "the server does not offer STARTTLS (it listed: {}), so this session cannot be encrypted; \
-                 use security \"tls\" for a TLS port (465), or \"none\" only for a relay you trust",
-                if capabilities.is_empty() { "nothing".to_string() } else { capabilities.join(" ") }
-            )));
-        }
-        session = session.starttls(server)?;
-        capabilities = session.hello(&server.client_name)?;
-        session.note("TLS established (RFC 3207 STARTTLS)");
-    }
-
-    session.authenticate(server, &capabilities)?;
+    let (mut session, _capabilities) = Session::connect_authenticated(server)?;
 
     session.expect(&format!("MAIL FROM:<{from}>"), &[250])?;
-
     let mut accepted: Vec<String> = Vec::new();
     let mut refused: Vec<(String, String)> = Vec::new();
     let mut last_refusal: Option<(u16, String)> = None;
@@ -253,6 +326,37 @@ pub fn send(server: &Server, from: &str, recipients: &[String], message: &[u8]) 
         reply: text,
         log: session.log,
     })
+}
+
+/// What one [`verify`] found: the relay was reached and the login was taken, and **nothing was
+/// handed over**.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct Checked {
+    pub host: String,
+    pub port: u16,
+    /// Whether `AUTH PLAIN` was carried out (`false` when the caller gave no credentials).
+    pub authenticated: bool,
+    /// The extensions the relay listed on the (encrypted, when asked for) session.
+    pub capabilities: Vec<String>,
+    /// The session in order, as `EHLO … → 250 …`. Credentials are redacted.
+    pub log: Vec<String>,
+}
+
+/// Check the connection without sending anything: connect, greet, say hello, encrypt the session
+/// when the caller asked for it, log in when credentials were given, and quit.
+///
+/// The session is the one [`send`] opens — same greeting, same `EHLO`, same `STARTTLS` upgrade,
+/// same `AUTH PLAIN` — and it stops there: `MAIL FROM`, `RCPT TO` and `DATA` are never sent, so a
+/// relay has nothing to deliver and a user finds out about a wrong port, a certificate that does
+/// not check out or a refused password before writing the message. Every failure is an [`Error`]
+/// and nothing panics.
+pub fn verify(server: &Server) -> Result<Checked, Error> {
+    check(server)?;
+    let authenticated = server.username.is_some();
+    let (mut session, capabilities) = Session::connect_authenticated(server)?;
+    session.ignore("QUIT");
+    session.note("connection check: no message was handed over");
+    Ok(Checked { host: server.host.trim().to_string(), port: server.port, authenticated, capabilities, log: session.log })
 }
 
 /// Check one envelope address (`from`, `MAIL FROM`) or recipient (`to`, `RCPT TO`).
@@ -519,11 +623,7 @@ fn handshake_error(server: &Server, error: &std::io::Error) -> Error {
     if let Some(inner) = error.get_ref()
         && let Some(rustls_error) = inner.downcast_ref::<rustls::Error>()
     {
-        return Error::Tls(format!(
-            "{host}:{} did not pass certificate verification ({}); nothing was sent",
-            server.port,
-            describe(rustls_error)
-        ));
+        return Error::Tls(format!("{host}:{} did not pass certificate verification ({}); nothing was sent", server.port, describe(rustls_error)));
     }
     Error::Tls(format!("the encrypted session with {host}:{} could not be set up: {error}", server.port))
 }
@@ -564,6 +664,35 @@ struct Session {
 }
 
 impl Session {
+    /// Connect, greet, say hello, encrypt when asked and log in when credentials were given.
+    ///
+    /// This is the part a send and a check share, so a check runs the very session a message would
+    /// — the same greeting, the same `EHLO`, the same `STARTTLS` upgrade and the same `AUTH`.
+    fn connect_authenticated(server: &Server) -> Result<(Session, Vec<String>), Error> {
+        let mut session = Session::connect(server)?;
+        session.greeting()?;
+        let mut capabilities = session.hello(&server.client_name)?;
+
+        // RFC 3207 §4.2: once the session is encrypted, what the relay said before is forgotten
+        // and `EHLO` is issued again — a relay may offer different extensions on a protected
+        // session.
+        if server.security == Security::StartTls {
+            if !capabilities.iter().any(|word| word == "STARTTLS") {
+                return Err(Error::Config(format!(
+                    "the server does not offer STARTTLS (it listed: {}), so this session cannot be encrypted; \
+                     use security \"tls\" for a TLS port (465), or \"none\" only for a relay you trust",
+                    if capabilities.is_empty() { "nothing".to_string() } else { capabilities.join(" ") }
+                )));
+            }
+            session = session.starttls(server)?;
+            capabilities = session.hello(&server.client_name)?;
+            session.note("TLS established (RFC 3207 STARTTLS)");
+        }
+
+        session.authenticate(server, &capabilities)?;
+        Ok((session, capabilities))
+    }
+
     fn connect(server: &Server) -> Result<Session, Error> {
         let addrs = (server.host.trim(), server.port)
             .to_socket_addrs()
@@ -872,6 +1001,64 @@ mod tests {
         let server = Server { host: "127.0.0.1".into(), port: 1, password: Some("secret".into()), ..Default::default() };
         let err = send(&server, "a@b", &["c@d".to_string()], b"Subject: hi\n\nbody\n").expect_err("password alone");
         assert!(matches!(err, Error::Config(_)), "{err:?}");
+    }
+
+    #[test]
+    fn the_preset_map_finds_the_provider_of_an_address() {
+        let gmail = preset("user@gmail.com").expect("gmail is in the map");
+        assert_eq!(gmail.name, "Gmail");
+        assert_eq!((gmail.host, gmail.port, gmail.security), ("smtp.gmail.com", 465, Security::ImplicitTls));
+        assert_eq!(gmail.alternative, Some((587, Security::StartTls)));
+        assert_eq!(gmail.app_password_page, Some("https://myaccount.google.com/apppasswords"));
+        // The other spelling of the same provider, a bare domain, another case and a root dot.
+        assert_eq!(preset("USER@GoogleMail.COM").map(|p| p.name), Some("Gmail"));
+        assert_eq!(preset(" gmail.com ").map(|p| p.name), Some("Gmail"));
+        assert_eq!(preset("gmail.com.").map(|p| p.name), Some("Gmail"));
+        for (domain, host, port, security) in [
+            ("yandex.ru", "smtp.yandex.ru", 465, Security::ImplicitTls),
+            ("yandex.com", "smtp.yandex.ru", 465, Security::ImplicitTls),
+            ("yandex.by", "smtp.yandex.ru", 465, Security::ImplicitTls),
+            ("mail.ru", "smtp.mail.ru", 465, Security::ImplicitTls),
+            ("bk.ru", "smtp.mail.ru", 465, Security::ImplicitTls),
+            ("inbox.ru", "smtp.mail.ru", 465, Security::ImplicitTls),
+            ("list.ru", "smtp.mail.ru", 465, Security::ImplicitTls),
+            ("outlook.com", "smtp-mail.outlook.com", 587, Security::StartTls),
+            ("hotmail.com", "smtp-mail.outlook.com", 587, Security::StartTls),
+            ("live.com", "smtp-mail.outlook.com", 587, Security::StartTls),
+        ] {
+            let entry = preset(domain).unwrap_or_else(|| panic!("{domain} is not in the map"));
+            assert_eq!((entry.host, entry.port, entry.security), (host, port, security), "{domain}");
+        }
+    }
+
+    #[test]
+    fn a_domain_the_map_does_not_know_fills_in_nothing() {
+        for value in ["", " ", "@", "user@", "example.org", "user@example.org", "gmail.com.example", "user@mail.ru.example"] {
+            assert!(preset(value).is_none(), "{value:?} should not be a known provider");
+        }
+    }
+
+    #[test]
+    fn every_preset_names_a_relay_a_session_could_use() {
+        for entry in PRESETS {
+            assert!(!entry.name.trim().is_empty() && !entry.domains.is_empty(), "{entry:?}");
+            // What the entry fills in has to pass the same checks a session makes before its socket.
+            let server = Server { host: entry.host.to_string(), port: entry.port, security: entry.security, ..Default::default() };
+            assert!(check(&server).is_ok(), "{entry:?}");
+            for domain in entry.domains {
+                assert_eq!(domain.to_ascii_lowercase(), *domain, "{domain} is listed in another case");
+                assert!(preset(&format!("someone@{domain}")).is_some(), "{domain}");
+            }
+        }
+    }
+
+    #[test]
+    fn a_check_refuses_what_it_could_not_carry_out_before_the_socket() {
+        // No host at all, and a password with no user name: both are configuration mistakes a
+        // check reports as such (a `Config` error) rather than by opening anything.
+        assert!(matches!(verify(&Server::default()), Err(Error::Config(_))));
+        let server = Server { host: "127.0.0.1".into(), port: 1, password: Some("secret".into()), ..Default::default() };
+        assert!(matches!(verify(&server), Err(Error::Config(_))));
     }
 
     #[test]

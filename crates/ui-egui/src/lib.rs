@@ -72,10 +72,10 @@ mod autoscroll;
 mod bidi;
 pub mod bulk_fields;
 mod dialogs;
-#[cfg(not(target_arch = "wasm32"))]
-pub mod email_send;
 mod edit_text_ui;
 mod editing;
+#[cfg(not(target_arch = "wasm32"))]
+pub mod email_send;
 #[cfg(not(target_arch = "wasm32"))]
 pub mod file_watch;
 mod files;
@@ -95,8 +95,8 @@ mod panels;
 mod pickers;
 pub mod prepare;
 mod print_ui;
-pub mod translate_ui;
 mod signature_drag;
+pub mod translate_ui;
 pub mod units;
 mod web_print;
 pub use print_ui::{Handling as PrintHandling, PrintDraft, PrinterSource, Which as PrintWhich, system_printers};
@@ -2911,6 +2911,7 @@ impl eframe::App for PdfCraftApp {
         self.poll_export();
         #[cfg(not(target_arch = "wasm32"))]
         self.poll_email_send();
+        self.poll_email_check();
         self.poll_translate();
         self.poll_ocr();
         self.poll_optimize();

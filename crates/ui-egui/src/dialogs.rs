@@ -927,19 +927,29 @@ fn dialogs(app: &mut PdfCraftApp, ctx: &egui::Context) {
                 close = apply || cancel;
                 return;
             }
-            // The dialog opens no socket: only its Send button starts a session, and a reason to
-            // stay open (an empty host, an address a relay could not read) is shown in place.
+            // The dialog opens no socket: only its Send and Check connection buttons start a
+            // session, and a reason to stay open (an empty host, an address a relay could not read)
+            // is shown in place.
             #[cfg(not(target_arch = "wasm32"))]
             Dialog::EmailSend => {
                 ui.set_width(560.0);
-                let (send, cancel) = crate::email_send::body(ui, &mut app.email.draft, &t);
-                if send {
+                let actions = crate::email_send::body(ui, &mut app.email, &t);
+                if let Some(page) = actions.open {
+                    app.open_url(page);
+                }
+                if actions.check {
+                    match app.check_email() {
+                        Ok(()) => {}
+                        Err(why) => app.notify(why),
+                    }
+                }
+                if actions.send {
                     match app.send_email() {
                         Ok(()) => close = true,
                         Err(why) => app.notify(why),
                     }
                 }
-                close = close || cancel;
+                close = close || actions.cancel;
                 return;
             }
             // Never shown on the web (the command says so there instead), but the match must be total.

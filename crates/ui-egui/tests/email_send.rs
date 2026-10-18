@@ -21,8 +21,7 @@ fn fixture() -> Vec<u8> {
     let objs = [
         "<< /Type /Catalog /Pages 2 0 R >>".to_string(),
         "<< /Type /Pages /Kids [3 0 R] /Count 1 /MediaBox [0 0 200 300] >>".to_string(),
-        "<< /Type /Page /Parent 2 0 R /MediaBox [0 0 200 300] /Contents 4 0 R /Resources << /Font << /F1 5 0 R >> >> >>"
-            .to_string(),
+        "<< /Type /Page /Parent 2 0 R /MediaBox [0 0 200 300] /Contents 4 0 R /Resources << /Font << /F1 5 0 R >> >> >>".to_string(),
         "<< /Length 47 >>\nstream\nBT /F1 24 Tf 20 150 Td (Quarterly report) Tj ET\nendstream".to_string(),
         "<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica >>".to_string(),
     ];
@@ -263,11 +262,7 @@ fn an_unusable_envelope_keeps_the_dialog_open_and_opens_no_socket() {
 
 #[test]
 fn a_password_is_never_put_in_the_diagnostic_form_of_the_draft() {
-    let draft = pdfcraft_ui_egui::email_send::Draft {
-        username: "ada".to_string(),
-        password: "hunter2".to_string(),
-        ..Default::default()
-    };
+    let draft = pdfcraft_ui_egui::email_send::Draft { username: "ada".to_string(), password: "hunter2".to_string(), ..Default::default() };
     let shown = format!("{draft:?}");
     assert!(!shown.contains("hunter2"), "{shown}");
     assert!(shown.contains("<hidden>"), "{shown}");

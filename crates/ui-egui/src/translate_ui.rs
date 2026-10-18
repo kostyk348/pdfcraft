@@ -141,16 +141,14 @@ pub fn provider(id: &str) -> &'static Provider {
 /// The DeepLX row: the endpoint the user named, and the languages to ask it for. Building it
 /// contacts nothing.
 fn deeplx(request: &Request<'_>) -> Result<Box<dyn tr::Translator + Send>, String> {
-    let backend = tr::Deeplx::new(request.endpoint, request.source, request.target, tr::DEFAULT_TIMEOUT_SECS)
-        .map_err(|error| error.to_string())?;
+    let backend = tr::Deeplx::new(request.endpoint, request.source, request.target, tr::DEFAULT_TIMEOUT_SECS).map_err(|error| error.to_string())?;
     Ok(Box::new(backend))
 }
 
 /// The Google row. Its requests, batching, 429 handling and cache belong to `t_ee9c7f34`; until
 /// that lands this row replaces nothing and asks no one, which is what it says.
 fn google(_request: &Request<'_>) -> Result<Box<dyn tr::Translator + Send>, String> {
-    Err(tl!("Google Translate's backend is not in this build yet, so nothing was sent. Choose the map or a DeepLX-compatible service.")
-        .to_string())
+    Err(tl!("Google Translate's backend is not in this build yet, so nothing was sent. Choose the map or a DeepLX-compatible service.").to_string())
 }
 
 /// What the dialog holds. The provider, the map, its fields and the font are the user's choice;
@@ -300,13 +298,14 @@ impl PdfCraftApp {
         let dir = self
             .export_dir_override
             .clone()
-            .or_else(|| self.session.get(id).and_then(|d| d.path.clone()).and_then(|p| std::path::Path::new(&p).parent().map(|d| d.to_string_lossy().into_owned())))
+            .or_else(|| {
+                self.session
+                    .get(id)
+                    .and_then(|d| d.path.clone())
+                    .and_then(|p| std::path::Path::new(&p).parent().map(|d| d.to_string_lossy().into_owned()))
+            })
             .unwrap_or_default();
-        if dir.is_empty() {
-            file
-        } else {
-            std::path::Path::new(&dir).join(file).to_string_lossy().into_owned()
-        }
+        if dir.is_empty() { file } else { std::path::Path::new(&dir).join(file).to_string_lossy().into_owned() }
     }
 
     /// Recount how much of the open document the chosen map covers. A pure lookup: no request.
@@ -404,8 +403,12 @@ impl PdfCraftApp {
                 self.translate_finish(id, &draft, &mut MapBackend(map))
             }
             Kind::Service => {
-                let fields =
-                    Fields { endpoint: draft.endpoint.trim().to_string(), key: draft.key.trim().to_string(), source: draft.source_language.trim().to_string(), target: draft.target.trim().to_string() };
+                let fields = Fields {
+                    endpoint: draft.endpoint.trim().to_string(),
+                    key: draft.key.trim().to_string(),
+                    source: draft.source_language.trim().to_string(),
+                    target: draft.target.trim().to_string(),
+                };
                 if row.address_required && fields.endpoint.is_empty() {
                     return Err(tl!("The network service needs an endpoint").to_string());
                 }
@@ -564,12 +567,11 @@ fn import_font(session: &mut Session, id: DocId, path: &str) -> Result<Option<St
     let bytes = std::fs::read(path).map_err(|e| format!("{path}: {e}"))?;
     let pages = session.get(id).map(|d| d.info.pages.len()).unwrap_or(0);
     for page in 0..pages {
-        let before: Vec<String> =
-            session.get(id).map(|d| d.text_editor_fonts(page).into_iter().map(|f| f.resource).collect()).unwrap_or_default();
+        let before: Vec<String> = session.get(id).map(|d| d.text_editor_fonts(page).into_iter().map(|f| f.resource).collect()).unwrap_or_default();
         session.apply(id, Edit::RegisterTextFont { page, bytes: Arc::new(bytes.clone()) }).map_err(|e| e.to_string())?;
-        let added = session.get(id).and_then(|d| {
-            d.text_editor_fonts(page).into_iter().find(|f| !before.contains(&f.resource) && !f.resource.starts_with("PCApproved"))
-        });
+        let added = session
+            .get(id)
+            .and_then(|d| d.text_editor_fonts(page).into_iter().find(|f| !before.contains(&f.resource) && !f.resource.starts_with("PCApproved")));
         if let Some(font) = added {
             return Ok(Some(font.resource));
         }
@@ -605,11 +607,7 @@ pub(crate) fn body(ui: &mut egui::Ui, app: &mut PdfCraftApp, t: &Tokens) -> bool
             ui.horizontal(|ui| {
                 let label = ui.label(tl!("Map:"));
                 if ui
-                    .add(
-                        egui::TextEdit::singleline(&mut app.translate.draft.map)
-                            .desired_width(380.0)
-                            .hint_text(tl!("No file chosen")),
-                    )
+                    .add(egui::TextEdit::singleline(&mut app.translate.draft.map).desired_width(380.0).hint_text(tl!("No file chosen")))
                     .labelled_by(label.id)
                     .changed()
                 {
@@ -628,9 +626,12 @@ pub(crate) fn body(ui: &mut egui::Ui, app: &mut PdfCraftApp, t: &Tokens) -> bool
             if let Some(preview) = app.translate.survey {
                 let numbers = [preview.covered.to_string(), preview.rows.to_string()];
                 ui.label(
-                    egui::RichText::new(crate::i18n::fmt(tl!("The map covers {covered} of {rows} rows."), &[("covered", &numbers[0]), ("rows", &numbers[1])]))
-                        .size(12.0)
-                        .color(t.text_muted),
+                    egui::RichText::new(crate::i18n::fmt(
+                        tl!("The map covers {covered} of {rows} rows."),
+                        &[("covered", &numbers[0]), ("rows", &numbers[1])],
+                    ))
+                    .size(12.0)
+                    .color(t.text_muted),
                 );
             }
         }
@@ -665,16 +666,20 @@ pub(crate) fn body(ui: &mut egui::Ui, app: &mut PdfCraftApp, t: &Tokens) -> bool
         }
     });
     ui.label(
-        egui::RichText::new(tl!("A script the document's own faces cannot draw (Cyrillic, Greek) needs a font; without one those rows fail instead of being drawn."))
-            .size(12.0)
-            .color(t.text_muted),
+        egui::RichText::new(tl!(
+            "A script the document's own faces cannot draw (Cyrillic, Greek) needs a font; without one those rows fail instead of being drawn."
+        ))
+        .size(12.0)
+        .color(t.text_muted),
     );
     ui.add_space(8.0);
 
     ui.add(widgets::checkbox(&mut app.translate.draft.replace, tl!("Replace the text in this document")));
     if !app.translate.draft.replace {
         ui.label(
-            egui::RichText::new(tl!("Otherwise the translation is written to a new file and this document is left alone.")).size(12.0).color(t.text_muted),
+            egui::RichText::new(tl!("Otherwise the translation is written to a new file and this document is left alone."))
+                .size(12.0)
+                .color(t.text_muted),
         );
         ui.horizontal(|ui| {
             let label = ui.label(tl!("Copy to:"));
@@ -728,10 +733,7 @@ fn report_body(ui: &mut egui::Ui, report: &Report, t: &Tokens) {
     // Who answered, and how many requests that cost: a number, so "this never touched the network"
     // is visible rather than assumed.
     let requests = report.network_requests.to_string();
-    ui.label(crate::i18n::fmt(
-        tl!("Provider: {provider} · requests: {requests}"),
-        &[("provider", report.provider), ("requests", &requests)],
-    ));
+    ui.label(crate::i18n::fmt(tl!("Provider: {provider} · requests: {requests}"), &[("provider", report.provider), ("requests", &requests)]));
     if report.network_requests == 0 {
         ui.label(egui::RichText::new(tl!("No request left this computer.")).size(11.0).color(t.text_muted));
     }
@@ -759,10 +761,8 @@ fn report_body(ui: &mut egui::Ui, report: &Report, t: &Tokens) {
 /// One reported row as a single line: page and box, the source text, and what it says about the
 /// translation.
 fn describe(row: &translate::Entry, what: &str) -> String {
-    let mut line = format!(
-        "{} p.{} [{:.0}, {:.0}, {:.0}, {:.0}] “{}”",
-        row.paragraph, row.page, row.rect[0], row.rect[1], row.rect[2], row.rect[3], row.text
-    );
+    let mut line =
+        format!("{} p.{} [{:.0}, {:.0}, {:.0}, {:.0}] “{}”", row.paragraph, row.page, row.rect[0], row.rect[1], row.rect[2], row.rect[3], row.text);
     match what {
         "size" => {
             if let Some(size) = row.size {

@@ -33,8 +33,8 @@ mod scan_colours;
 pub mod signature_image;
 pub mod signature_scan;
 pub mod text_fonts;
-pub mod translate;
 mod text_preview;
+pub mod translate;
 mod upright_image;
 pub mod xfa;
 

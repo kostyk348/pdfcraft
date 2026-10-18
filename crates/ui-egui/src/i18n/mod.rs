@@ -1367,6 +1367,9 @@ mod tests {
             "ΔLOC",
             "+Bin",
             "−Bin",
+            // Czech writes these two as English does: a server is a server, a port is a port.
+            "Server:",
+            "Port:",
         ];
         let (entries, errors) = parse_entries(cs.0.source, cs.0.plural_forms());
         assert!(errors.is_empty(), "{errors:?}");

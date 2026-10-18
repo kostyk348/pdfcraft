@@ -253,6 +253,50 @@ fn an_encrypted_mode_reaches_the_socket_instead_of_being_refused() {
     }
 }
 
+#[test]
+fn a_check_takes_the_login_and_hands_over_no_message() {
+    // The receiver advertises AUTH PLAIN and accepts the credentials. A check must reach exactly
+    // that point and stop: no envelope, no DATA, nothing in its payload.
+    let (port, receiver) = receive(Mode::WithAuth);
+    let server = Server { username: Some("ada".to_string()), password: Some("hunter2".to_string()), ..server(port) };
+    let checked = pdfcraft_smtp::verify(&server).expect("the connection is fine");
+    let record = receiver.join().expect("the receiver thread");
+
+    assert_eq!(checked.host, "127.0.0.1");
+    assert_eq!(checked.port, port);
+    assert!(checked.authenticated, "the credentials were given and taken");
+    assert!(checked.capabilities.contains(&"AUTH".to_string()), "{:?}", checked.capabilities);
+    // The wire proves it: the login went out, and the message did not.
+    assert_eq!(record.auth, vec!["AGFkYQBodW50ZXIy"]);
+    assert_eq!(record.commands, vec!["EHLO pdfcraft.local".to_string(), "AUTH PLAIN AGFkYQBodW50ZXIy".to_string(), "QUIT".to_string()]);
+    assert!(!record.got_data, "a check handed over DATA: {:?}", record.commands);
+    assert!(record.payload.is_empty(), "the receiver kept a message: {:?}", record.payload);
+    // Nothing secret is in the log a person (or an agent) may see.
+    assert!(checked.log.iter().any(|line| line.contains("AUTH PLAIN <credentials>")), "{:?}", checked.log);
+    assert!(!checked.log.iter().any(|line| line.contains("hunter2")), "{:?}", checked.log);
+    assert!(checked.log.iter().any(|line| line.contains("no message was handed over")), "{:?}", checked.log);
+}
+
+#[test]
+fn a_check_without_credentials_says_so() {
+    let (port, receiver) = receive(Mode::Accept);
+    let checked = pdfcraft_smtp::verify(&server(port)).expect("the connection is fine");
+    let record = receiver.join().expect("the receiver thread");
+    assert!(!checked.authenticated, "no password was given, so none can have been checked");
+    assert_eq!(record.commands, vec!["EHLO pdfcraft.local".to_string(), "QUIT".to_string()]);
+    assert!(record.payload.is_empty() && !record.got_data);
+}
+
+#[test]
+fn a_check_against_a_relay_that_is_not_there_is_an_error_not_a_panic() {
+    let listener = TcpListener::bind("127.0.0.1:0").expect("a loopback port");
+    let port = listener.local_addr().expect("the port").port();
+    drop(listener);
+    let err = pdfcraft_smtp::verify(&Server { timeout: std::time::Duration::from_millis(500), ..server(port) }).expect_err("nothing is listening");
+    assert!(matches!(err, Error::Connect(_)), "{err:?}");
+    assert!(err.to_string().contains(&port.to_string()), "{err}");
+}
+
 /// The receiver helper itself: a client that speaks the protocol by hand reaches it, so a passing
 /// test above means the client and the receiver agree about the wire, not merely that both exist.
 #[test]

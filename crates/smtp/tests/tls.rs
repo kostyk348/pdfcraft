@@ -18,7 +18,8 @@ use rustls::pki_types::{CertificateDer, PrivateKeyDer, PrivatePkcs8KeyDer};
 
 /// The message both tests send: the same shape `pdfcraft-eml` composes (LF line endings, base64
 /// parts), so what the receiver keeps is exactly what the `.eml` holds.
-const MESSAGE: &[u8] = b"From: ada@example.com\nTo: team@example.com\nSubject: hi\nMIME-Version: 1.0\nContent-Type: text/plain\n\nY29tcG9zZWQgYnkgaGFuZAo=\n";
+const MESSAGE: &[u8] =
+    b"From: ada@example.com\nTo: team@example.com\nSubject: hi\nMIME-Version: 1.0\nContent-Type: text/plain\n\nY29tcG9zZWQgYnkgaGFuZAo=\n";
 
 fn der(name: &str) -> Vec<u8> {
     std::fs::read(format!("{}/tests/data/{name}", env!("CARGO_MANIFEST_DIR"))).expect("a test certificate")
