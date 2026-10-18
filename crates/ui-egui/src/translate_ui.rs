@@ -33,7 +33,6 @@ use pdfcraft_engine::{DocId, Edit, Session};
 use pdfcraft_translate as tr;
 use pdfcraft_translate::Translator as _;
 
-use crate::pickers::Ask;
 use crate::theme::{self, Tokens};
 use crate::{Dialog, PdfCraftApp, widgets};
 
