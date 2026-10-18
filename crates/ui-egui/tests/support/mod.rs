@@ -2,6 +2,9 @@
 use egui_kittest::Harness;
 use pdfcraft_ui_egui::PdfCraftApp;
 
+/// Shared by the test binaries that need it; a binary that includes `mod support` for something else
+/// is not a reason to build it with a warning.
+#[allow(dead_code)]
 pub fn wait_until(h: &mut Harness<'static, PdfCraftApp>, what: &str, ready: impl Fn(&PdfCraftApp) -> bool) {
     let deadline = std::time::Instant::now() + std::time::Duration::from_secs(30);
     loop {

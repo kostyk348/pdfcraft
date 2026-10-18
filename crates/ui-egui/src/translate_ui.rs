@@ -85,8 +85,13 @@ pub struct Provider {
     pub hint: &'static str,
     /// Build the service's backend. `Err` is a reason for the dialog — what the provider still
     /// needs, or that this build cannot ask it. Nothing has been sent when it returns.
-    pub build: Option<fn(&Request<'_>) -> Result<Box<dyn tr::Translator + Send>, String>>,
+    pub build: Option<Build>,
 }
+
+/// How a provider builds its backend from the fields the dialog holds: `Err` is a reason for the
+/// dialog (what the provider still needs, or that this build cannot ask it), and nothing has been
+/// sent when it returns.
+pub type Build = fn(&Request<'_>) -> Result<Box<dyn tr::Translator + Send>, String>;
 
 /// The offline map: the default, and the only provider that cannot open a socket.
 pub const MAP: Provider = Provider {
@@ -536,12 +541,7 @@ impl PdfCraftApp {
 
 /// Ask the chosen service for every string, off the frame thread. A provider that cannot be built
 /// (Google, until its own card lands) says so here, before a single request.
-fn fetch(
-    provider: &'static str,
-    build: fn(&Request<'_>) -> Result<Box<dyn tr::Translator + Send>, String>,
-    fields: &Fields,
-    strings: &[String],
-) -> Fetched {
+fn fetch(provider: &'static str, build: Build, fields: &Fields, strings: &[String]) -> Fetched {
     let mut backend = match build(&fields.borrow()) {
         Ok(backend) => backend,
         Err(error) => return Fetched { translations: BTreeMap::new(), requests: 0, provider, error: Some(error) },
@@ -599,7 +599,7 @@ pub(crate) fn body(ui: &mut egui::Ui, app: &mut PdfCraftApp, t: &Tokens) -> bool
     let row = provider(app.translate.draft.provider);
     ui.horizontal_wrapped(|ui| {
         for offered in PROVIDERS {
-            ui.radio_value(&mut app.translate.draft.provider, offered.id, tl!(offered.label));
+            widgets::radio_value(ui, &mut app.translate.draft.provider, offered.id, tl!(offered.label));
         }
     });
     ui.label(egui::RichText::new(tl!(row.hint)).size(12.0).color(t.text_muted));
