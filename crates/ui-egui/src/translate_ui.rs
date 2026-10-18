@@ -33,6 +33,10 @@ use pdfcraft_engine::{DocId, Edit, Session};
 use pdfcraft_translate as tr;
 use pdfcraft_translate::Translator as _;
 
+// The native file pickers (there is no `pickers` module in a browser build, and the three uses
+// below sit inside `cfg(not(target_arch = "wasm32"))` blocks).
+#[cfg(not(target_arch = "wasm32"))]
+use crate::pickers::Ask;
 use crate::theme::{self, Tokens};
 use crate::{Dialog, PdfCraftApp, widgets};
 
