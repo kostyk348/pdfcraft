@@ -106,6 +106,7 @@ pub static ICONS: &[(&str, &[u8])] = &[
     ("list-ordered", include_bytes!("../../../assets/icons/list-ordered.svg")),
     ("lock", include_bytes!("../../../assets/icons/lock.svg")),
     ("lock-open", include_bytes!("../../../assets/icons/lock-open.svg")),
+    ("mail", include_bytes!("../../../assets/icons/mail.svg")),
     ("maximize", include_bytes!("../../../assets/icons/maximize.svg")),
     ("maximize-2", include_bytes!("../../../assets/icons/maximize-2.svg")),
     ("message-circle-reply", include_bytes!("../../../assets/icons/message-circle-reply.svg")),

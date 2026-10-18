@@ -2351,6 +2351,9 @@ animation effects	Off	Ki
 	This document is trying to open a local file:	Ez a dokumentum egy helyi fájlt próbál megnyitni:
 	Move tag earlier	Címke korábbra helyezése
 	Move tag later	Címke későbbre helyezése
+	Save as email message…	Mentés e-mail üzenetként…
+	Save as email message	Mentés e-mail üzenetként
+	Email message (.eml)	E-mail üzenet (.eml)
 	Send as email…	Küldés e-mailként…
 	Send as email	Küldés e-mailként
 	The message is the one Save as email message… writes, delivered over SMTP. Nothing is sent until you press Send.	Az üzenet ugyanaz, amit a „Mentés e-mail üzenetként…” készít, SMTP-n keresztül kézbesítve. Semmi nem megy ki, amíg a Küldés gombra nem kattint.

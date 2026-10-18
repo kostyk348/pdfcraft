@@ -2332,6 +2332,9 @@ animation effects	Off	Wyłączone
 	This document is trying to open a local file:	Ten dokument próbuje otworzyć plik lokalny:
 	Move tag earlier	Przenieś znacznik wcześniej
 	Move tag later	Przenieś znacznik później
+	Save as email message…	Zapisz jako wiadomość e-mail…
+	Save as email message	Zapisz jako wiadomość e-mail
+	Email message (.eml)	Wiadomość e-mail (.eml)
 	Send as email…	Wyślij jako e-mail…
 	Send as email	Wyślij jako e-mail
 	The message is the one Save as email message… writes, delivered over SMTP. Nothing is sent until you press Send.	Wiadomość to ta sama, którą tworzy „Zapisz jako wiadomość e-mail…”, dostarczona przez SMTP. Nic nie zostanie wysłane, dopóki nie klikniesz Wyślij.

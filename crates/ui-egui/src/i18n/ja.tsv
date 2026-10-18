@@ -2352,6 +2352,9 @@ animation effects	Off	オフ
 	This document is trying to open a local file:	この文書はローカルファイルを開こうとしています：
 	Move tag earlier	タグを前へ移動
 	Move tag later	タグを後へ移動
+	Save as email message…	メールメッセージとして保存…
+	Save as email message	メールメッセージとして保存
+	Email message (.eml)	メールメッセージ（.eml）
 	Send as email…	メールとして送信…
 	Send as email	メールとして送信
 	The message is the one Save as email message… writes, delivered over SMTP. Nothing is sent until you press Send.	メッセージは「メールメッセージとして保存…」が作成するものと同じで、SMTP で配送されます。「送信」を押すまで何も送信されません。

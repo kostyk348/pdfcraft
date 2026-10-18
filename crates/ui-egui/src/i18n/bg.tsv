@@ -2315,6 +2315,9 @@ animation effects	Off	Изключени
 	This document is trying to open a local file:	Този документ се опитва да отвори локален файл:
 	Move tag earlier	Преместване на етикета по-рано
 	Move tag later	Преместване на етикета по-късно
+	Save as email message…	Запазване като имейл съобщение…
+	Save as email message	Запазване като имейл съобщение
+	Email message (.eml)	Имейл съобщение (.eml)
 	Send as email…	Изпращане като имейл…
 	Send as email	Изпращане като имейл
 	The message is the one Save as email message… writes, delivered over SMTP. Nothing is sent until you press Send.	Съобщението е същото, което създава „Запазване като имейл съобщение…“, доставено по SMTP. Нищо не се изпраща, докато не натиснете Изпращане.

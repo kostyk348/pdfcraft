@@ -2350,6 +2350,9 @@ animation effects	Off	Өшірулі
 	This document is trying to open a local file:	Бұл құжат жергілікті файлды ашуға әрекеттеніп жатыр:
 	Move tag earlier	Тегті ертерек жылжыту
 	Move tag later	Тегті кейінірек жылжыту
+	Save as email message…	Электрондық пошта хабары ретінде сақтау…
+	Save as email message	Электрондық пошта хабары ретінде сақтау
+	Email message (.eml)	Электрондық пошта хабары (.eml)
 	Send as email…	Электрондық пошта ретінде жіберу…
 	Send as email	Электрондық пошта ретінде жіберу
 	The message is the one Save as email message… writes, delivered over SMTP. Nothing is sent until you press Send.	Хабар «Электрондық пошта хабары ретінде сақтау…» жасайтын хабардың дәл өзі және SMTP арқылы жеткізіледі. «Жіберу» түймесін баспайынша ештеңе жіберілмейді.

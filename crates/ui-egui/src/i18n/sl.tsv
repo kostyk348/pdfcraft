@@ -2357,6 +2357,9 @@ animation effects	Off	Izklopljeni
 	This document is trying to open a local file:	Ta dokument poskuša odpreti lokalno datoteko:
 	Move tag earlier	Premakni oznako prej
 	Move tag later	Premakni oznako pozneje
+	Save as email message…	Shrani kot e-poštno sporočilo…
+	Save as email message	Shrani kot e-poštno sporočilo
+	Email message (.eml)	E-poštno sporočilo (.eml)
 	Send as email…	Pošlji kot e-pošto sporočilo…
 	Send as email	Pošlji kot e-pošto sporočilo
 	The message is the one Save as email message… writes, delivered over SMTP. Nothing is sent until you press Send.	Sporočilo je isto, kot ga ustvari »Shrani kot e-poštno sporočilo…«, dostavljeno prek SMTP. Nič ni poslano, dokler ne pritisnete Pošlji.

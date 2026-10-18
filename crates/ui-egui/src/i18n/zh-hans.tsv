@@ -2316,6 +2316,9 @@ animation effects	Off	关
 	This document is trying to open a local file:	此文档正尝试打开本地文件：
 	Move tag earlier	将标签前移
 	Move tag later	将标签后移
+	Save as email message…	另存为电子邮件…
+	Save as email message	另存为电子邮件
+	Email message (.eml)	电子邮件 (.eml)
 	Send as email…	作为电子邮件发送…
 	Send as email	作为电子邮件发送
 	The message is the one Save as email message… writes, delivered over SMTP. Nothing is sent until you press Send.	该邮件与“另存为电子邮件…”生成的完全相同，通过 SMTP 投递。在按下“发送”之前不会发送任何内容。

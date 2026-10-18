@@ -2265,6 +2265,9 @@ animation effects	Off	Выкл
 	This document is trying to open a local file:	Этот документ пытается открыть локальный файл:
 	Move tag earlier	Переместить тег раньше
 	Move tag later	Переместить тег позже
+	Save as email message…	Сохранить как сообщение эл. почты…
+	Save as email message	Сохранить как сообщение эл. почты
+	Email message (.eml)	Сообщение эл. почты (.eml)
 	Send as email…	Отправить письмом…
 	Send as email	Отправить письмом
 	The message is the one Save as email message… writes, delivered over SMTP. Nothing is sent until you press Send.	Письмо — то же, что создаёт «Сохранить как сообщение эл. почты…», доставленное по SMTP. Ничего не отправляется, пока вы не нажмёте «Отправить».

@@ -2265,6 +2265,9 @@ animation effects	Off	ఆఫ్
 	This document is trying to open a local file:	ఈ పత్రం ఒక స్థానిక ఫైల్‌ను తెరవడానికి ప్రయత్నిస్తోంది:
 	Move tag earlier	ట్యాగ్‌ను ముందుకు తరలించు
 	Move tag later	ట్యాగ్‌ను వెనుకకు తరలించు
+	Save as email message…	ఇమెయిల్ సందేశంగా సేవ్ చేయి…
+	Save as email message	ఇమెయిల్ సందేశంగా సేవ్ చేయి
+	Email message (.eml)	ఇమెయిల్ సందేశం (.eml)
 	Send as email…	ఇమెయిల్గా పంపండి…
 	Send as email	ఇమెయిల్గా పంపండి
 	The message is the one Save as email message… writes, delivered over SMTP. Nothing is sent until you press Send.	సందేశం "ఇమెయిల్ సందేశంగా సేవ్ చేయి…" సృష్టించేదే, SMTP ద్వారా పంపబడుతుంది. మీరు పంపండి నొక్కే వరకు ఏదీ పంపబడదు.

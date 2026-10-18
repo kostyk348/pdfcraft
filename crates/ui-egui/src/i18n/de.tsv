@@ -2353,6 +2353,9 @@ animation effects	Off	Aus
 	This document is trying to open a local file:	Dieses Dokument versucht, eine lokale Datei zu öffnen:
 	Move tag earlier	Tag früher verschieben
 	Move tag later	Tag später verschieben
+	Save as email message…	Als E-Mail-Nachricht speichern…
+	Save as email message	Als E-Mail-Nachricht speichern
+	Email message (.eml)	E-Mail-Nachricht (.eml)
 	Send as email…	Als E-Mail senden…
 	Send as email	Als E-Mail senden
 	The message is the one Save as email message… writes, delivered over SMTP. Nothing is sent until you press Send.	Die Nachricht ist dieselbe, die „Als E-Mail-Nachricht speichern…“ erzeugt, nur über SMTP zugestellt. Erst mit „Senden“ wird etwas gesendet.

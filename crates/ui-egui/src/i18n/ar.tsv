@@ -2373,6 +2373,9 @@ animation effects	Off	معطّلة
 	This document is trying to open a local file:	يحاول هذا المستند فتح ملف محلي:
 	Move tag earlier	نقل العلامة للأعلى
 	Move tag later	نقل العلامة للأسفل
+	Save as email message…	حفظ كرسالة بريد إلكتروني…
+	Save as email message	حفظ كرسالة بريد إلكتروني
+	Email message (.eml)	رسالة بريد إلكتروني (.eml)
 	Send as email…	إرسال كبريد إلكتروني…
 	Send as email	إرسال كبريد إلكتروني
 	The message is the one Save as email message… writes, delivered over SMTP. Nothing is sent until you press Send.	الرسالة هي نفسها التي ينشئها «حفظ كرسالة بريد إلكتروني…»، وتُسلَّم عبر SMTP. لا يُرسَل شيء حتى تضغط إرسال.

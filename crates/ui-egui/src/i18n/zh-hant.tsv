@@ -2226,6 +2226,9 @@ animation effects	Off	關
 	This document is trying to open a local file:	此文件正嘗試開啟本機檔案：
 	Move tag earlier	將標記前移
 	Move tag later	將標記後移
+	Save as email message…	另存為電子郵件…
+	Save as email message	另存為電子郵件
+	Email message (.eml)	電子郵件（.eml）
 	Send as email…	以電子郵件傳送…
 	Send as email	以電子郵件傳送
 	The message is the one Save as email message… writes, delivered over SMTP. Nothing is sent until you press Send.	郵件與「另存為電子郵件…」所產生的完全相同，透過 SMTP 投遞。在按下「傳送」之前不會送出任何內容。

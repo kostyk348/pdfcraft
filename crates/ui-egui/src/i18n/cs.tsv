@@ -2426,6 +2426,9 @@ animation effects	Off	Vypnuto
 	This document is trying to open a local file:	Tento dokument se pokouší otevřít místní soubor:
 	Move tag earlier	Přesunout značku dříve
 	Move tag later	Přesunout značku později
+	Save as email message…	Uložit jako e-mailovou zprávu…
+	Save as email message	Uložit jako e-mailovou zprávu
+	Email message (.eml)	E-mailová zpráva (.eml)
 	Send as email…	Odeslat e-mailem…
 	Send as email	Odeslat e-mailem
 	The message is the one Save as email message… writes, delivered over SMTP. Nothing is sent until you press Send.	Zpráva je stejná, jakou vytváří „Uložit jako e-mailovou zprávu…”, doručená přes SMTP. Nic se neodešle, dokud nestisknete Odeslat.

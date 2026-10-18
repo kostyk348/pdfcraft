@@ -2348,6 +2348,9 @@ animation effects	Off	Kapalı
 	This document is trying to open a local file:	Bu belge yerel bir dosya açmaya çalışıyor:
 	Move tag earlier	Etiketi daha erken taşı
 	Move tag later	Etiketi daha geç taşı
+	Save as email message…	E-posta iletisi olarak kaydet…
+	Save as email message	E-posta iletisi olarak kaydet
+	Email message (.eml)	E-posta iletisi (.eml)
 	Send as email…	E-posta olarak gönder…
 	Send as email	E-posta olarak gönder
 	The message is the one Save as email message… writes, delivered over SMTP. Nothing is sent until you press Send.	İleti, "E-posta iletisi olarak kaydet…" ile oluşturulanın aynısıdır ve SMTP ile teslim edilir. Gönder'e basmadan hiçbir şey gönderilmez.

@@ -2362,6 +2362,9 @@ animation effects	Off	Ανενεργά
 	This document is trying to open a local file:	Αυτό το έγγραφο προσπαθεί να ανοίξει ένα τοπικό αρχείο:
 	Move tag earlier	Μετακίνηση ετικέτας νωρίτερα
 	Move tag later	Μετακίνηση ετικέτας αργότερα
+	Save as email message…	Αποθήκευση ως μήνυμα email…
+	Save as email message	Αποθήκευση ως μήνυμα email
+	Email message (.eml)	Μήνυμα email (.eml)
 	Send as email…	Αποστολή ως email…
 	Send as email	Αποστολή ως email
 	The message is the one Save as email message… writes, delivered over SMTP. Nothing is sent until you press Send.	Το μήνυμα είναι το ίδιο που δημιουργεί η «Αποθήκευση ως μήνυμα email…», παραδομένο μέσω SMTP. Τίποτα δεν αποστέλλεται μέχρι να πατήσετε Αποστολή.

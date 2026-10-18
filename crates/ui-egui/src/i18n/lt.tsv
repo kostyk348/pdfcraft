@@ -2596,6 +2596,9 @@ key	Space	Tarpas
 	This document is trying to open a local file:	Šis dokumentas bando atverti vietinį failą:
 	Move tag earlier	Perkelti žymą anksčiau
 	Move tag later	Perkelti žymą vėliau
+	Save as email message…	Išsaugoti kaip el. laišką…
+	Save as email message	Išsaugoti kaip el. laišką
+	Email message (.eml)	El. laiškas (.eml)
 	Send as email…	Siųsti el. paštu…
 	Send as email	Siųsti el. paštu
 	The message is the one Save as email message… writes, delivered over SMTP. Nothing is sent until you press Send.	Laiškas yra toks pat, kokį sukuria „Išsaugoti kaip el. laišką…“, pristatomas per SMTP. Niekas nesiunčiama, kol nepaspaudžiate Siųsti.

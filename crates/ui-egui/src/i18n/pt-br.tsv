@@ -2366,6 +2366,9 @@ animation effects	Off	Desativados
 	This document is trying to open a local file:	Este documento está tentando abrir um arquivo local:
 	Move tag earlier	Mover tag para antes
 	Move tag later	Mover tag para depois
+	Save as email message…	Salvar como mensagem de e-mail…
+	Save as email message	Salvar como mensagem de e-mail
+	Email message (.eml)	Mensagem de e-mail (.eml)
 	Send as email…	Enviar por e-mail…
 	Send as email	Enviar por e-mail
 	The message is the one Save as email message… writes, delivered over SMTP. Nothing is sent until you press Send.	A mensagem é a mesma criada por "Salvar como mensagem de e-mail…", entregue por SMTP. Nada é enviado até você clicar em Enviar.

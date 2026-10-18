@@ -2374,6 +2374,9 @@ animation effects	Off	Вимкнено
 	This document is trying to open a local file:	Цей документ намагається відкрити локальний файл:
 	Move tag earlier	Перемістити тег раніше
 	Move tag later	Перемістити тег пізніше
+	Save as email message…	Зберегти як повідомлення електронної пошти…
+	Save as email message	Зберегти як повідомлення електронної пошти
+	Email message (.eml)	Повідомлення електронної пошти (.eml)
 	Send as email…	Надіслати листом…
 	Send as email	Надіслати листом
 	The message is the one Save as email message… writes, delivered over SMTP. Nothing is sent until you press Send.	Лист — той самий, що створює «Зберегти як повідомлення електронної пошти…», доставлений через SMTP. Нічого не надсилається, доки ви не натиснете «Надіслати».
