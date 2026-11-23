@@ -110,6 +110,11 @@ pub const SIDEWAYS: &[(&str, &str)] = &[
     ("automation", "platform"),
 ];
 
+/// Same-layer edges allowed **only** as a dev-dependency. A test may compare what the app's own
+/// dialog produces with what the headless tool produces for the same fixture; the shipping
+/// dependency graph must still respect `SIDEWAYS`.
+pub const DEV_SIDEWAYS: &[(&str, &str)] = &[("ui-egui", "automation")];
+
 /// External crates that constitute a UI toolkit / windowing dependency (prefix match with `*`).
 pub const UI_CRATES: &[&str] = &["egui", "eframe", "winit", "egui_kittest", "craft-ui", "egui_extras", "egui_dock", "egui_tiles", "rfd", "wgpu*"];
 pub const UI_MIN_LAYER: u8 = 7;
@@ -132,6 +137,10 @@ fn is_ui_crate(name: &str) -> bool {
 
 fn sideways_allowed(from: &str, to: &str) -> bool {
     SIDEWAYS.contains(&(short_name(from), short_name(to)))
+}
+
+fn dev_sideways_allowed(from: &str, to: &str) -> bool {
+    DEV_SIDEWAYS.contains(&(short_name(from), short_name(to)))
 }
 
 fn standalone_allowed(from: &str, to: &str) -> bool {
@@ -213,7 +222,9 @@ pub fn check(crates: &[Crate]) -> Vec<Violation> {
                     Some(Class::Testkit) => {}
                     Some(dc) => {
                         let to = dc.layer().unwrap_or(u8::MAX);
-                        let ok = to < layer || (to == layer && sideways_allowed(&c.name, &d.name));
+                        let ok = to < layer
+                            || (to == layer
+                                && (sideways_allowed(&c.name, &d.name) || (d.kind == DepKind::Dev && dev_sideways_allowed(&c.name, &d.name))));
                         if !ok {
                             out.push(Violation::Upward { krate: c.name.clone(), dep: d.name.clone(), from: layer, to: to.min(8), kind: d.kind });
                         }
@@ -297,6 +308,16 @@ mod tests {
     fn listed_sideways_edges_allowed() {
         assert!(check(&[c("pdfcraft-redact", &[("pdfcraft-edit", Normal, true)])]).is_empty());
         assert!(!check(&[c("pdfcraft-edit", &[("pdfcraft-redact", Normal, true)])]).is_empty());
+    }
+
+    #[test]
+    fn dev_only_sideways_edge_is_allowed_only_as_dev() {
+        // The dialog-versus-headless equality test: dev-dependency only.
+        assert!(check(&[c("pdfcraft-ui-egui", &[("pdfcraft-automation", Dev, true)])]).is_empty());
+        // The same edge as a shipping dependency would break the rule: the app must not link
+        // automation into the product through the ui crate.
+        let v = check(&[c("pdfcraft-ui-egui", &[("pdfcraft-automation", Normal, true)])]);
+        assert!(matches!(v[..], [Violation::Upward { from: 7, to: 7, .. }]), "{v:?}");
     }
 
     #[test]

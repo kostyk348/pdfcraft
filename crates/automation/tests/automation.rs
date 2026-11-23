@@ -6215,7 +6215,10 @@ fn translate_writes_cyrillic_through_a_loaded_face_and_reads_it_back_from_the_sa
     assert_eq!(report["translated"], 1, "{report}");
     assert_eq!(report["failed"]["count"], 0, "{report}");
     assert_eq!(report["network_requests"], 0, "{report}");
-    assert_eq!(report["out"]["path"], dir.join("translated.pdf").to_string_lossy().as_ref());
+    // Windows returns the canonical `\\?\` spelling while the runner's TEMP is an 8.3 short name,
+    // so compare what the two paths mean, not how they are spelled.
+    let written = report["out"]["path"].as_str().expect("out.path is a string");
+    assert_eq!(std::fs::canonicalize(written).unwrap(), std::fs::canonicalize(dir.join("translated.pdf")).unwrap(), "{report}");
     let after = paragraphs(&mut a, doc);
     assert_eq!(after[0]["text"], "Привет", "{after:?}");
     assert!(after[0]["font"].as_str().unwrap().contains("Inter"), "drawn in the loaded face: {after:?}");
